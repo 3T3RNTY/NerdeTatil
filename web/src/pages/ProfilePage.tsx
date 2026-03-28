@@ -1,6 +1,26 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { PageShell } from '../components/PageShell'
+
+const PROFILE = {
+  displayName: 'Kullanıcı Adı',
+  fullName: 'Emirhan Bayrak',
+  email: 'emirhan.bayrak@ornek.com',
+  phone: '+90 532 000 00 00',
+  location: 'İstanbul, Türkiye',
+  bio: 'Hafta sonu kaçamakları ve Ege kıyılarını keşfetmeyi seviyorum. Önerilerime göz atabilirsin.',
+  memberSince: 'Mart 2024',
+}
+
+function DetailRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-nt-muted">{label}</dt>
+      <dd className="text-base text-nt-ink md:text-lg">{children}</dd>
+    </div>
+  )
+}
 
 export function ProfilePage() {
   return (
@@ -30,7 +50,7 @@ export function ProfilePage() {
                 </div>
               </div>
               <div className="text-center sm:text-left">
-                <h1 className="text-2xl font-bold tracking-tight text-nt-ink md:text-3xl">Kullanıcı Adı</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-nt-ink md:text-3xl">{PROFILE.displayName}</h1>
                 <p className="mt-1 text-sm text-nt-muted">Tatil önerilerini paylaş</p>
               </div>
             </div>
@@ -49,18 +69,44 @@ export function ProfilePage() {
 
       <PageShell className="pt-8">
         <div className="flex flex-col gap-8 md:gap-10">
-          <section className="rounded-2xl border border-nt-border bg-nt-surface p-7 shadow-md md:rounded-3xl md:p-8 lg:p-10">
-            <div className="flex min-h-[160px] items-center justify-center rounded-2xl bg-nt-bg/80 py-10 text-center md:min-h-[180px]">
-              <p className="text-lg font-medium text-nt-muted md:text-xl">Profil Detayı</p>
-            </div>
-            <div className="mt-6 flex justify-end md:mt-8">
+          <section
+            aria-labelledby="profil-detay-baslik"
+            className="rounded-2xl border border-nt-border bg-nt-surface p-7 shadow-md md:rounded-3xl md:p-8 lg:p-10"
+          >
+            <div className="flex flex-col gap-4 border-b border-nt-border pb-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 id="profil-detay-baslik" className="text-xl font-bold text-nt-ink md:text-2xl">
+                  Profil Detayı
+                </h2>
+                <p className="mt-1 text-sm text-nt-muted">Bilgilerin uygulamada nasıl göründüğünü buradan kontrol edebilirsin.</p>
+              </div>
               <button
                 type="button"
-                className="rounded-xl bg-nt-primary px-8 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-nt-primary-hover"
+                className="shrink-0 rounded-xl bg-nt-primary px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-nt-primary-hover sm:px-8"
               >
                 Düzenle
               </button>
             </div>
+
+            <dl className="mt-8 grid gap-8 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-8">
+              <DetailRow label="Ad Soyad">{PROFILE.fullName}</DetailRow>
+              <DetailRow label="E-posta">
+                <a href={`mailto:${PROFILE.email}`} className="text-nt-primary underline-offset-2 hover:underline">
+                  {PROFILE.email}
+                </a>
+              </DetailRow>
+              <DetailRow label="Telefon">
+                <a href={`tel:${PROFILE.phone.replace(/\s/g, '')}`} className="text-nt-primary underline-offset-2 hover:underline">
+                  {PROFILE.phone}
+                </a>
+              </DetailRow>
+              <DetailRow label="Konum">{PROFILE.location}</DetailRow>
+              <div className="space-y-1.5 sm:col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-nt-muted">Hakkımda</dt>
+                <dd className="text-base leading-relaxed text-nt-ink md:text-lg">{PROFILE.bio}</dd>
+              </div>
+              <DetailRow label="Üyelik">{PROFILE.memberSince}</DetailRow>
+            </dl>
           </section>
 
           <section className="rounded-2xl border border-nt-border bg-nt-surface p-7 shadow-md md:rounded-3xl md:p-8 lg:p-10">
