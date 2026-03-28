@@ -48,7 +48,7 @@ export function ProfilePage() {
       </div>
 
       <PageShell className="pt-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+        <div className="flex flex-col gap-8 md:gap-10">
           <section className="rounded-2xl border border-nt-border bg-nt-surface p-7 shadow-md md:rounded-3xl md:p-8 lg:p-10">
             <div className="flex min-h-[160px] items-center justify-center rounded-2xl bg-nt-bg/80 py-10 text-center md:min-h-[180px]">
               <p className="text-lg font-medium text-nt-muted md:text-xl">Profil Detayı</p>
