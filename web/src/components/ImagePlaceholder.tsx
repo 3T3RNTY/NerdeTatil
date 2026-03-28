@@ -5,7 +5,7 @@ type ImagePlaceholderProps = {
 export function ImagePlaceholder({ className = '' }: ImagePlaceholderProps) {
   return (
     <div
-      className={`flex aspect-square items-center justify-center bg-neutral-300 text-neutral-500 ${className}`}
+      className={`flex aspect-square items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-teal-100/50 text-teal-600/40 ${className}`}
       role="img"
       aria-label="Görsel yer tutucu"
     >

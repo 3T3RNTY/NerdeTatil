@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { ImagePlaceholder } from '../components/ImagePlaceholder'
 import { PageShell } from '../components/PageShell'
@@ -12,55 +12,77 @@ export function DetailPage() {
   const { id } = useParams()
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen pb-28">
       <AppHeader />
       <PageShell>
-        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
-          <div className="space-y-4">
+        <Link
+          to="/"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-nt-muted transition hover:text-nt-primary"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+          Ana sayfa
+        </Link>
+
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start">
+          <div className="space-y-5">
             <div
-              className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-400 [&::-webkit-scrollbar-track]:bg-neutral-200"
+              className="-mx-1 overflow-hidden rounded-2xl border border-nt-border bg-nt-surface p-2 shadow-sm sm:mx-0"
               role="region"
               aria-label="Görsel galerisi"
             >
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="w-[min(50%,280px)] shrink-0 snap-center sm:w-[min(45%,320px)]"
-                >
-                  <ImagePlaceholder className="rounded-sm" />
-                </div>
-              ))}
+              <div
+                className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pl-1 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-teal-300/80 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-100"
+              >
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="w-[min(72%,280px)] shrink-0 snap-center sm:w-[min(55%,300px)]"
+                  >
+                    <ImagePlaceholder className="rounded-xl" />
+                  </div>
+                ))}
+              </div>
             </div>
             <p className="sr-only">Öğe kimliği: {id ?? '—'}</p>
-            <div className="min-h-[120px] rounded border border-black p-4 text-center text-neutral-700 sm:min-h-[140px] sm:p-6">
-              Açıklama
+
+            <div className="rounded-2xl border border-nt-border bg-nt-surface p-5 shadow-sm sm:p-6">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-nt-muted">Açıklama</h2>
+              <p className="mt-3 text-base leading-relaxed text-nt-ink">
+                Burada mekân veya deneyim hakkında açıklama metni yer alacak. Şu an wireframe metni gösteriliyor.
+              </p>
             </div>
           </div>
 
-          <div className="space-y-4 lg:sticky lg:top-24">
-            <div className="flex items-center gap-4 rounded border border-black p-4 sm:p-5">
-              <span className="text-4xl text-amber-500 sm:text-5xl" aria-hidden>
+          <div className="space-y-5 lg:sticky lg:top-28">
+            <div className="flex items-center gap-4 rounded-2xl border border-nt-border bg-gradient-to-br from-nt-surface to-teal-50/40 p-5 shadow-sm sm:p-6">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-3xl text-amber-500 shadow-inner" aria-hidden>
                 ★
               </span>
-              <span className="text-lg font-medium text-neutral-900 sm:text-xl">Puan</span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-nt-muted">Puan</p>
+                <p className="mt-0.5 text-2xl font-bold text-nt-ink">4.8</p>
+                <p className="text-sm text-nt-muted">128 değerlendirme</p>
+              </div>
             </div>
 
-            <section aria-labelledby="yorumlar-baslik">
-              <h2 id="yorumlar-baslik" className="sr-only">
+            <section aria-labelledby="yorumlar-baslik" className="rounded-2xl border border-nt-border bg-nt-surface p-4 shadow-sm sm:p-5">
+              <h2 id="yorumlar-baslik" className="text-sm font-semibold text-nt-ink">
                 Yorumlar
               </h2>
-              <ul className="space-y-3">
+              <ul className="mt-4 space-y-3">
                 {MOCK_COMMENTS.map((c) => (
                   <li
                     key={c.id}
-                    className="flex items-stretch gap-2 rounded border border-black p-2 sm:gap-3 sm:p-3"
+                    className="flex gap-3 rounded-xl bg-nt-bg/80 p-3 ring-1 ring-nt-border/60"
                   >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#444444] text-white sm:h-12 sm:w-12">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-nt-primary to-teal-700 text-white shadow-sm">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="h-6 w-6"
+                        className="h-5 w-5"
                         aria-hidden
                       >
                         <path
@@ -70,13 +92,9 @@ export function DetailPage() {
                         />
                       </svg>
                     </div>
-                    <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-                      <div className="shrink-0 rounded border border-black px-2 py-1.5 text-center text-sm sm:px-3">
-                        {c.user}
-                      </div>
-                      <div className="min-h-[44px] flex-1 rounded border border-black px-2 py-2 text-sm text-neutral-700 sm:px-3">
-                        {c.text}
-                      </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-nt-ink">{c.user}</p>
+                      <p className="mt-1 text-sm leading-relaxed text-nt-muted">{c.text}</p>
                     </div>
                   </li>
                 ))}
@@ -86,20 +104,20 @@ export function DetailPage() {
         </div>
       </PageShell>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-10 border-t border-neutral-300 bg-white p-3 sm:p-4">
-        <div className="mx-auto flex max-w-[800px] items-center gap-2 px-1 sm:px-4 md:max-w-4xl lg:max-w-6xl">
+      <footer className="fixed bottom-0 left-0 right-0 z-20 border-t border-nt-border bg-nt-surface/95 p-3 shadow-[0_-4px_24px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-4">
+        <div className="mx-auto flex max-w-[800px] items-center gap-2 sm:px-4 md:max-w-4xl lg:max-w-6xl">
           <label className="sr-only" htmlFor="yorum-ekle">
             Yorum Ekle
           </label>
           <input
             id="yorum-ekle"
             type="text"
-            placeholder="Yorum Ekle"
-            className="min-h-12 min-w-0 flex-1 rounded border border-black px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#444444] sm:text-base"
+            placeholder="Yorumunu yaz…"
+            className="min-h-12 min-w-0 flex-1 rounded-2xl border border-nt-border bg-nt-bg px-4 py-2.5 text-sm text-nt-ink outline-none ring-nt-primary/25 transition placeholder:text-nt-muted focus:border-teal-300 focus:bg-nt-surface focus:ring-2 sm:text-base"
           />
           <button
             type="button"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-black bg-[#444444] text-2xl font-light text-white transition-opacity hover:opacity-90"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-nt-primary text-xl font-light text-white shadow-sm transition hover:bg-nt-primary-hover"
             aria-label="Yorum gönder"
           >
             +

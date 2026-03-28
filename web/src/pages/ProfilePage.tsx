@@ -1,54 +1,76 @@
 import { Link } from 'react-router-dom'
+import { AppHeader } from '../components/AppHeader'
 import { PageShell } from '../components/PageShell'
 
 export function ProfilePage() {
   return (
-    <div className="min-h-screen bg-white">
-      <PageShell className="flex flex-col gap-8">
-        <section className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-8 md:gap-10">
-          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-[#444444] text-white sm:h-32 sm:w-32">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-14 w-14 sm:h-16 sm:w-16"
-              aria-hidden
-            >
-              <path
-                fillRule="evenodd"
-                d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.645z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-          <p className="text-center text-lg font-semibold text-neutral-900 sm:text-left sm:text-xl">
-            Kullanıcı Adı
-          </p>
-        </section>
+    <div className="min-h-screen">
+      <AppHeader />
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-8">
-          <section>
-            <div className="flex min-h-[72px] items-center justify-center rounded border border-black px-4 py-4 text-center font-medium text-neutral-900">
-              Profil Detayı
+      <div className="border-b border-nt-border bg-gradient-to-b from-teal-600/10 via-nt-bg to-nt-bg">
+        <PageShell className="pb-8 pt-4 md:pb-10 md:pt-6">
+          <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <div className="relative">
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-teal-400 to-teal-700 opacity-70 blur-sm" aria-hidden />
+                <div className="relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-nt-primary to-teal-800 text-white shadow-lg ring-4 ring-nt-surface sm:h-32 sm:w-32">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="h-14 w-14 sm:h-16 sm:w-16"
+                    aria-hidden
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.645z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-center sm:text-left">
+                <h1 className="text-2xl font-bold tracking-tight text-nt-ink md:text-3xl">Kullanıcı Adı</h1>
+                <p className="mt-1 text-sm text-nt-muted">Tatil önerilerini paylaş</p>
+              </div>
             </div>
-            <div className="mt-3 flex justify-end">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-xl border border-nt-border bg-nt-surface px-4 py-2.5 text-sm font-semibold text-nt-ink shadow-sm transition hover:border-teal-200 hover:bg-teal-50/50"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+              Ana sayfa
+            </Link>
+          </div>
+        </PageShell>
+      </div>
+
+      <PageShell className="pt-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+          <section className="rounded-2xl border border-nt-border bg-nt-surface p-6 shadow-sm">
+            <div className="flex min-h-[100px] items-center justify-center rounded-xl bg-nt-bg/80 py-8 text-center">
+              <p className="font-medium text-nt-muted">Profil Detayı</p>
+            </div>
+            <div className="mt-5 flex justify-end">
               <button
                 type="button"
-                className="rounded-lg bg-[#444444] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 sm:px-6"
+                className="rounded-xl bg-nt-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-nt-primary-hover"
               >
                 Düzenle
               </button>
             </div>
           </section>
 
-          <section>
-            <div className="flex min-h-[120px] items-center justify-center rounded border border-black px-4 py-6 text-center font-medium text-neutral-900 sm:min-h-[140px]">
-              Paylaşımlar
+          <section className="rounded-2xl border border-nt-border bg-nt-surface p-6 shadow-sm">
+            <div className="flex min-h-[140px] items-center justify-center rounded-xl bg-nt-bg/80 py-10 text-center">
+              <p className="font-medium text-nt-muted">Paylaşımlar</p>
             </div>
-            <div className="mt-3 flex justify-end">
+            <div className="mt-5 flex justify-end">
               <Link
                 to="/yeni-paylasim"
-                className="inline-flex flex-col items-center justify-center rounded-lg bg-[#444444] px-4 py-2.5 text-center text-sm font-medium leading-tight text-white transition-opacity hover:opacity-90 sm:px-6"
+                className="inline-flex flex-col items-center justify-center rounded-xl bg-nt-primary px-5 py-3 text-center text-sm font-semibold leading-tight text-white shadow-sm transition hover:bg-nt-primary-hover sm:flex-row sm:gap-1.5"
               >
                 <span>Yeni</span>
                 <span>Paylaşım</span>
@@ -57,12 +79,6 @@ export function ProfilePage() {
           </section>
         </div>
       </PageShell>
-
-      <nav className="mx-auto mt-8 max-w-[800px] px-4 pb-8 text-center sm:px-6 md:max-w-4xl lg:max-w-6xl">
-        <Link to="/" className="text-sm text-neutral-600 underline hover:text-neutral-900">
-          Ana Sayfaya dön
-        </Link>
-      </nav>
     </div>
   )
 }

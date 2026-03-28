@@ -2,22 +2,36 @@ import { Link } from 'react-router-dom'
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-neutral-300 bg-white">
-      <div className="mx-auto flex w-full max-w-[800px] items-center gap-3 px-4 py-3 sm:px-6 md:max-w-4xl md:gap-4 lg:max-w-6xl lg:px-8">
+    <header className="sticky top-0 z-30 border-b border-nt-border/80 bg-nt-surface/90 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-[800px] items-center gap-3 px-4 py-3.5 sm:px-6 md:max-w-4xl md:gap-4 lg:max-w-6xl lg:px-8">
         <label className="sr-only" htmlFor="app-search">
           Arama
         </label>
-        <input
-          id="app-search"
-          type="search"
-          placeholder="Arama Çubuğu"
-          className="min-h-11 min-w-0 flex-1 rounded border border-black px-3 py-2 text-sm outline-none ring-[#444444] placeholder:text-neutral-500 focus:ring-2 sm:text-base"
-        />
+        <div className="relative min-h-0 min-w-0 flex-1">
+          <span
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-nt-muted"
+            aria-hidden
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+              />
+            </svg>
+          </span>
+          <input
+            id="app-search"
+            type="search"
+            placeholder="Mekan, şehir veya tatil ara…"
+            className="min-h-11 w-full rounded-2xl border border-nt-border bg-nt-bg py-2.5 pl-11 pr-4 text-sm text-nt-ink outline-none ring-nt-primary/30 transition placeholder:text-nt-muted focus:border-nt-primary/40 focus:bg-nt-surface focus:ring-2 sm:text-base"
+          />
+        </div>
         <Link
           to="/profil"
-          className="flex shrink-0 items-center gap-2 rounded border border-black px-2 py-1.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-100 sm:px-3 sm:text-base"
+          className="group flex shrink-0 items-center gap-2 rounded-2xl border border-transparent bg-nt-bg px-2 py-1.5 transition hover:border-nt-border hover:bg-nt-surface sm:gap-2.5 sm:px-3"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#444444] text-white">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-nt-primary to-teal-700 text-white shadow-sm ring-2 ring-white/30 transition group-hover:ring-nt-primary/20">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -32,7 +46,7 @@ export function AppHeader() {
               />
             </svg>
           </span>
-          <span className="hidden sm:inline">Profil</span>
+          <span className="hidden text-sm font-semibold text-nt-ink sm:inline">Profil</span>
         </Link>
       </div>
     </header>
