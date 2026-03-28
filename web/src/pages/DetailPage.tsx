@@ -50,7 +50,7 @@ export function DetailPage() {
             <div className="rounded-2xl border border-nt-border bg-nt-surface p-6 shadow-md sm:p-8 md:rounded-3xl lg:p-10">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-nt-muted sm:text-sm">Açıklama</h2>
               <p className="mt-4 text-base leading-relaxed text-nt-ink md:text-lg">
-                Burada mekân veya deneyim hakkında açıklama metni yer alacak. Şu an wireframe metni gösteriliyor.
+                Paylaşım ile ilgili açıklamalar.
               </p>
             </div>
           </div>
