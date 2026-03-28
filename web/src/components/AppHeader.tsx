@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 export function AppHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-nt-border/80 bg-nt-surface/90 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[800px] items-center gap-3 px-4 py-3.5 sm:px-6 md:max-w-4xl md:gap-4 lg:max-w-6xl lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1400px] items-center gap-3 px-4 py-3.5 sm:px-6 md:gap-4 lg:px-10 xl:px-12">
         <label className="sr-only" htmlFor="app-search">
           Arama
         </label>

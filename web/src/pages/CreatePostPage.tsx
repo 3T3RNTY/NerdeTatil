@@ -14,12 +14,12 @@ export function CreatePostPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start">
-          <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-nt-muted">Görseller</p>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <ImagePlaceholder className="rounded-xl shadow-inner" />
-              <ImagePlaceholder className="rounded-xl shadow-inner" />
+        <div className="flex flex-col gap-10 lg:grid lg:grid-cols-2 lg:gap-12 xl:gap-14 lg:items-start">
+          <div className="space-y-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-nt-muted sm:text-sm">Görseller</p>
+            <div className="grid grid-cols-2 gap-4 sm:gap-5 md:gap-6">
+              <ImagePlaceholder className="rounded-2xl shadow-inner md:rounded-3xl" />
+              <ImagePlaceholder className="rounded-2xl shadow-inner md:rounded-3xl" />
             </div>
             <div className="flex justify-end">
               <button
@@ -40,7 +40,7 @@ export function CreatePostPage() {
             </label>
             <textarea
               id="aciklama"
-              className="mt-2 min-h-[220px] w-full resize-y rounded-2xl border border-nt-border bg-nt-surface p-4 text-base leading-relaxed text-nt-ink shadow-sm outline-none ring-nt-primary/20 transition placeholder:text-nt-muted focus:border-teal-300 focus:ring-2 sm:min-h-[260px] lg:min-h-[280px]"
+              className="mt-2 min-h-[260px] w-full resize-y rounded-2xl border border-nt-border bg-nt-surface p-5 text-base leading-relaxed text-nt-ink shadow-md outline-none ring-nt-primary/20 transition placeholder:text-nt-muted focus:border-teal-300 focus:ring-2 sm:min-h-[300px] md:rounded-3xl md:p-6 md:text-lg lg:min-h-[340px]"
               placeholder="Nerede kaldın, ne yaptın, ne önerirsin?"
               rows={8}
             />
@@ -49,7 +49,7 @@ export function CreatePostPage() {
       </PageShell>
 
       <footer className="fixed bottom-0 left-0 right-0 z-20 border-t border-nt-border bg-nt-surface/95 p-3 shadow-[0_-4px_24px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-4">
-        <div className="mx-auto flex max-w-[800px] items-stretch gap-3 sm:px-4 md:max-w-4xl lg:max-w-6xl">
+        <div className="mx-auto flex max-w-[1400px] items-stretch gap-3 sm:px-4 lg:px-10 xl:px-12">
           <button
             type="button"
             className="min-h-12 flex-1 rounded-2xl bg-nt-primary px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-nt-primary-hover"

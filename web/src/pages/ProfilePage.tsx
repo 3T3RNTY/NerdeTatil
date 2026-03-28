@@ -48,29 +48,29 @@ export function ProfilePage() {
       </div>
 
       <PageShell className="pt-8">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-          <section className="rounded-2xl border border-nt-border bg-nt-surface p-6 shadow-sm">
-            <div className="flex min-h-[100px] items-center justify-center rounded-xl bg-nt-bg/80 py-8 text-center">
-              <p className="font-medium text-nt-muted">Profil Detayı</p>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+          <section className="rounded-2xl border border-nt-border bg-nt-surface p-7 shadow-md md:rounded-3xl md:p-8 lg:p-10">
+            <div className="flex min-h-[160px] items-center justify-center rounded-2xl bg-nt-bg/80 py-10 text-center md:min-h-[180px]">
+              <p className="text-lg font-medium text-nt-muted md:text-xl">Profil Detayı</p>
             </div>
-            <div className="mt-5 flex justify-end">
+            <div className="mt-6 flex justify-end md:mt-8">
               <button
                 type="button"
-                className="rounded-xl bg-nt-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-nt-primary-hover"
+                className="rounded-xl bg-nt-primary px-8 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-nt-primary-hover"
               >
                 Düzenle
               </button>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-nt-border bg-nt-surface p-6 shadow-sm">
-            <div className="flex min-h-[140px] items-center justify-center rounded-xl bg-nt-bg/80 py-10 text-center">
-              <p className="font-medium text-nt-muted">Paylaşımlar</p>
+          <section className="rounded-2xl border border-nt-border bg-nt-surface p-7 shadow-md md:rounded-3xl md:p-8 lg:p-10">
+            <div className="flex min-h-[200px] items-center justify-center rounded-2xl bg-nt-bg/80 py-12 text-center md:min-h-[220px]">
+              <p className="text-lg font-medium text-nt-muted md:text-xl">Paylaşımlar</p>
             </div>
-            <div className="mt-5 flex justify-end">
+            <div className="mt-6 flex justify-end md:mt-8">
               <Link
                 to="/yeni-paylasim"
-                className="inline-flex flex-col items-center justify-center rounded-xl bg-nt-primary px-5 py-3 text-center text-sm font-semibold leading-tight text-white shadow-sm transition hover:bg-nt-primary-hover sm:flex-row sm:gap-1.5"
+                className="inline-flex flex-col items-center justify-center rounded-xl bg-nt-primary px-6 py-3.5 text-center text-base font-semibold leading-tight text-white shadow-sm transition hover:bg-nt-primary-hover sm:flex-row sm:gap-1.5"
               >
                 <span>Yeni</span>
                 <span>Paylaşım</span>
