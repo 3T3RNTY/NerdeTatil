@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nerdetatil_postgres
+    environment:
+      POSTGRES_USER: nerdetatil_user
+      POSTGRES_PASSWORD: nerdetatil_password
+      POSTGRES_DB: nerdetatil_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/migrations/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    networks:
+      - nerdetatil_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nerdetatil_user -d nerdetatil_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  nerdetatil_network:
+    driver: bridge
