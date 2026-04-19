@@ -3,7 +3,7 @@ NerdeTatil
 
 NerdeTatil, kullanıcıların gezi ve tatil yaptıkları yerleri kaydedip paylaşabildiği, diğer kullanıcıların paylaşımlarını keşfedip etkileşimde bulunabildiği bir web ve mobil uygulamadır.
 
-Bu depo; web (React + Vite) ve mobil (Expo + React Native) istemcilerini ve proje dokümantasyonunu bir arada barındıran bir monorepo şeklinde yapılandırılmıştır.
+Bu depo artık tek bir Expo Router istemcisi içerir. Aynı kod tabanı ile hem mobil (iOS/Android) hem web çalıştırılır.
 
 ---
 
@@ -13,13 +13,11 @@ Kök dizin yapısı:
 
 ```text
 NerdeTatil
-├─ web/            # Web uygulaması (React + TypeScript + Vite)
-├─ mobile/         # Mobil uygulama (Expo + React Native)
+├─ client/         # Expo Router istemcisi (iOS + Android + Web)
 └─ documentation/  # Proje dokümantasyonu (örn. Dokumantasyon.pdf)
 ```
 
-- `web/`: Kullanıcıların tarayıcı üzerinden eriştiği React tabanlı web arayüzü.
-- `mobile/`: Expo ile çalışan React Native mobil uygulaması.
+- `client/`: Tek kod tabanında ekran/route yapısı ile çalışan çok platformlu uygulama.
 - `documentation/`: `Dokumantasyon.pdf` dahil olmak üzere analiz, diyagramlar ve proje raporlarının bulunduğu klasör.
 
 ---
@@ -59,14 +57,10 @@ sağlayan bir web ve mobil uygulama geliştirmeyi amaçlar.
 
 ### Frontend
 
-- **Web**: React.js (TypeScript + Vite)
-- **Mobil**: React Native (Expo)
-- **State Yönetimi**: Redux Toolkit (`@reduxjs/toolkit`, `react-redux`)
-- **Stil**:
-  - Web: Tailwind CSS
-  - Mobil: NativeWind + TailwindCSS
-- **Router (Web)**: `react-router-dom`
-- **Harita Entegrasyonu (Web)**: Leaflet
+- **Tek İstemci**: Expo + Expo Router + React Native
+- **Platformlar**: iOS, Android, Web
+- **State Yönetimi**: Redux Toolkit (`@reduxjs/toolkit`, `react-redux`) (entegrasyon için hazır)
+- **Router**: Expo Router (`app/` dosya tabanlı route yapısı)
 
 ### Backend
 
@@ -98,51 +92,35 @@ cd NerdeTatil
 
 ---
 
-### Web Uygulaması (React + Vite) – `web/`
+### Birleşik Uygulama (Expo Router) – `client/`
 
 Kurulum:
 
 ```bash
-cd web
+cd client
 npm install
 ```
 
-Geliştirme sunucusu:
+Ortam degiskenleri:
 
 ```bash
-npm run dev
+cd client
+copy .env.example .env
 ```
 
-Production build:
+Kullanilan genel degiskenler:
 
-```bash
-npm run build
-```
+- EXPO_PUBLIC_APP_NAME
+- EXPO_PUBLIC_API_BASE_URL
+- EXPO_PUBLIC_ENABLE_MOCK
 
-Build sonrası önizleme:
-
-```bash
-npm run preview
-```
-
----
-
-### Mobil Uygulama (Expo + React Native) – `mobile/`
-
-Kurulum:
-
-```bash
-cd mobile
-npm install
-```
-
-Expo geliştirme sunucusunu başlatmak için:
+Geliştirme sunucusunu başlat:
 
 ```bash
 npm run start
 ```
 
-Platforma özel kısayollar:
+Platforma özel komutlar:
 
 ```bash
 # Android emülatör / cihaz
@@ -151,8 +129,14 @@ npm run android
 # iOS simülatör (sadece macOS)
 npm run ios
 
-# Web üzerinde Expo
+# Web üzerinde çalıştırma
 npm run web
+```
+
+Mobil ve web'i aynı anda açmak için:
+
+```bash
+npm run start:all
 ```
 
 Telefon üzerinden test için Expo Go uygulamasını indirip, terminalde çıkan QR kodu okutabilirsin.
