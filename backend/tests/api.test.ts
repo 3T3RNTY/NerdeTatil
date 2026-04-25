@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import test, { describe } from 'node:test';
+import test, { describe, before } from 'node:test';
 
 /**
  * Test Suite for NerdeTatil API Endpoints
@@ -11,7 +11,40 @@ import test, { describe } from 'node:test';
 
 let app: Express;
 
-beforeAll(() => {
+const expect = (actual: any) => ({
+  toBe(expected: any) {
+    if (actual !== expected) {
+      throw new Error(`Expected ${JSON.stringify(actual)} to be ${JSON.stringify(expected)}`);
+    }
+  },
+  toContain(expected: any) {
+    if (actual == null || typeof actual.includes !== 'function' || !actual.includes(expected)) {
+      throw new Error(`Expected value to contain ${JSON.stringify(expected)}`);
+    }
+  },
+  toBeTruthy() {
+    if (!actual) {
+      throw new Error(`Expected ${JSON.stringify(actual)} to be truthy`);
+    }
+  },
+  toHaveProperty(path: string, value?: any) {
+    const keys = path.split('.');
+    let current = actual;
+
+    for (const key of keys) {
+      if (current == null || !(key in current)) {
+        throw new Error(`Expected object to have property "${path}"`);
+      }
+      current = current[key];
+    }
+
+    if (arguments.length === 2 && current !== value) {
+      throw new Error(`Expected property "${path}" to be ${JSON.stringify(value)}, got ${JSON.stringify(current)}`);
+    }
+  },
+});
+
+before(() => {
   // Setup Express app with same config as server
   app = express();
   app.use(cors({ origin: '*', credentials: true }));
