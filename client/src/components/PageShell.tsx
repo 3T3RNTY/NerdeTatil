@@ -29,6 +29,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 1100,
     alignSelf: 'center',
+    marginHorizontal: 'auto' as any,
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 16,

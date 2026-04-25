@@ -67,7 +67,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={[styles.screen, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color="#0d9488" />
       </View>
     )
   }
@@ -78,6 +78,7 @@ export default function ProfileScreen() {
         <AppHeader />
         <PageShell>
           <View style={styles.errorBox}>
+            <Text style={styles.errorEmoji}>⚠️</Text>
             <Text style={styles.errorText}>{error || 'Profil bulunamadı'}</Text>
           </View>
         </PageShell>
@@ -91,46 +92,51 @@ export default function ProfileScreen() {
       <PageShell>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={[styles.hero, isWideWeb && styles.heroWide]}>
-            <Text style={styles.avatar}>👤</Text>
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatar}>👤</Text>
+            </View>
             <View style={styles.heroTextWrap}>
               <Text style={styles.displayName}>{profile.fullName || profile.username}</Text>
-              <Text style={styles.heroSub}>Tatil önerilerini paylaş</Text>
+              <Text style={styles.heroSub}>@{profile.username}</Text>
             </View>
             <Pressable style={styles.logoutButton} onPress={handleLogout}>
               <Text style={styles.logoutButtonText}>Çıkış</Text>
             </Pressable>
           </View>
 
+          {/* Quick Stats */}
+          <View style={[styles.statsGrid, isWideWeb && styles.statsGridWide]}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{profile.postsCount}</Text>
+              <Text style={styles.statName}>Paylaşım</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{profile.commentsCount}</Text>
+              <Text style={styles.statName}>Yorum</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{profile.followersCount}</Text>
+              <Text style={styles.statName}>Takipçi</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{profile.followingCount}</Text>
+              <Text style={styles.statName}>Takip</Text>
+            </View>
+          </View>
+
           <View style={[styles.sections, isWideWeb && styles.sectionsWide]}>
             <View style={[styles.card, isWideWeb && styles.profileCardWide]}>
-              <Text style={styles.cardTitle}>Profil Detayı</Text>
+              <Text style={styles.cardTitle}>👤 Profil Detayı</Text>
               <InfoRow label="Kullanıcı Adı" value={profile.username} />
               <InfoRow label="Ad Soyad" value={profile.fullName} />
               <InfoRow label="E-posta" value={profile.email} />
               <InfoRow label="Hakkımda" value={profile.bio} />
-              <View style={styles.statsRow}>
-                <View style={styles.stat}>
-                  <Text style={styles.statValue}>{profile.postsCount}</Text>
-                  <Text style={styles.statLabel}>Paylaşım</Text>
-                </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statValue}>{profile.commentsCount}</Text>
-                  <Text style={styles.statLabel}>Yorum</Text>
-                </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statValue}>{profile.followersCount}</Text>
-                  <Text style={styles.statLabel}>Takipçi</Text>
-                </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statValue}>{profile.followingCount}</Text>
-                  <Text style={styles.statLabel}>Takip Eden</Text>
-                </View>
-              </View>
             </View>
 
             <View style={[styles.card, isWideWeb && styles.postCardWide]}>
-              <Text style={styles.cardTitle}>Paylaşımlar</Text>
+              <Text style={styles.cardTitle}>✍️ Paylaşımlar</Text>
               <View style={styles.placeholder}>
+                <Text style={styles.placeholderEmoji}>📝</Text>
                 <Text style={styles.placeholderText}>
                   {profile.postsCount === 0
                     ? 'Henüz paylaşım yok'
@@ -139,7 +145,7 @@ export default function ProfileScreen() {
               </View>
               <Link href="/yeni-paylasim" asChild>
                 <Pressable style={styles.primaryButton}>
-                  <Text style={styles.primaryButtonText}>Yeni Paylaşım</Text>
+                  <Text style={styles.primaryButtonText}>+ Yeni Paylaşım</Text>
                 </Pressable>
               </Link>
             </View>
@@ -153,7 +159,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#e8f5f1',
   },
   centerContent: {
     justifyContent: 'center',
@@ -162,18 +168,36 @@ const styles = StyleSheet.create({
   hero: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#dbe4ef',
-    backgroundColor: '#ffffff',
-    padding: 14,
+    borderColor: '#ccf0e8',
+    backgroundColor: '#f0fdf9',
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 14,
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   heroWide: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
+  },
+  avatarContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: '#d1f3ed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#0d9488',
+    shadowOffset: { width: -2, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   avatar: {
-    fontSize: 28,
+    fontSize: 32,
   },
   heroTextWrap: {
     flex: 1,
@@ -181,53 +205,107 @@ const styles = StyleSheet.create({
   displayName: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0f172a',
+    color: '#0d9488',
   },
   heroSub: {
     marginTop: 2,
-    color: '#64748b',
+    color: '#0f766e',
+    fontWeight: '500',
+    fontSize: 13,
   },
   logoutButton: {
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ef4444',
-    backgroundColor: '#fee2e2',
+    borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    shadowColor: '#dc2626',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   logoutButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: '#dc2626',
+    letterSpacing: 0.3,
   },
   errorBox: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#fca5a5',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: '#dcfce7',
+    borderRadius: 12,
+    padding: 14,
     marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#dc2626',
+  },
+  errorEmoji: {
+    fontSize: 18,
   },
   errorText: {
-    color: '#991b1b',
-    fontSize: 12,
-    textAlign: 'center',
+    color: '#7c2d12',
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  statsGridWide: {
+    gap: 14,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: '#f0fdf9',
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccf0e8',
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statNumber: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0d9488',
+  },
+  statName: {
+    fontSize: 11,
+    color: '#0f766e',
+    marginTop: 4,
+    fontWeight: '600',
   },
   sections: {
-    gap: 14,
-    marginTop: 14,
+    gap: 16,
+    marginTop: 16,
   },
   sectionsWide: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    gap: 16,
   },
   card: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#dbe4ef',
-    backgroundColor: '#ffffff',
-    padding: 14,
+    borderColor: '#ccf0e8',
+    backgroundColor: '#f0fdf9',
+    padding: 16,
     gap: 12,
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   profileCardWide: {
     flex: 1,
@@ -238,69 +316,59 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0f172a',
+    color: '#0d9488',
   },
   infoRow: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#d1f3ed',
     gap: 4,
   },
   infoLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0f766e',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   infoValue: {
     fontSize: 14,
     color: '#0f172a',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#3b82f6',
-  },
-  statLabel: {
-    fontSize: 11,
-    color: '#999',
-    marginTop: 2,
+    fontWeight: '500',
   },
   placeholder: {
     borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#cbd5e1',
-    padding: 20,
+    borderColor: '#ccf0e8',
+    padding: 24,
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#e8f5f1',
+  },
+  placeholderEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
   },
   placeholderText: {
-    color: '#999',
+    color: '#0f766e',
     fontSize: 13,
-    fontStyle: 'italic',
+    fontWeight: '500',
   },
   primaryButton: {
     borderRadius: 12,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#0d9488',
     paddingVertical: 12,
     alignItems: 'center',
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   primaryButtonText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
 })

@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   ScrollView,
+  Animated,
 } from 'react-native'
 import { Link, useRouter } from 'expo-router'
 import { useAuth } from '../src/hooks/useAuth'
@@ -18,6 +18,8 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [validationError, setValidationError] = useState('')
+  const [emailFocused, setEmailFocused] = useState(false)
+  const [passwordFocused, setPasswordFocused] = useState(false)
 
   const handleLogin = async () => {
     try {
@@ -44,9 +46,11 @@ export default function LoginScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.backgroundGradient} />
+      
       <View style={styles.header}>
         <Text style={styles.title}>🌍 NerdeTatil</Text>
-        <Text style={styles.subtitle}>Seyahat Paylaşım Platformu</Text>
+        <Text style={styles.subtitle}>Seyahat deneyimlerini keş ve paylaş</Text>
       </View>
 
       <View style={styles.formContainer}>
@@ -54,41 +58,51 @@ export default function LoginScreen() {
 
         {(validationError || error) && (
           <View style={styles.errorBox}>
+            <Text style={styles.errorEmoji}>⚠️</Text>
             <Text style={styles.errorText}>{validationError || error}</Text>
           </View>
         )}
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="example@email.com"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            editable={!isLoading}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          <View style={[styles.inputWrapper, emailFocused && styles.inputWrapperFocused]}>
+            <TextInput
+              style={styles.input}
+              placeholder="example@email.com"
+              placeholderTextColor="#9ca3af"
+              value={email}
+              onChangeText={setEmail}
+              editable={!isLoading}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
+            />
+          </View>
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Şifre</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#999"
-            value={password}
-            onChangeText={setPassword}
-            editable={!isLoading}
-            secureTextEntry
-          />
+          <View style={[styles.inputWrapper, passwordFocused && styles.inputWrapperFocused]}>
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              placeholderTextColor="#9ca3af"
+              value={password}
+              onChangeText={setPassword}
+              editable={!isLoading}
+              secureTextEntry
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
+            />
+          </View>
         </View>
 
         <TouchableOpacity
           style={[styles.button, isLoading && styles.buttonDisabled]}
           onPress={handleLogin}
           disabled={isLoading}
+          activeOpacity={0.85}
         >
           {isLoading ? (
             <ActivityIndicator color="#fff" />
@@ -113,7 +127,15 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#e8f5f1',
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    backgroundColor: '#e8f5f1',
   },
   contentContainer: {
     flexGrow: 1,
@@ -127,90 +149,128 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 8,
+    color: '#0d9488',
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#059669',
     textAlign: 'center',
+    fontWeight: '500',
   },
   formContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    backgroundColor: '#f0fdf9',
+    borderRadius: 24,
+    padding: 28,
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 8, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#d1f3ed',
   },
   heading: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 20,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 24,
     textAlign: 'center',
+    color: '#0d9488',
   },
   errorBox: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#fca5a5',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    backgroundColor: '#dcfce7',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#dc2626',
+  },
+  errorEmoji: {
+    fontSize: 18,
   },
   errorText: {
-    color: '#991b1b',
-    fontSize: 12,
-    textAlign: 'center',
+    color: '#7c2d12',
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    fontWeight: '700',
+    color: '#0d9488',
+    marginBottom: 10,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  inputWrapper: {
+    borderRadius: 12,
+    backgroundColor: '#e8f5f1',
+    borderWidth: 1,
+    borderColor: '#ccf0e8',
+    shadowColor: '#000',
+    shadowOffset: { width: -3, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  inputWrapperFocused: {
+    borderColor: '#0d9488',
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 14,
-    color: '#333',
-    backgroundColor: '#f8f9fa',
+    color: '#0f172a',
+    fontWeight: '500',
   },
   button: {
-    backgroundColor: '#3b82f6',
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: '#0d9488',
+    borderRadius: 12,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 28,
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   linkContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#ccf0e8',
   },
   linkText: {
-    color: '#666',
-    fontSize: 12,
+    color: '#6b7280',
+    fontSize: 13,
+    fontWeight: '500',
   },
   linkButton: {
-    color: '#3b82f6',
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#0d9488',
+    fontSize: 13,
+    fontWeight: '700',
   },
 })
