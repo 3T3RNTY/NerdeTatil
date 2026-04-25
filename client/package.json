@@ -1,0 +1,30 @@
+{
+  "name": "nerdetatil-client",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "start:all": "concurrently \"expo start\" \"expo start --web --port 19007\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^3.0.2",
+    "axios": "^1.15.2",
+    "expo": "^55.0.17",
+    "expo-router": "~55.0.12",
+    "expo-status-bar": "~55.0.4",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.4",
+    "react-native-web": "^0.21.2"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "concurrently": "^9.2.1",
+    "typescript": "~5.9.2"
+  }
+}
