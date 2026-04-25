@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  passwordHash      String    @map("password_hash")
+  username          String    @unique
+  fullName          String?   @map("full_name")
+  bio               String?
+  profileImageUrl   String?   @map("profile_image_url")
+  isActive          Boolean   @default(true) @map("is_active")
+  emailVerified     Boolean   @default(false) @map("email_verified")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  posts             Post[]
+  comments          Comment[]
+  likes             Like[]
+  followers         UserFollow[] @relation("followers")
+  following         UserFollow[] @relation("following")
+
+  @@map("users")
+}
+
+model Location {
+  id          String    @id @default(uuid())
+  name        String
+  address     String?
+  city        String?
+  country     String?
+  latitude    Decimal?  @db.Decimal(10, 8)
+  longitude   Decimal?  @db.Decimal(11, 8)
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  posts       Post[]
+
+  @@map("locations")
+  @@index([city])
+}
+
+model Post {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  locationId     String    @map("location_id")
+  title          String?
+  description    String
+  rating         Int?      @db.SmallInt
+  imageUrls      String[]  @map("image_urls")
+  isPublic       Boolean   @default(true) @map("is_public")
+  allowComments  Boolean   @default(true) @map("allow_comments")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location       Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  comments       Comment[]
+  likes          Like[]
+
+  @@map("posts")
+  @@index([userId])
+  @@index([locationId])
+  @@index([createdAt(sort: Desc)])
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  postId    String    @map("post_id")
+  userId    String    @map("user_id")
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+  @@index([postId])
+  @@index([userId])
+}
+
+model Like {
+  id            String    @id @default(uuid())
+  postId        String    @map("post_id")
+  userId        String    @map("user_id")
+  reactionType  String    @default("like") @map("reaction_type")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  post          Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
+  @@index([postId])
+  @@index([userId])
+}
+
+model UserFollow {
+  id          String    @id @default(uuid())
+  followerId  String    @map("follower_id")
+  followingId String    @map("following_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  follower    User      @relation("followers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User      @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("user_follows")
+  @@index([followerId])
+  @@index([followingId])
+}

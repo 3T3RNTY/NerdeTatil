@@ -1,15 +1,14 @@
 /**
  * NerdeTatil Backend Server
- * Express.js + PostgreSQL
+ * Express.js + PostgreSQL + Prisma
  * 
- * Run: node server.js
+ * Run: npm run dev (recommended) or npm start (requires build)
  */
 
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const db = require('./src/db/connection');
-const apiRoutes = require('./src/routes/api');
+const apiRoutes = require('./dist/routes/api').default;
 
 const app = express();
 

@@ -1,14 +1,43 @@
+import { Platform } from 'react-native';
+
 type EnvMap = Record<string, string | undefined>
 
 const runtimeEnv: EnvMap =
   (globalThis as { process?: { env?: EnvMap } }).process?.env ?? {}
 
 const appName = runtimeEnv.EXPO_PUBLIC_APP_NAME ?? 'NerdeTatil'
-const apiBaseUrl = runtimeEnv.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.ornek.com'
-const mockEnabled = (runtimeEnv.EXPO_PUBLIC_ENABLE_MOCK ?? 'true') === 'true'
+
+// Determine API base URL based on platform and environment variables
+const getApiBaseUrl = (): string => {
+  // If explicitly set via environment variable, use that
+  if (runtimeEnv.EXPO_PUBLIC_API_BASE_URL) {
+    return runtimeEnv.EXPO_PUBLIC_API_BASE_URL;
+  }
+
+  // For different platforms, use appropriate API URL
+  if (Platform.OS === 'android') {
+    // Android emulator: use 10.0.2.2 to reach the host machine
+    return 'http://10.0.2.2:5000/api';
+  } else if (Platform.OS === 'ios') {
+    // iOS simulator: localhost works
+    return 'http://localhost:5000/api';
+  } else {
+    // Web or other platforms: use localhost
+    return 'http://localhost:5000/api';
+  }
+};
+
+const apiBaseUrl = getApiBaseUrl();
+const mockEnabled = (runtimeEnv.EXPO_PUBLIC_ENABLE_MOCK ?? 'false') === 'true'
 
 export const env = {
   appName,
   apiBaseUrl,
   mockEnabled,
 } as const
+
+export const appConfig = {
+  appName,
+  apiBaseUrl,
+  mockEnabled,
+}
