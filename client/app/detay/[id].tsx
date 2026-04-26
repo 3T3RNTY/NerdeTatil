@@ -12,8 +12,8 @@ import {
   ScrollView,
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
-import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 import { PageShell } from '@/src/components/PageShell'
+import ImageGallery from '@/app/components/ImageGallery'
 import { PostService, PostDetail, Comment } from '@/src/api/postService'
 import { useAuth } from '@/src/hooks/useAuth'
 
@@ -69,9 +69,18 @@ export default function DetailScreen() {
     }
   }
 
+  const contentLayoutStyle = StyleSheet.flatten([styles.contentLayout, isWideWeb && styles.contentLayoutWide])
+  const mainColumnStyle = StyleSheet.flatten([styles.mainColumn, isWideWeb && styles.mainColumnWide])
+  const sideColumnStyle = StyleSheet.flatten([styles.sideColumn, isWideWeb && styles.sideColumnWide])
+  const sendButtonStyle = StyleSheet.flatten([
+    styles.sendButton,
+    (submittingComment || !commentText.trim()) && styles.sendButtonDisabled,
+  ])
+
   if (loading) {
+    const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
-      <View style={[styles.screen, styles.centerContent]}>
+      <View style={loadingStyle}>
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     )
@@ -106,17 +115,38 @@ export default function DetailScreen() {
             </Pressable>
           </Link>
 
-          <View style={[styles.contentLayout, isWideWeb && styles.contentLayoutWide]}>
-            <View style={[styles.mainColumn, isWideWeb && styles.mainColumnWide]}>
-              <ImagePlaceholder
-                style={isWideWeb ? styles.heroImageWide : undefined}
-              />
-              <Text style={styles.meta}>ID: {post.id}</Text>
-              {post.location && (
-                <Text style={styles.location}>
-                  📍 {post.location.name}, {post.location.city}
-                </Text>
+          <View style={contentLayoutStyle}>
+            <View style={mainColumnStyle}>
+              {/* Image Gallery */}
+              {post.imageUrls && post.imageUrls.length > 0 && (
+                <ImageGallery
+                  images={post.imageUrls}
+                  onImagePress={(index) => console.log('Image pressed:', index)}
+                />
               )}
+
+              {/* Location Display */}
+              {post.location && (
+                <View style={styles.locationCard}>
+                  <View style={styles.locationHeader}>
+                    <Text style={styles.locationEmoji}>📍</Text>
+                    <View style={styles.locationInfo}>
+                      <Text style={styles.locationName}>{post.location.name}</Text>
+                      <Text style={styles.locationAddress}>
+                        {post.location.city && `${post.location.city}, `}
+                        {post.location.country}
+                      </Text>
+                    </View>
+                  </View>
+                  {post.location.latitude && post.location.longitude && (
+                    <Text style={styles.locationCoordinates}>
+                      {post.location.latitude.toFixed(4)}°, {post.location.longitude.toFixed(4)}°
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              <Text style={styles.meta}>ID: {post.id}</Text>
 
               <View style={styles.block}>
                 <Text style={styles.blockTitle}>{post.title || 'Paylaşım'}</Text>
@@ -134,7 +164,7 @@ export default function DetailScreen() {
               </View>
             </View>
 
-            <View style={[styles.sideColumn, isWideWeb && styles.sideColumnWide]}>
+            <View style={sideColumnStyle}>
               {post.rating && (
                 <View style={styles.scoreBox}>
                   <Text style={styles.score}>★ {post.rating}</Text>
@@ -171,11 +201,7 @@ export default function DetailScreen() {
                     multiline
                   />
                   <Pressable
-                    style={[
-                      styles.sendButton,
-                      (submittingComment || !commentText.trim()) &&
-                        styles.sendButtonDisabled,
-                    ]}
+                    style={sendButtonStyle}
                     onPress={handleAddComment}
                     disabled={submittingComment || !commentText.trim()}
                   >
@@ -232,10 +258,47 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontSize: 13,
   },
-  location: {
-    color: '#666',
+  locationCard: {
+    borderRadius: 16,
+    backgroundColor: '#e8f5f1',
+    borderWidth: 2,
+    borderColor: '#0d9488',
+    padding: 14,
+    gap: 8,
+    marginBottom: 14,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  locationEmoji: {
+    fontSize: 24,
+    marginTop: 2,
+  },
+  locationInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  locationName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0d9488',
+  },
+  locationAddress: {
     fontSize: 13,
+    color: '#0f766e',
     fontWeight: '500',
+  },
+  locationCoordinates: {
+    fontSize: 11,
+    color: '#0f766e',
+    fontFamily: 'monospace',
+    backgroundColor: '#f0fdf9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   contentLayout: {
     gap: 14,

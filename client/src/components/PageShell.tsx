@@ -9,14 +9,15 @@ type PageShellProps = {
 export function PageShell({ children, withScroll = true }: PageShellProps) {
   const { width } = useWindowDimensions()
   const horizontalPadding = width >= 1200 ? 28 : width >= 768 ? 22 : 16
+  const flattenedStyle = StyleSheet.flatten([styles.container, { paddingHorizontal: horizontalPadding }])
 
   if (!withScroll) {
-    return <View style={[styles.container, { paddingHorizontal: horizontalPadding }]}>{children}</View>
+    return <View style={flattenedStyle}>{children}</View>
   }
 
   return (
     <ScrollView
-      contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+      contentContainerStyle={flattenedStyle}
       keyboardShouldPersistTaps="handled"
     >
       {children}

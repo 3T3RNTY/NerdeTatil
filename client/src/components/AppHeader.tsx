@@ -7,13 +7,20 @@ export function AppHeader() {
   const isWide = width >= 900
   const pathname = usePathname()
   const isProfilePage = pathname === '/profil'
+  const searchStyle = StyleSheet.flatten([styles.search, isWide && styles.searchWide])
 
   return (
     <View style={styles.header}>
       <View style={styles.inner}>
-        {isWide ? <Text style={styles.brand}>🌍 {env.appName}</Text> : null}
+        {isWide ? (
+          <Link href="/" asChild>
+            <Pressable>
+              <Text style={styles.brand}>🌍 {env.appName}</Text>
+            </Pressable>
+          </Link>
+        ) : null}
         <TextInput
-          style={[styles.search, isWide && styles.searchWide]}
+          style={searchStyle}
           placeholder="Mekan, şehir veya tatil ara..."
           placeholderTextColor="#9ca3af"
         />

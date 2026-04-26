@@ -22,6 +22,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
+  
+  const listStyle = StyleSheet.flatten([styles.list, isWideWeb && styles.listWide])
 
   useEffect(() => {
     fetchPosts()
@@ -42,8 +44,9 @@ export default function HomeScreen() {
   }
 
   if (loading) {
+    const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
-      <View style={[styles.screen, styles.centerContent]}>
+      <View style={loadingStyle}>
         <ActivityIndicator size="large" color="#0d9488" />
       </View>
     )
@@ -67,12 +70,14 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <View style={[styles.list, isWideWeb && styles.listWide]}>
+        <View style={listStyle}>
           {posts.length === 0 ? (
             <Text style={styles.emptyText}>Henüz paylaşım yok</Text>
           ) : (
-            posts.map((post) => (
-              <View key={post.id} style={[styles.card, isWideWeb && styles.cardWide]}>
+            posts.map((post) => {
+              const cardStyle = StyleSheet.flatten([styles.card, isWideWeb && styles.cardWide])
+              return (
+              <View key={post.id} style={cardStyle}>
                 <ImagePlaceholder
                   style={isWideWeb ? styles.cardImageWide : undefined}
                 />
@@ -118,7 +123,8 @@ export default function HomeScreen() {
                   </Link>
                 </View>
               </View>
-            ))
+            )
+            })
           )}
         </View>
       </PageShell>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import Toast from 'react-native-toast-message'
 import { AuthProvider, AuthContext } from '../src/context/AuthContext'
 import { useContext } from 'react'
 
@@ -48,6 +49,7 @@ function RootLayoutNav() {
         {/* Main app screens - always defined */}
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="profil" options={{ headerShown: false }} />
+        <Stack.Screen name="user-posts" options={{ headerShown: false }} />
         <Stack.Screen name="yeni-paylasim" options={{ headerShown: false }} />
         <Stack.Screen name="detay/[id]" options={{ headerShown: false }} />
       </Stack>
@@ -59,6 +61,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <RootLayoutNav />
+      <Toast />
     </AuthProvider>
   )
 }

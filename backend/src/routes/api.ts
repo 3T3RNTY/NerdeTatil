@@ -3,6 +3,7 @@ import { UserController } from '../controllers/userController';
 import { PostController } from '../controllers/postController';
 import { LocationController } from '../controllers/locationController';
 import { AuthController } from '../controllers/authController';
+import imageController from '../controllers/imageController';
 import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth';
 import {
   validateUserRegistration,
@@ -81,6 +82,9 @@ router.delete('/posts/:id/like', authMiddleware, PostController.unlike);
 
 router.get('/locations', LocationController.list);
 router.get('/locations/popular', LocationController.getPopular);
+router.post('/locations/geocode', LocationController.geocode);
+router.post('/locations/reverse-geocode', LocationController.reverseGeocode);
+router.get('/locations/search', LocationController.search);
 router.get('/locations/country/:country', LocationController.getByCountry);
 router.get('/locations/city/:city', LocationController.getByCity);
 router.get('/locations/:id', LocationController.getById); // Must be last - generic route
@@ -92,5 +96,11 @@ router.post(
 );
 router.put('/locations/:id', authMiddleware, LocationController.update);
 router.delete('/locations/:id', authMiddleware, LocationController.delete);
+
+// ============================================
+// IMAGES ROUTES
+// ============================================
+
+router.use('/images', imageController);
 
 export default router;

@@ -64,9 +64,17 @@ export default function ProfileScreen() {
     }
   }
 
+  const handleViewPosts = () => {
+    router.push('/user-posts')
+  }
+
+  const heroStyle = StyleSheet.flatten([styles.hero, isWideWeb && styles.heroWide])
+  const sectionsStyle = StyleSheet.flatten([styles.sections, isWideWeb && styles.sectionsWide])
+
   if (loading) {
+    const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
-      <View style={[styles.screen, styles.centerContent]}>
+      <View style={loadingStyle}>
         <ActivityIndicator size="large" color="#0d9488" />
       </View>
     )
@@ -91,7 +99,7 @@ export default function ProfileScreen() {
       <AppHeader />
       <PageShell>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={[styles.hero, isWideWeb && styles.heroWide]}>
+          <View style={heroStyle}>
             <View style={styles.avatarContainer}>
               <Text style={styles.avatar}>👤</Text>
             </View>
@@ -105,11 +113,14 @@ export default function ProfileScreen() {
           </View>
 
           {/* Quick Stats */}
-          <View style={[styles.statsGrid, isWideWeb && styles.statsGridWide]}>
-            <View style={styles.statCard}>
+          <View style={StyleSheet.flatten([styles.statsGrid, isWideWeb && styles.statsGridWide])}>
+            <Pressable 
+              style={styles.statCard}
+              onPress={handleViewPosts}
+            >
               <Text style={styles.statNumber}>{profile.postsCount}</Text>
               <Text style={styles.statName}>Paylaşım</Text>
-            </View>
+            </Pressable>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{profile.commentsCount}</Text>
               <Text style={styles.statName}>Yorum</Text>
@@ -124,8 +135,8 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <View style={[styles.sections, isWideWeb && styles.sectionsWide]}>
-            <View style={[styles.card, isWideWeb && styles.profileCardWide]}>
+          <View style={sectionsStyle}>
+            <View style={StyleSheet.flatten([styles.card, isWideWeb && styles.profileCardWide])}>
               <Text style={styles.cardTitle}>👤 Profil Detayı</Text>
               <InfoRow label="Kullanıcı Adı" value={profile.username} />
               <InfoRow label="Ad Soyad" value={profile.fullName} />
@@ -133,14 +144,12 @@ export default function ProfileScreen() {
               <InfoRow label="Hakkımda" value={profile.bio} />
             </View>
 
-            <View style={[styles.card, isWideWeb && styles.postCardWide]}>
-              <Text style={styles.cardTitle}>✍️ Paylaşımlar</Text>
+            <View style={StyleSheet.flatten([styles.card, isWideWeb && styles.postCardWide])}>
+              <Text style={styles.cardTitle}>📝 Yeni Paylaşım</Text>
               <View style={styles.placeholder}>
-                <Text style={styles.placeholderEmoji}>📝</Text>
+                <Text style={styles.placeholderEmoji}>➕</Text>
                 <Text style={styles.placeholderText}>
-                  {profile.postsCount === 0
-                    ? 'Henüz paylaşım yok'
-                    : `${profile.postsCount} paylaşımın var`}
+                  Yeni bir paylaşım oluştur
                 </Text>
               </View>
               <Link href="/yeni-paylasim" asChild>
