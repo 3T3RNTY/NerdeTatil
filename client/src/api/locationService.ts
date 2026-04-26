@@ -124,4 +124,77 @@ export class LocationService {
       throw error.response?.data || { error: 'Failed to delete location' };
     }
   }
+
+  /**
+   * Geocode address to coordinates
+   */
+  static async geocodeAddress(
+    address: string
+  ): Promise<{
+    success: boolean;
+    data: {
+      latitude: number;
+      longitude: number;
+      address: string;
+      city?: string;
+      country?: string;
+    };
+  }> {
+    try {
+      const response = await apiClient.post('/locations/geocode', { address });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to geocode address' };
+    }
+  }
+
+  /**
+   * Reverse geocode coordinates to address
+   */
+  static async reverseGeocode(
+    latitude: number,
+    longitude: number
+  ): Promise<{
+    success: boolean;
+    data: {
+      address: string;
+      city?: string;
+      country?: string;
+      latitude: number;
+      longitude: number;
+    };
+  }> {
+    try {
+      const response = await apiClient.post('/locations/reverse-geocode', {
+        latitude,
+        longitude,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to reverse geocode' };
+    }
+  }
+
+  /**
+   * Search for locations by query
+   */
+  static async searchLocations(query: string, limit: number = 5): Promise<{
+    success: boolean;
+    data: Array<{
+      latitude: number;
+      longitude: number;
+      address: string;
+      city?: string;
+      country?: string;
+    }>;
+  }> {
+    try {
+      const response = await apiClient.get('/locations/search', {
+        params: { q: query, limit },
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to search locations' };
+    }
+  }
 }

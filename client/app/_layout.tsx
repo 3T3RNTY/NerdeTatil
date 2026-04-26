@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import Toast from 'react-native-toast-message'
 import { AuthProvider, AuthContext } from '../src/context/AuthContext'
 import { useContext } from 'react'
 
@@ -59,6 +60,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <RootLayoutNav />
+      <Toast />
     </AuthProvider>
   )
 }

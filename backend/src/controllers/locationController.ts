@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { LocationService } from '../services/locationService';
+import geocodingService from '../services/geocodingService';
 
 export class LocationController {
   /**
@@ -186,6 +187,97 @@ export class LocationController {
     } catch (error) {
       console.error('Error fetching popular locations:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * POST /api/locations/geocode
+   * Geocode an address to coordinates
+   */
+  static async geocode(req: Request, res: Response) {
+    try {
+      const { address } = req.body;
+
+      if (!address) {
+        return res.status(400).json({ error: 'Address is required' });
+      }
+
+      const result = await geocodingService.geocodeAddress(address);
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Error geocoding address:', error);
+      res.status(400).json({
+        error: error instanceof Error ? error.message : 'Geocoding failed',
+      });
+    }
+  }
+
+  /**
+   * POST /api/locations/reverse-geocode
+   * Reverse geocode coordinates to address
+   */
+  static async reverseGeocode(req: Request, res: Response) {
+    try {
+      const { latitude, longitude } = req.body;
+
+      if (latitude === undefined || longitude === undefined) {
+        return res.status(400).json({
+          error: 'Latitude and longitude are required',
+        });
+      }
+
+      if (!geocodingService.validateCoordinates(latitude, longitude)) {
+        return res.status(400).json({
+          error: 'Invalid coordinates',
+        });
+      }
+
+      const result = await geocodingService.reverseGeocode(latitude, longitude);
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+      res.status(400).json({
+        error: error instanceof Error ? error.message : 'Reverse geocoding failed',
+      });
+    }
+  }
+
+  /**
+   * GET /api/locations/search
+   * Search for locations by query (autocomplete)
+   */
+  static async search(req: Request, res: Response) {
+    try {
+      const { q, limit } = req.query;
+
+      if (!q) {
+        return res.status(400).json({
+          error: 'Search query is required',
+        });
+      }
+
+      const results = await geocodingService.searchLocations(
+        q as string,
+        parseInt(limit as string) || 5
+      );
+
+      res.json({
+        success: true,
+        data: results,
+      });
+    } catch (error) {
+      console.error('Error searching locations:', error);
+      res.status(400).json({
+        error: error instanceof Error ? error.message : 'Search failed',
+      });
     }
   }
 }
