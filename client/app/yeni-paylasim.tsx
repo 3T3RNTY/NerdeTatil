@@ -253,7 +253,7 @@ export default function CreatePostScreen() {
                       {option}
                     </Text>
                   </Pressable>
-                )
+                );
                 })}
               </View>
               {rating && (

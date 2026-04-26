@@ -179,7 +179,7 @@ export default function UserPostsScreen() {
                   </View>
                 </View>
               </View>
-            )
+            );
             })
           )}
         </View>

@@ -57,6 +57,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [uploadErrors, setUploadErrors] = useState<UploadError[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const canAddMore = uploadedImages.length + selectedImages.length < maxImages;
   const removeButtonStyle = StyleSheet.flatten([styles.removeButton, styles.removeButtonUploaded])
   const addButtonStyle = StyleSheet.flatten([styles.addButton, !canAddMore && styles.addButtonDisabled])
   const uploadButtonStyle = StyleSheet.flatten([styles.uploadButton, isUploading && styles.uploadButtonDisabled])
@@ -189,8 +190,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     const newSelected = selectedImages.filter((_, i) => i !== index);
     setSelectedImages(newSelected);
   };
-
-  const canAddMore = uploadedImages.length + selectedImages.length < maxImages;
 
   return (
     <View style={styles.container}>
