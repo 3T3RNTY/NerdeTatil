@@ -39,6 +39,11 @@ export default function CreatePostScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
+  const layoutStyle = StyleSheet.flatten([styles.layout, isWideWeb && styles.layoutWide])
+  const cardStyle = StyleSheet.flatten([styles.card, isWideWeb && styles.fullWidthCard])
+  const textAreaStyle = StyleSheet.flatten([styles.textArea, isWideWeb && styles.textAreaWide])
+  const primaryButtonStyle = StyleSheet.flatten([styles.primaryButton, isSubmitting && styles.primaryButtonDisabled])
+
   // Validate form
   const validateForm = (): boolean => {
     setFormError('')
@@ -144,6 +149,10 @@ export default function CreatePostScreen() {
           fontSize: 14,
           fontWeight: '600',
           color: '#fff',
+          backgroundColor: '#10b981',
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 8,
         },
         visibilityTime: 3000,
       })
@@ -187,9 +196,9 @@ export default function CreatePostScreen() {
             </View>
           ) : null}
 
-          <View style={[styles.layout, isWideWeb && styles.layoutWide]}>
+          <View style={layoutStyle}>
             {/* Location Picker */}
-            <View style={[styles.card, isWideWeb && styles.fullWidthCard]}>
+            <View style={cardStyle}>
               <View style={styles.cardHeader}>
                 <Text style={styles.sectionEmoji}>📍</Text>
                 <Text style={styles.sectionTitle}>Konum Seç</Text>
@@ -206,7 +215,7 @@ export default function CreatePostScreen() {
             </View>
 
             {/* Image Uploader */}
-            <View style={[styles.card, isWideWeb && styles.fullWidthCard]}>
+            <View style={cardStyle}>
               <View style={styles.cardHeader}>
                 <Text style={styles.sectionEmoji}>📸</Text>
                 <Text style={styles.sectionTitle}>Görseller</Text>
@@ -224,30 +233,28 @@ export default function CreatePostScreen() {
             </View>
 
             {/* Rating Selector */}
-            <View style={[styles.card, isWideWeb && styles.fullWidthCard]}>
+            <View style={cardStyle}>
               <View style={styles.cardHeader}>
                 <Text style={styles.sectionEmoji}>⭐</Text>
                 <Text style={styles.sectionTitle}>Puan Ver (1-5)</Text>
               </View>
               <View style={styles.ratingContainer}>
-                {ratingOptions.map((option) => (
+                {ratingOptions.map((option) => {
+                  const ratingButtonStyle = StyleSheet.flatten([styles.ratingButton, rating === option && styles.ratingButtonActive])
+                  const ratingButtonTextStyle = StyleSheet.flatten([styles.ratingButtonText, rating === option && styles.ratingButtonTextActive])
+                  return (
                   <Pressable
                     key={option}
-                    style={[
-                      styles.ratingButton,
-                      rating === option && styles.ratingButtonActive,
-                    ]}
+                    style={ratingButtonStyle}
                     onPress={() => setRating(option)}
                     disabled={isSubmitting}
                   >
-                    <Text style={[
-                      styles.ratingButtonText,
-                      rating === option && styles.ratingButtonTextActive,
-                    ]}>
+                    <Text style={ratingButtonTextStyle}>
                       {option}
                     </Text>
                   </Pressable>
-                ))}
+                )
+                })}
               </View>
               {rating && (
                 <View style={styles.ratingBadge}>
@@ -257,7 +264,7 @@ export default function CreatePostScreen() {
             </View>
 
             {/* Description Section */}
-            <View style={[styles.card, isWideWeb && styles.fullWidthCard]}>
+            <View style={cardStyle}>
               <View style={styles.cardHeader}>
                 <Text style={styles.sectionEmoji}>✏️</Text>
                 <Text style={styles.sectionTitle}>Başlık (İsteğe bağlı)</Text>
@@ -276,7 +283,7 @@ export default function CreatePostScreen() {
                 <Text style={styles.sectionTitle}>Açıklama (Zorunlu)</Text>
               </View>
               <TextInput
-                style={[styles.textArea, isWideWeb && styles.textAreaWide]}
+                style={textAreaStyle}
                 placeholder="Nerede kaldın, ne yaptın, ne önerirsin? Başka seyahatseverleri ilham ver..."
                 placeholderTextColor="#9ca3af"
                 multiline
@@ -290,10 +297,7 @@ export default function CreatePostScreen() {
 
           <View style={styles.footerActions}>
             <Pressable
-              style={[
-                styles.primaryButton,
-                isSubmitting && styles.primaryButtonDisabled,
-              ]}
+              style={primaryButtonStyle}
               onPress={handleCreatePost}
               disabled={isSubmitting}
             >

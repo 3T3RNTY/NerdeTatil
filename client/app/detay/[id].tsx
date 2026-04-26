@@ -69,9 +69,18 @@ export default function DetailScreen() {
     }
   }
 
+  const contentLayoutStyle = StyleSheet.flatten([styles.contentLayout, isWideWeb && styles.contentLayoutWide])
+  const mainColumnStyle = StyleSheet.flatten([styles.mainColumn, isWideWeb && styles.mainColumnWide])
+  const sideColumnStyle = StyleSheet.flatten([styles.sideColumn, isWideWeb && styles.sideColumnWide])
+  const sendButtonStyle = StyleSheet.flatten([
+    styles.sendButton,
+    (submittingComment || !commentText.trim()) && styles.sendButtonDisabled,
+  ])
+
   if (loading) {
+    const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
-      <View style={[styles.screen, styles.centerContent]}>
+      <View style={loadingStyle}>
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     )
@@ -106,8 +115,8 @@ export default function DetailScreen() {
             </Pressable>
           </Link>
 
-          <View style={[styles.contentLayout, isWideWeb && styles.contentLayoutWide]}>
-            <View style={[styles.mainColumn, isWideWeb && styles.mainColumnWide]}>
+          <View style={contentLayoutStyle}>
+            <View style={mainColumnStyle}>
               {/* Image Gallery */}
               {post.imageUrls && post.imageUrls.length > 0 && (
                 <ImageGallery
@@ -155,7 +164,7 @@ export default function DetailScreen() {
               </View>
             </View>
 
-            <View style={[styles.sideColumn, isWideWeb && styles.sideColumnWide]}>
+            <View style={sideColumnStyle}>
               {post.rating && (
                 <View style={styles.scoreBox}>
                   <Text style={styles.score}>★ {post.rating}</Text>
@@ -192,11 +201,7 @@ export default function DetailScreen() {
                     multiline
                   />
                   <Pressable
-                    style={[
-                      styles.sendButton,
-                      (submittingComment || !commentText.trim()) &&
-                        styles.sendButtonDisabled,
-                    ]}
+                    style={sendButtonStyle}
                     onPress={handleAddComment}
                     disabled={submittingComment || !commentText.trim()}
                   >

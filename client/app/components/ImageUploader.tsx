@@ -57,6 +57,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [uploadErrors, setUploadErrors] = useState<UploadError[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const removeButtonStyle = StyleSheet.flatten([styles.removeButton, styles.removeButtonUploaded])
+  const addButtonStyle = StyleSheet.flatten([styles.addButton, !canAddMore && styles.addButtonDisabled])
+  const uploadButtonStyle = StyleSheet.flatten([styles.uploadButton, isUploading && styles.uploadButtonDisabled])
+
   // Request permission and pick images
   const handlePickImages = useCallback(async () => {
     try {
@@ -194,10 +198,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       {/* Add Images Button */}
       <TouchableOpacity
-        style={[
-          styles.addButton,
-          !canAddMore && styles.addButtonDisabled,
-        ]}
+        style={addButtonStyle}
         onPress={handlePickImages}
         disabled={!canAddMore || isUploading}
       >
@@ -231,10 +232,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
           {/* Upload Button */}
           <TouchableOpacity
-            style={[
-              styles.uploadButton,
-              isUploading && styles.uploadButtonDisabled,
-            ]}
+            style={uploadButtonStyle}
             onPress={handleUploadImages}
             disabled={isUploading}
           >
@@ -278,7 +276,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                   style={styles.previewImage}
                 />
                 <TouchableOpacity
-                  style={[styles.removeButton, styles.removeButtonUploaded]}
+                  style={removeButtonStyle}
                   onPress={() => handleRemoveImage(index)}
                 >
                   <Text style={styles.removeButtonText}>✕</Text>

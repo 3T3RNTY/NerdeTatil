@@ -21,6 +21,10 @@ export default function LoginScreen() {
   const [emailFocused, setEmailFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
 
+  const emailInputStyle = StyleSheet.flatten([styles.inputWrapper, emailFocused && styles.inputWrapperFocused])
+  const passwordInputStyle = StyleSheet.flatten([styles.inputWrapper, passwordFocused && styles.inputWrapperFocused])
+  const buttonStyle = StyleSheet.flatten([styles.button, isLoading && styles.buttonDisabled])
+
   const handleLogin = async () => {
     try {
       setValidationError('')
@@ -65,7 +69,7 @@ export default function LoginScreen() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
-          <View style={[styles.inputWrapper, emailFocused && styles.inputWrapperFocused]}>
+          <View style={emailInputStyle}>
             <TextInput
               style={styles.input}
               placeholder="example@email.com"
@@ -83,7 +87,7 @@ export default function LoginScreen() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Şifre</Text>
-          <View style={[styles.inputWrapper, passwordFocused && styles.inputWrapperFocused]}>
+          <View style={passwordInputStyle}>
             <TextInput
               style={styles.input}
               placeholder="••••••••"
@@ -99,7 +103,7 @@ export default function LoginScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.button, isLoading && styles.buttonDisabled]}
+          style={buttonStyle}
           onPress={handleLogin}
           disabled={isLoading}
           activeOpacity={0.85}

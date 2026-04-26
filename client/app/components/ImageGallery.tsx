@@ -25,6 +25,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const scrollViewRef = useRef<ScrollView>(null);
   const screenWidth = Dimensions.get('window').width;
 
+  const imageContainerStyle = (width: number) => StyleSheet.flatten([styles.imageContainer, { width }])
+  const leftArrowStyle = StyleSheet.flatten([styles.arrowButton, styles.leftArrow])
+  const rightArrowStyle = StyleSheet.flatten([styles.arrowButton, styles.rightArrow])
+  const getThumbnailStyle = (index: number) => StyleSheet.flatten([styles.thumbnail, index === currentIndex && styles.thumbnailActive])
+
   if (!images || images.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -79,7 +84,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           {images.map((image, index) => (
             <TouchableOpacity
               key={index}
-              style={[styles.imageContainer, { width: screenWidth }]}
+              style={imageContainerStyle(screenWidth)}
               onPress={() => onImagePress?.(index)}
             >
               <Image
@@ -95,13 +100,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         {images.length > 1 && (
           <>
             <TouchableOpacity
-              style={[styles.arrowButton, styles.leftArrow]}
+              style={leftArrowStyle}
               onPress={handlePrev}
             >
               <Text style={styles.arrowText}>{'<'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.arrowButton, styles.rightArrow]}
+              style={rightArrowStyle}
               onPress={handleNext}
             >
               <Text style={styles.arrowText}>{'>'}</Text>
@@ -130,10 +135,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           {images.map((image, index) => (
             <TouchableOpacity
               key={index}
-              style={[
-                styles.thumbnail,
-                index === currentIndex && styles.thumbnailActive,
-              ]}
+              style={getThumbnailStyle(index)}
               onPress={() => {
                 setCurrentIndex(index);
                 scrollViewRef.current?.scrollTo({
