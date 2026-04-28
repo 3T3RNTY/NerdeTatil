@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Text,
   Dimensions,
+  useWindowDimensions,
+  Platform,
 } from 'react-native';
 
 interface ImageGalleryProps {
@@ -22,8 +24,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   onImagePress,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
-  const screenWidth = Dimensions.get('window').width;
+  const { width: windowWidth } = useWindowDimensions();
+  const isMobile = Platform.OS !== 'web';
+  
+  // Use container width if measured, otherwise fallback to window width
+  const scrollWidth = containerWidth > 0 ? containerWidth : windowWidth;
+  
+  // Calculate responsive height based on width (16:9 aspect ratio)
+  // Mobile: 120-200px, Web: 200-300px
+  const minHeight = isMobile ? 120 : 180;
+  const maxHeight = isMobile ? 200 : 300;
+  const galleryHeight = Math.max(minHeight, Math.min(maxHeight, Math.round(scrollWidth * 9 / 16)));
 
   const imageContainerStyle = (width: number) => StyleSheet.flatten([styles.imageContainer, { width }])
   const leftArrowStyle = StyleSheet.flatten([styles.arrowButton, styles.leftArrow])
@@ -43,7 +56,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     const newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
     setCurrentIndex(newIndex);
     scrollViewRef.current?.scrollTo({
-      x: newIndex * screenWidth,
+      x: newIndex * scrollWidth,
       animated: true,
     });
   };
@@ -53,7 +66,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     const newIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
     setCurrentIndex(newIndex);
     scrollViewRef.current?.scrollTo({
-      x: newIndex * screenWidth,
+      x: newIndex * scrollWidth,
       animated: true,
     });
   };
@@ -61,16 +74,16 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   // Handle scroll end
   const handleScroll = (event: any) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffset / screenWidth);
+    const index = Math.round(contentOffset / scrollWidth);
     if (index !== currentIndex && index < images.length) {
       setCurrentIndex(index);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}>
       {/* Main Carousel */}
-      <View style={styles.carouselContainer}>
+      <View style={[styles.carouselContainer, { height: galleryHeight }]}>
         <ScrollView
           ref={scrollViewRef}
           horizontal
@@ -78,13 +91,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={handleScroll}
-          snapToInterval={screenWidth}
+          snapToInterval={scrollWidth}
           decelerationRate="fast"
         >
           {images.map((image, index) => (
             <TouchableOpacity
               key={index}
-              style={imageContainerStyle(screenWidth)}
+              style={imageContainerStyle(scrollWidth)}
               onPress={() => onImagePress?.(index)}
             >
               <Image
@@ -139,7 +152,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               onPress={() => {
                 setCurrentIndex(index);
                 scrollViewRef.current?.scrollTo({
-                  x: index * screenWidth,
+                  x: index * scrollWidth,
                   animated: true,
                 });
               }}
@@ -162,7 +175,6 @@ const styles = StyleSheet.create({
   },
   carouselContainer: {
     position: 'relative',
-    height: 300,
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
     overflow: 'hidden',
@@ -239,7 +251,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   emptyContainer: {
-    height: 300,
+    minHeight: 120,
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     justifyContent: 'center',
