@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
+import { ScrollView, StyleSheet, useWindowDimensions, View, Platform } from 'react-native'
 
 type PageShellProps = {
   children: ReactNode
@@ -8,8 +8,13 @@ type PageShellProps = {
 
 export function PageShell({ children, withScroll = true }: PageShellProps) {
   const { width } = useWindowDimensions()
+  const isMobile = Platform.OS !== 'web'
   const horizontalPadding = width >= 1200 ? 28 : width >= 768 ? 22 : 16
-  const flattenedStyle = StyleSheet.flatten([styles.container, { paddingHorizontal: horizontalPadding }])
+  const bottomPadding = isMobile ? 70 : 0
+  const flattenedStyle = StyleSheet.flatten([
+    styles.container,
+    { paddingHorizontal: horizontalPadding, paddingBottom: bottomPadding },
+  ])
 
   if (!withScroll) {
     return <View style={flattenedStyle}>{children}</View>

@@ -5,6 +5,7 @@ import { env } from '@/src/config/env'
 export function AppHeader() {
   const { width } = useWindowDimensions()
   const isWide = width >= 900
+  const isMobile = Platform.OS !== 'web'
   const pathname = usePathname()
   const isProfilePage = pathname === '/profil'
   const searchStyle = StyleSheet.flatten([styles.search, isWide && styles.searchWide])
@@ -12,7 +13,15 @@ export function AppHeader() {
   return (
     <View style={styles.header}>
       <View style={styles.inner}>
-        {isWide ? (
+        {isMobile ? (
+          // Mobile: Show brand only
+          <Link href="/" asChild>
+            <Pressable>
+              <Text style={styles.brand}>🌍 {env.appName}</Text>
+            </Pressable>
+          </Link>
+        ) : isWide ? (
+          // Wide Web: Show brand
           <Link href="/" asChild>
             <Pressable>
               <Text style={styles.brand}>🌍 {env.appName}</Text>
@@ -24,12 +33,14 @@ export function AppHeader() {
           placeholder="Mekan, şehir veya tatil ara..."
           placeholderTextColor="#9ca3af"
         />
-        <Link href={isProfilePage ? '/' : '/profil'} asChild>
-          <Pressable style={styles.profileButton}>
-            <Text style={styles.profileEmoji}>{isProfilePage ? '🏠' : '👤'}</Text>
-            {isWide ? <Text style={styles.profileText}>{isProfilePage ? 'Ana Sayfa' : 'Profil'}</Text> : null}
-          </Pressable>
-        </Link>
+        {!isMobile && (
+          <Link href={isProfilePage ? '/' : '/profil'} asChild>
+            <Pressable style={styles.profileButton}>
+              <Text style={styles.profileEmoji}>{isProfilePage ? '🏠' : '👤'}</Text>
+              {isWide ? <Text style={styles.profileText}>{isProfilePage ? 'Ana Sayfa' : 'Profil'}</Text> : null}
+            </Pressable>
+          </Link>
+        )}
       </View>
     </View>
   )

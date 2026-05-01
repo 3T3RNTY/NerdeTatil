@@ -3,7 +3,9 @@ import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import Toast from 'react-native-toast-message'
 import { AuthProvider, AuthContext } from '../src/context/AuthContext'
+import { MobileNavigation } from '../src/components/MobileNavigation'
 import { useContext } from 'react'
+import { Platform, View, StyleSheet } from 'react-native'
 
 function RootLayoutNav() {
   const authContext = useContext(AuthContext)
@@ -33,7 +35,7 @@ function RootLayoutNav() {
   }
 
   return (
-    <>
+    <View style={styles.rootContainer}>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -53,7 +55,8 @@ function RootLayoutNav() {
         <Stack.Screen name="yeni-paylasim" options={{ headerShown: false }} />
         <Stack.Screen name="detay/[id]" options={{ headerShown: false }} />
       </Stack>
-    </>
+      {Platform.OS !== 'web' && <MobileNavigation />}
+    </View>
   )
 }
 
@@ -65,3 +68,9 @@ export default function RootLayout() {
     </AuthProvider>
   )
 }
+
+const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+  },
+})

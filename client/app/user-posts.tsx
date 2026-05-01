@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
   ActivityIndicator,
+  Image,
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
@@ -19,6 +20,7 @@ export default function UserPostsScreen() {
   const router = useRouter()
   const { width } = useWindowDimensions()
   const isWideWeb = Platform.OS === 'web' && width >= 920
+  const isMobile = Platform.OS !== 'web'
   const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -117,9 +119,24 @@ export default function UserPostsScreen() {
               const viewButtonStyle = StyleSheet.flatten([styles.actionButton, styles.viewButton])
               return (
               <View key={post.id} style={cardStyle}>
-                <ImagePlaceholder
-                  style={isWideWeb ? styles.cardImageWide : undefined}
-                />
+                <View style={[styles.cardImage, isWideWeb && styles.cardImageWide, isMobile && styles.cardImageMobile]}>
+                  {post.imageUrls && post.imageUrls.length > 0 ? (
+                    <>
+                      <Image
+                        source={{ uri: post.imageUrls[0] }}
+                        style={styles.image}
+                        resizeMode="cover"
+                      />
+                      {post.imageUrls.length > 1 && (
+                        <View style={styles.imageCountBadge}>
+                          <Text style={styles.imageCountText}>+{post.imageUrls.length - 1}</Text>
+                        </View>
+                      )}
+                    </>
+                  ) : (
+                    <ImagePlaceholder compact />
+                  )}
+                </View>
                 <View style={styles.cardBody}>
                   <Text style={styles.cardTitle} numberOfLines={2}>
                     {post.title || post.description.substring(0, 30)}
@@ -329,8 +346,38 @@ const styles = StyleSheet.create({
   cardWide: {
     width: '48%',
   },
+  cardImage: {
+    minHeight: 180,
+    maxHeight: 250,
+    backgroundColor: '#f0f0f0',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  cardImageMobile: {
+    minHeight: 120,
+    maxHeight: 150,
+  },
   cardImageWide: {
     minHeight: 200,
+    maxHeight: 300,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imageCountBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  imageCountText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   cardBody: {
     padding: 16,

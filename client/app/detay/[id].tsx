@@ -107,8 +107,7 @@ export default function DetailScreen() {
   return (
     <View style={styles.screen}>
       <AppHeader />
-      <PageShell>
-        <ScrollView showsVerticalScrollIndicator={false}>
+      <PageShell withScroll={true}>
           <Link href="/" asChild>
             <Pressable style={styles.backButton}>
               <Text style={styles.backButtonText}>← Ana sayfa</Text>
@@ -215,7 +214,6 @@ export default function DetailScreen() {
               )}
             </View>
           </View>
-        </ScrollView>
       </PageShell>
     </View>
   )
