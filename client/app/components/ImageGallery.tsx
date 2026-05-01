@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   Platform,
 } from 'react-native';
+import { tokens } from '@/src/theme/tokens';
 
 interface ImageGalleryProps {
   images: string[];
@@ -171,14 +172,14 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: tokens.spacing[5],
   },
   carouselContainer: {
     position: 'relative',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
+    backgroundColor: tokens.colors.backgroundTertiary,
+    borderRadius: tokens.borderRadius.base,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: tokens.spacing[3],
   },
   imageContainer: {
     height: '100%',
@@ -195,56 +196,56 @@ const styles = StyleSheet.create({
     marginTop: -20,
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: tokens.borderRadius.full,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: tokens.zIndex.dropdown,
   },
   leftArrow: {
-    left: 10,
+    left: tokens.spacing[3],
   },
   rightArrow: {
-    right: 10,
+    right: tokens.spacing[3],
   },
   arrowText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
+    color: tokens.colors.background,
+    fontSize: tokens.typography.fontSize['2xl'],
+    fontWeight: tokens.typography.fontWeight.bold as any,
   },
   counterContainer: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
+    bottom: tokens.spacing[2],
+    right: tokens.spacing[2],
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    zIndex: 10,
+    paddingHorizontal: tokens.spacing[2],
+    paddingVertical: tokens.spacing[1],
+    borderRadius: tokens.borderRadius.full,
+    zIndex: tokens.zIndex.dropdown,
   },
   counterText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    color: tokens.colors.background,
+    fontSize: tokens.typography.fontSize.xs,
+    fontWeight: tokens.typography.fontWeight.semibold as any,
   },
   thumbnailsContainer: {
     height: 80,
   },
   thumbnailsContent: {
-    paddingHorizontal: 5,
-    gap: 8,
+    paddingHorizontal: tokens.spacing[1],
+    gap: tokens.spacing[2],
   },
   thumbnail: {
     width: 70,
     height: 70,
-    borderRadius: 6,
+    borderRadius: tokens.borderRadius.sm,
     borderWidth: 2,
     borderColor: 'transparent',
     overflow: 'hidden',
-    backgroundColor: '#e0e0e0',
+    backgroundColor: tokens.colors.backgroundSecondary,
   },
   thumbnailActive: {
-    borderColor: '#007AFF',
+    borderColor: tokens.colors.primary,
   },
   thumbnailImage: {
     width: '100%',
@@ -252,15 +253,15 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     minHeight: 120,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
+    backgroundColor: tokens.colors.backgroundSecondary,
+    borderRadius: tokens.borderRadius.base,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: tokens.spacing[5],
   },
   emptyText: {
-    fontSize: 14,
-    color: '#999',
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.textTertiary,
   },
 });
 
