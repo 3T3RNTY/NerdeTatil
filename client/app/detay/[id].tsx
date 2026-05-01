@@ -124,24 +124,56 @@ export default function DetailScreen() {
                 />
               )}
 
-              {/* Location Display */}
-              {post.location && (
-                <View style={styles.locationCard}>
-                  <View style={styles.locationHeader}>
-                    <Text style={styles.locationEmoji}>📍</Text>
-                    <View style={styles.locationInfo}>
-                      <Text style={styles.locationName}>{post.location.name}</Text>
-                      <Text style={styles.locationAddress}>
-                        {post.location.city && `${post.location.city}, `}
-                        {post.location.country}
-                      </Text>
+              {/* Category Badge */}
+              {post.category && (
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryBadgeText}>
+                    {post.category === 'TRIP' && '🗺️ Seyahat'}
+                    {post.category === 'FOOD_PLACE' && '🍽️ Restorant'}
+                    {post.category === 'HOTEL' && '🏨 Otel'}
+                    {post.category === 'ATTRACTION' && '🎡 Mekan'}
+                  </Text>
+                </View>
+              )}
+
+              {/* Trip Dates */}
+              {post.category === 'TRIP' && post.startDate && post.endDate && (
+                <View style={styles.dateRangeCard}>
+                  <Text style={styles.dateRangeTitle}>📅 Seyahat Tarihleri</Text>
+                  <Text style={styles.dateRangeText}>
+                    {new Date(post.startDate).toLocaleDateString('tr-TR')} - {new Date(post.endDate).toLocaleDateString('tr-TR')}
+                  </Text>
+                </View>
+              )}
+
+              {/* Locations Display */}
+              {post.locations && post.locations.length > 0 && (
+                <View style={styles.locationsContainer}>
+                  <Text style={styles.locationsTitle}>📍 Konumlar ({post.locations.length})</Text>
+                  {post.locations.map((location, index) => (
+                    <View key={index} style={styles.locationCard}>
+                      <View style={styles.locationHeader}>
+                        <Text style={styles.locationNumber}>{index + 1}</Text>
+                        <View style={styles.locationInfo}>
+                          <Text style={styles.locationName}>{location.name}</Text>
+                          <Text style={styles.locationAddress}>
+                            {location.city && `${location.city}, `}
+                            {location.country}
+                          </Text>
+                          {location.visitDate && (
+                            <Text style={styles.visitDate}>
+                              Ziyaret: {new Date(location.visitDate).toLocaleDateString('tr-TR')}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      {location.latitude && location.longitude && (
+                        <Text style={styles.locationCoordinates}>
+                          {location.latitude.toFixed(4)}°, {location.longitude.toFixed(4)}°
+                        </Text>
+                      )}
                     </View>
-                  </View>
-                  {post.location.latitude && post.location.longitude && (
-                    <Text style={styles.locationCoordinates}>
-                      {post.location.latitude.toFixed(4)}°, {post.location.longitude.toFixed(4)}°
-                    </Text>
-                  )}
+                  ))}
                 </View>
               )}
 
@@ -297,6 +329,64 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 4,
     overflow: 'hidden',
+  },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#dbeafe',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#7dd3fc',
+  },
+  categoryBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0369a1',
+  },
+  dateRangeCard: {
+    borderRadius: 16,
+    backgroundColor: '#f0e8ff',
+    borderWidth: 2,
+    borderColor: '#8b5cf6',
+    padding: 14,
+    gap: 8,
+    marginBottom: 14,
+  },
+  dateRangeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6d28d9',
+  },
+  dateRangeText: {
+    fontSize: 13,
+    color: '#6d28d9',
+    fontWeight: '600',
+  },
+  locationsContainer: {
+    gap: 12,
+    marginBottom: 14,
+  },
+  locationsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0d9488',
+    marginBottom: 4,
+  },
+  locationNumber: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0d9488',
+    width: 28,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  visitDate: {
+    fontSize: 11,
+    color: '#0f766e',
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   contentLayout: {
     gap: 14,

@@ -10,6 +10,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PostCategory {
+  TRIP
+  FOOD_PLACE
+  HOTEL
+  ATTRACTION
+}
+
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
@@ -45,37 +52,38 @@ model Location {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  // Relations
-  posts       Post[]
-
   @@map("locations")
   @@index([city])
 }
 
 model Post {
-  id             String    @id @default(uuid())
-  userId         String    @map("user_id")
-  locationId     String    @map("location_id")
+  id             String        @id @default(uuid())
+  userId         String        @map("user_id")
+  category       PostCategory  @default(ATTRACTION) @map("category")
   title          String?
   description    String
-  rating         Int?      @db.SmallInt
-  imageUrls      String[]  @map("image_urls")
-  isPublic       Boolean   @default(true) @map("is_public")
-  allowComments  Boolean   @default(true) @map("allow_comments")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  rating         Int?          @db.SmallInt
+  imageUrls      String[]      @map("image_urls")
+  locationsData  Json          @map("locations_data") // Array of {id, name, address, city, country, latitude, longitude, visitDate?}
+  startDate      DateTime?     @map("start_date") // For TRIP category: trip start date
+  endDate        DateTime?     @map("end_date") // For TRIP category: trip end date
+  metadata       Json?         // Category-specific data: {mealType?, priceRange?, amenities?, etc}
+  isPublic       Boolean       @default(true) @map("is_public")
+  allowComments  Boolean       @default(true) @map("allow_comments")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
 
   // Relations
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  location       Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   comments       Comment[]
   likes          Like[]
 
   @@map("posts")
   @@index([userId])
-  @@index([locationId])
+  @@index([category])
   @@index([createdAt(sort: Desc)])
 }
+
 
 model Comment {
   id        String    @id @default(uuid())

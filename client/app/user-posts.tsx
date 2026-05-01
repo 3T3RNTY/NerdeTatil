@@ -8,13 +8,53 @@ import {
   useWindowDimensions,
   View,
   ActivityIndicator,
-  Image,
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
-import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 import { PageShell } from '@/src/components/PageShell'
 import { PostService, Post } from '@/src/api/postService'
 import { useAuth } from '@/src/hooks/useAuth'
+import TripCard from './components/TripCard'
+import FoodPlaceCard from './components/FoodPlaceCard'
+import HotelCard from './components/HotelCard'
+import AttractionCard from './components/AttractionCard'
+
+// Helper function to render the correct card component based on category
+const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean, onEdit: (id: string) => void, onDelete: (id: string) => void) => {
+  const cardComponent = (() => {
+    switch (post.category) {
+      case 'TRIP':
+        return <TripCard post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+      case 'FOOD_PLACE':
+        return <FoodPlaceCard post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+      case 'HOTEL':
+        return <HotelCard post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+      case 'ATTRACTION':
+        return <AttractionCard post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+      default:
+        return <AttractionCard post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+    }
+  })()
+
+  return (
+    <View key={post.id}>
+      {cardComponent}
+      <View style={styles.editDeleteContainer}>
+        <Pressable
+          style={styles.editButton}
+          onPress={() => onEdit(post.id)}
+        >
+          <Text style={styles.editButtonText}>✏️ Düzenle</Text>
+        </Pressable>
+        <Pressable
+          style={styles.deleteButton}
+          onPress={() => onDelete(post.id)}
+        >
+          <Text style={styles.deleteButtonText}>🗑️ Sil</Text>
+        </Pressable>
+      </View>
+    </View>
+  )
+}
 
 export default function UserPostsScreen() {
   const router = useRouter()
@@ -114,90 +154,7 @@ export default function UserPostsScreen() {
               </Link>
             </View>
           ) : (
-            posts.map((post) => {
-              const cardStyle = StyleSheet.flatten([styles.card, isWideWeb && styles.cardWide])
-              const viewButtonStyle = StyleSheet.flatten([styles.actionButton, styles.viewButton])
-              return (
-              <View key={post.id} style={cardStyle}>
-                <View style={[styles.cardImage, isWideWeb && styles.cardImageWide, isMobile && styles.cardImageMobile]}>
-                  {post.imageUrls && post.imageUrls.length > 0 ? (
-                    <>
-                      <Image
-                        source={{ uri: post.imageUrls[0] }}
-                        style={styles.image}
-                        resizeMode="cover"
-                      />
-                      {post.imageUrls.length > 1 && (
-                        <View style={styles.imageCountBadge}>
-                          <Text style={styles.imageCountText}>+{post.imageUrls.length - 1}</Text>
-                        </View>
-                      )}
-                    </>
-                  ) : (
-                    <ImagePlaceholder compact />
-                  )}
-                </View>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardTitle} numberOfLines={2}>
-                    {post.title || post.description.substring(0, 30)}
-                  </Text>
-                  <Text style={styles.cardDescription} numberOfLines={3}>
-                    {post.description}
-                  </Text>
-
-                  {post.location && (
-                    <View style={styles.locationBadge}>
-                      <Text style={styles.locationEmoji}>📍</Text>
-                      <Text style={styles.locationText}>
-                        {post.location.name}, {post.location.city}
-                      </Text>
-                    </View>
-                  )}
-
-                  {post.rating && (
-                    <View style={styles.ratingBadge}>
-                      <Text style={styles.ratingEmoji}>★</Text>
-                      <Text style={styles.ratingText}>{post.rating}</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.stats}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statEmoji}>❤️</Text>
-                      <Text style={styles.statText}>{post.likesCount}</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statEmoji}>💬</Text>
-                      <Text style={styles.statText}>{post.commentsCount}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.actionButtonsContainer}>
-                    <Link href={`/detay/${post.id}`} asChild>
-                      <Pressable style={viewButtonStyle}>
-                        <Text style={styles.viewButtonText}>İncele →</Text>
-                      </Pressable>
-                    </Link>
-                  </View>
-
-                  <View style={styles.editDeleteContainer}>
-                    <Pressable
-                      style={styles.editButton}
-                      onPress={() => handleEditPost(post.id)}
-                    >
-                      <Text style={styles.editButtonText}>✏️ Düzenle</Text>
-                    </Pressable>
-                    <Pressable
-                      style={styles.deleteButton}
-                      onPress={() => confirmDelete(post.id)}
-                    >
-                      <Text style={styles.deleteButtonText}>🗑️ Sil</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-            );
-            })
+            posts.map((post) => renderPostCard(post, isWideWeb, isMobile, handleEditPost, confirmDelete))
           )}
         </View>
       </PageShell>
@@ -331,155 +288,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  card: {
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#ccf0e8',
-    backgroundColor: '#f0fdf9',
-    overflow: 'hidden',
-    shadowColor: '#0d9488',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardWide: {
-    width: '48%',
-  },
-  cardImage: {
-    minHeight: 180,
-    maxHeight: 250,
-    backgroundColor: '#f0f0f0',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cardImageMobile: {
-    minHeight: 120,
-    maxHeight: 150,
-  },
-  cardImageWide: {
-    minHeight: 200,
-    maxHeight: 300,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  imageCountBadge: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-  },
-  imageCountText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardBody: {
-    padding: 16,
-    gap: 10,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0d9488',
-  },
-  cardDescription: {
-    fontSize: 13,
-    color: '#0f766e',
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  locationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#e0f2f1',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    alignSelf: 'flex-start',
-  },
-  locationEmoji: {
-    fontSize: 14,
-  },
-  locationText: {
-    fontSize: 12,
-    color: '#0d7a6f',
-    fontWeight: '600',
-  },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#fef3c7',
-    borderRadius: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    alignSelf: 'flex-start',
-  },
-  ratingEmoji: {
-    fontSize: 14,
-  },
-  ratingText: {
-    fontSize: 12,
-    color: '#a16207',
-    fontWeight: '700',
-  },
-  stats: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: '#e8f5f1',
-    borderRadius: 6,
-  },
-  statEmoji: {
-    fontSize: 14,
-  },
-  statText: {
-    fontSize: 12,
-    color: '#0f766e',
-    fontWeight: '600',
-  },
-  actionButtonsContainer: {
-    gap: 8,
-  },
-  actionButton: {
-    marginTop: 8,
-    minHeight: 44,
-    borderRadius: 10,
-    backgroundColor: '#0d9488',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#0d9488',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  viewButton: {
-    backgroundColor: '#0d9488',
-  },
-  viewButtonText: {
-    fontSize: 15,
-    color: '#ffffff',
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
   editDeleteContainer: {
     flexDirection: 'row',
     gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#f0fdf9',
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    marginBottom: 16,
   },
   editButton: {
     flex: 1,

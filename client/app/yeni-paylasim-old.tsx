@@ -5,10 +5,17 @@ import Toast from 'react-native-toast-message'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
 import { useAuth } from '@/src/hooks/useAuth'
-import MultiLocationPicker from './components/MultiLocationPicker'
-import CategorySelector from './components/CategorySelector'
+import LocationPicker from './components/LocationPicker'
 import ImageUploader from './components/ImageUploader'
-import { PostService, PostCategory, LocationData } from '@/src/api/postService'
+import { PostService } from '@/src/api/postService'
+
+interface Location {
+  latitude: number
+  longitude: number
+  address: string
+  city?: string
+  country?: string
+}
 
 interface UploadedImage {
   url: string
@@ -22,18 +29,11 @@ export default function CreatePostScreen() {
   const isWideWeb = Platform.OS === 'web' && width >= 980
 
   // Form state
-  const [category, setCategory] = useState<PostCategory | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [rating, setRating] = useState<number | undefined>(undefined)
-  const [selectedLocations, setSelectedLocations] = useState<LocationData[]>([])
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [mealType, setMealType] = useState('')
-  const [priceRange, setPriceRange] = useState('')
-  const [amenities, setAmenities] = useState('')
-  const [hours, setHours] = useState('')
   
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,11 +48,6 @@ export default function CreatePostScreen() {
   const validateForm = (): boolean => {
     setFormError('')
     
-    if (!category) {
-      setFormError('Please select a category')
-      return false
-    }
-
     if (!description.trim()) {
       setFormError('Description is required')
       return false
@@ -63,8 +58,8 @@ export default function CreatePostScreen() {
       return false
     }
 
-    if (selectedLocations.length === 0) {
-      setFormError('Please add at least one location')
+    if (!selectedLocation) {
+      setFormError('Please select a location')
       return false
     }
 
@@ -81,7 +76,7 @@ export default function CreatePostScreen() {
     return true
   }
 
-  // Handle post creation
+  // Create or get location
   const handleCreatePost = async () => {
     if (!validateForm()) {
       return
@@ -92,39 +87,55 @@ export default function CreatePostScreen() {
       return
     }
 
+    if (!selectedLocation) {
+      setFormError('Please select a location')
+      return
+    }
+
+    const location = selectedLocation
+
     setIsSubmitting(true)
 
     try {
-      // Build metadata based on category
-      const metadata: any = {}
+      // First, check if location exists or create it
+      let locationId: string
       
-      if (category === 'FOOD_PLACE') {
-        if (mealType) metadata.mealType = mealType
-        if (priceRange) metadata.priceRange = priceRange
-      } else if (category === 'HOTEL') {
-        if (priceRange) metadata.priceRange = priceRange
-        if (amenities) {
-          metadata.amenities = amenities
-            .split(',')
-            .map((a) => a.trim())
-            .filter((a) => a.length > 0)
+      // Create location with coordinates
+      const LocationService = require('@/src/api/locationService').LocationService
+      const locationData = {
+        name: location.address.split(',')[0] || location.address,
+        address: location.address,
+        city: location.city,
+        country: location.country,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      }
+
+      try {
+        const createdLocation = await LocationService.createLocation(locationData)
+        locationId = createdLocation.id
+      } catch (error) {
+        // If location creation fails, try to find existing
+        const existingLocations = await LocationService.getLocations({
+          search: location.address,
+        })
+        if (existingLocations.length > 0) {
+          locationId = existingLocations[0].id
+        } else {
+          throw new Error('Failed to create or find location')
         }
-      } else if (category === 'ATTRACTION') {
-        if (hours) metadata.hours = hours
       }
 
       // Create post
       const postData = {
         userId: user.id,
-        category: category!,
+        locationId,
         title: title || undefined,
         description,
         rating: rating ?? undefined,
         imageUrls: uploadedImages.map((img) => img.url),
-        locations: selectedLocations,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        isPublic: true,
+        allowComments: true,
       }
 
       const createdPost = await PostService.createPost(postData)
@@ -170,7 +181,7 @@ export default function CreatePostScreen() {
             <View style={styles.titleHeader}>
               <View>
                 <Text style={styles.title}>✍️ Yeni Paylaşım</Text>
-                <Text style={styles.subtitle}>Deneyimlerini kategorize ederek ve fotoğraflarla anlatarak başka seyahatseverleri ilham ver</Text>
+                <Text style={styles.subtitle}>Deneyimlerini fotoğraflarla anlatarak başka seyahatseverleri ilham ver</Text>
               </View>
               <Pressable style={styles.exitButton} onPress={() => router.back()} disabled={isSubmitting}>
                 <Text style={styles.exitButtonText}>✕</Text>
@@ -186,129 +197,22 @@ export default function CreatePostScreen() {
           ) : null}
 
           <View style={layoutStyle}>
-            {/* Category Selector */}
-            <View style={cardStyle}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.sectionEmoji}>📂</Text>
-                <Text style={styles.sectionTitle}>Kategori Seç</Text>
-              </View>
-              <CategorySelector selected={category} onSelect={setCategory} />
-            </View>
-
-            {/* Multi-Location Picker */}
+            {/* Location Picker */}
             <View style={cardStyle}>
               <View style={styles.cardHeader}>
                 <Text style={styles.sectionEmoji}>📍</Text>
-                <Text style={styles.sectionTitle}>Konumlar</Text>
+                <Text style={styles.sectionTitle}>Konum Seç</Text>
               </View>
-              <MultiLocationPicker
-                onLocationsSelect={setSelectedLocations}
-                maxLocations={10}
+              <LocationPicker
+                onLocationSelect={setSelectedLocation}
+                initialLocation={selectedLocation || undefined}
               />
-              {selectedLocations.length > 0 && (
+              {selectedLocation && (
                 <View style={styles.selectedLocationBadge}>
-                  <Text style={styles.selectedLocationText}>✓ {selectedLocations.length} konum seçildi</Text>
+                  <Text style={styles.selectedLocationText}>✓ Konum seçildi</Text>
                 </View>
               )}
             </View>
-
-            {/* Trip Dates (for TRIP category) */}
-            {category === 'TRIP' && (
-              <View style={cardStyle}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.sectionEmoji}>📅</Text>
-                  <Text style={styles.sectionTitle}>Seyahat Tarihleri</Text>
-                </View>
-                <View style={styles.dateRow}>
-                  <TextInput
-                    style={[styles.dateInput, { flex: 1 }]}
-                    placeholder="Başlangıç (YYYY-MM-DD)"
-                    placeholderTextColor="#9ca3af"
-                    value={startDate}
-                    onChangeText={setStartDate}
-                    editable={!isSubmitting}
-                  />
-                  <Text style={styles.dateSeperator}>-</Text>
-                  <TextInput
-                    style={[styles.dateInput, { flex: 1 }]}
-                    placeholder="Bitiş (YYYY-MM-DD)"
-                    placeholderTextColor="#9ca3af"
-                    value={endDate}
-                    onChangeText={setEndDate}
-                    editable={!isSubmitting}
-                  />
-                </View>
-              </View>
-            )}
-
-            {/* Category-Specific Fields */}
-            {category === 'FOOD_PLACE' && (
-              <View style={cardStyle}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.sectionEmoji}>🍽️</Text>
-                  <Text style={styles.sectionTitle}>Restoran Bilgileri</Text>
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Yemek Türü (Örn: İtalyan, Türk, ...)"
-                  placeholderTextColor="#9ca3af"
-                  value={mealType}
-                  onChangeText={setMealType}
-                  editable={!isSubmitting}
-                />
-                <TextInput
-                  style={[styles.input, { marginTop: 8 }]}
-                  placeholder="Fiyat Aralığı (Örn: €€€, €€€€, ...)"
-                  placeholderTextColor="#9ca3af"
-                  value={priceRange}
-                  onChangeText={setPriceRange}
-                  editable={!isSubmitting}
-                />
-              </View>
-            )}
-
-            {category === 'HOTEL' && (
-              <View style={cardStyle}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.sectionEmoji}>🏨</Text>
-                  <Text style={styles.sectionTitle}>Otel Bilgileri</Text>
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Fiyat Aralığı (Örn: €€€, €€€€, ...)"
-                  placeholderTextColor="#9ca3af"
-                  value={priceRange}
-                  onChangeText={setPriceRange}
-                  editable={!isSubmitting}
-                />
-                <TextInput
-                  style={[styles.input, { marginTop: 8 }]}
-                  placeholder="Olanaklar (virgülle ayrılmış, örn: WiFi, Yüzme Havuzu)"
-                  placeholderTextColor="#9ca3af"
-                  value={amenities}
-                  onChangeText={setAmenities}
-                  editable={!isSubmitting}
-                  multiline
-                />
-              </View>
-            )}
-
-            {category === 'ATTRACTION' && (
-              <View style={cardStyle}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.sectionEmoji}>🏛️</Text>
-                  <Text style={styles.sectionTitle}>Sehenlik Bilgileri</Text>
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Açılış Saatleri (Örn: 09:00-18:00)"
-                  placeholderTextColor="#9ca3af"
-                  value={hours}
-                  onChangeText={setHours}
-                  editable={!isSubmitting}
-                />
-              </View>
-            )}
 
             {/* Image Uploader */}
             <View style={cardStyle}>
@@ -380,7 +284,7 @@ export default function CreatePostScreen() {
               </View>
               <TextInput
                 style={textAreaStyle}
-                placeholder="Deneyimini detaylıca anlatarak başka seyahatseverleri ilham ver..."
+                placeholder="Nerede kaldın, ne yaptın, ne önerirsin? Başka seyahatseverleri ilham ver..."
                 placeholderTextColor="#9ca3af"
                 multiline
                 textAlignVertical="top"
@@ -455,57 +359,71 @@ const styles = StyleSheet.create({
   exitButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f0fdf9',
+    borderRadius: 10,
+    backgroundColor: '#fee2e2',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#ccf0e8',
+    shadowColor: '#dc2626',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   exitButtonText: {
-    fontSize: 20,
+    fontSize: 22,
+    color: '#dc2626',
     fontWeight: '700',
-    color: '#0f766e',
   },
   errorContainer: {
     backgroundColor: '#fee2e2',
-    borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 16,
   },
   errorText: {
+    color: '#dc2626',
     fontSize: 13,
-    fontWeight: '600',
-    color: '#991b1b',
+    fontWeight: '500',
+  },
+  card: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#ccf0e8',
+    backgroundColor: '#f0fdf9',
+    padding: 16,
+    gap: 14,
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 16,
+  },
+  fullWidthCard: {
+    width: '48%',
   },
   layout: {
-    flexDirection: 'column',
     gap: 16,
   },
   layoutWide: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#ccf0e8',
-    marginBottom: 0,
+  mediaCardWide: {
+    flex: 1,
   },
-  fullWidthCard: {
-    width: '100%',
+  textCardWide: {
+    flex: 1,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
+    gap: 8,
   },
   sectionEmoji: {
     fontSize: 20,
@@ -513,173 +431,154 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0f766e',
+    color: '#0d9488',
   },
   selectedLocationBadge: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#d1f3ed',
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginTop: 8,
-    alignSelf: 'flex-start',
+    padding: 8,
+    alignItems: 'center',
   },
   selectedLocationText: {
-    fontSize: 12,
+    color: '#0d9488',
     fontWeight: '600',
-    color: '#047857',
+    fontSize: 13,
   },
   imageCountBadge: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#d1f3ed',
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginTop: 8,
-    alignSelf: 'flex-start',
+    padding: 8,
+    alignItems: 'center',
   },
   imageCountText: {
-    fontSize: 12,
+    color: '#0d9488',
     fontWeight: '600',
-    color: '#047857',
+    fontSize: 13,
   },
   ratingContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
     gap: 8,
-    marginVertical: 12,
   },
   ratingButton: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: '#f0fdf9',
     borderWidth: 2,
     borderColor: '#ccf0e8',
+    backgroundColor: '#e8f5f1',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   ratingButtonActive: {
-    backgroundColor: '#d1fae5',
-    borderColor: '#10b981',
+    borderColor: '#0d9488',
+    backgroundColor: '#0d9488',
   },
   ratingButtonText: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#0f766e',
+    color: '#0d9488',
   },
   ratingButtonTextActive: {
-    color: '#047857',
+    color: '#fff',
   },
   ratingBadge: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#d1f3ed',
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    alignSelf: 'flex-start',
+    padding: 8,
+    alignItems: 'center',
+    marginTop: 8,
   },
   ratingBadgeText: {
-    fontSize: 12,
+    color: '#0d9488',
     fontWeight: '600',
-    color: '#047857',
+    fontSize: 13,
   },
   titleInput: {
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#ccf0e8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: '#e8f5f1',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
+    color: '#0f172a',
+    fontWeight: '500',
     marginBottom: 12,
   },
   textArea: {
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#ccf0e8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: '#e8f5f1',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
+    color: '#0f172a',
+    fontWeight: '500',
     minHeight: 120,
-    textAlignVertical: 'top',
   },
   textAreaWide: {
-    minHeight: 150,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccf0e8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
-  },
-  dateRow: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  dateInput: {
-    borderWidth: 1,
-    borderColor: '#ccf0e8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
-  },
-  dateSeperator: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0f766e',
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: '#10b981',
-    paddingVertical: 12,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-  },
-  primaryButtonDisabled: {
-    opacity: 0.6,
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  primaryButtonEmoji: {
-    fontSize: 16,
-  },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: '#e0f2fe',
-    paddingVertical: 12,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    borderWidth: 2,
-    borderColor: '#0ea5e9',
-  },
-  secondaryButtonText: {
-    color: '#0369a1',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  secondaryButtonEmoji: {
-    fontSize: 16,
+    minHeight: 180,
   },
   footerActions: {
     flexDirection: 'row',
     gap: 12,
     marginTop: 20,
-    paddingBottom: 20,
+    marginBottom: 40,
+  },
+  primaryButton: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: '#0d9488',
+    paddingVertical: 14,
+    alignItems: 'center',
+    gap: 6,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  primaryButtonEmoji: {
+    fontSize: 18,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  secondaryButton: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccf0e8',
+    backgroundColor: '#e8f5f1',
+    paddingVertical: 14,
+    alignItems: 'center',
+    gap: 6,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  secondaryButtonEmoji: {
+    fontSize: 18,
+  },
+  secondaryButtonText: {
+    color: '#0d9488',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 })

@@ -43,36 +43,43 @@ export class PostController {
 
   /**
    * POST /api/posts
-   * Create a new post
+   * Create a new post with multiple locations and category
    */
   static async create(req: Request, res: Response) {
     try {
-      const { userId, locationId, title, description, rating, imageUrls } =
+      const { userId, category, title, description, rating, imageUrls, locations, startDate, endDate, metadata } =
         req.body;
 
-      if (!userId || !locationId || !description) {
+      if (!userId || !category || !description || !locations || locations.length === 0) {
         return res.status(400).json({
           error:
-            'Missing required fields: userId, locationId, description',
+            'Missing required fields: userId, category, description, locations',
         });
       }
 
       const post = await PostService.createPost({
         userId,
-        locationId,
+        category,
         title,
         description,
         rating,
         imageUrls,
+        locations,
+        startDate,
+        endDate,
+        metadata,
       });
 
       res.status(201).json(post);
     } catch (error: any) {
       console.error('Error creating post:', error);
+      if (error.message.includes('Missing required fields')) {
+        return res.status(400).json({ error: error.message });
+      }
       if (error.code === 'P2025') {
         return res
           .status(400)
-          .json({ error: 'User or location not found' });
+          .json({ error: 'User not found' });
       }
       res.status(500).json({ error: 'Internal server error' });
     }

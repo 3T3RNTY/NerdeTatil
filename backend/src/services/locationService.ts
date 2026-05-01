@@ -112,24 +112,68 @@ export class LocationService {
    * Get popular locations (with most posts)
    */
   static async getPopularLocations(limit: number = 10) {
-    const locations = await prisma.location.findMany({
-      include: {
-        _count: {
-          select: { posts: true },
-        },
-      },
-      orderBy: {
-        posts: {
-          _count: 'desc',
-        },
-      },
-      take: limit,
+    const safeLimit = Number.isFinite(limit)
+      ? Math.min(Math.max(Math.trunc(limit), 1), 100)
+      : 10;
+
+    const posts = await prisma.post.findMany({
+      where: { isPublic: true },
+      select: { locationsData: true },
     });
 
-    return locations.map((loc) => ({
-      ...loc,
-      postsCount: loc._count.posts,
-      _count: undefined,
-    }));
+    const locationPostCounts = new Map<string, number>();
+
+    for (const post of posts) {
+      if (!Array.isArray(post.locationsData)) continue;
+
+      // Count each location at most once per post.
+      const uniqueLocationIds = new Set<string>();
+
+      for (const location of post.locationsData) {
+        if (
+          typeof location === 'object' &&
+          location !== null &&
+          'id' in location &&
+          typeof location.id === 'string' &&
+          location.id.trim() !== ''
+        ) {
+          uniqueLocationIds.add(location.id);
+        }
+      }
+
+      for (const locationId of uniqueLocationIds) {
+        locationPostCounts.set(locationId, (locationPostCounts.get(locationId) ?? 0) + 1);
+      }
+    }
+
+    const rankedLocationIds = Array.from(locationPostCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, safeLimit);
+
+    if (rankedLocationIds.length === 0) {
+      return [];
+    }
+
+    const locations = await prisma.location.findMany({
+      where: {
+        id: {
+          in: rankedLocationIds.map(([locationId]) => locationId),
+        },
+      },
+    });
+
+    const locationById = new Map(locations.map((location) => [location.id, location]));
+
+    return rankedLocationIds
+      .map(([locationId, postsCount]) => {
+        const location = locationById.get(locationId);
+        if (!location) return null;
+
+        return {
+          ...location,
+          postsCount,
+        };
+      })
+      .filter((location): location is NonNullable<typeof location> => location !== null);
   }
 }

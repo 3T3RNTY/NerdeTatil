@@ -54,7 +54,7 @@ export default function LoginScreen() {
       
       <View style={styles.header}>
         <Text style={styles.title}>🌍 NerdeTatil</Text>
-        <Text style={styles.subtitle}>Seyahat deneyimlerini keş ve paylaş</Text>
+        <Text style={styles.subtitle}>Seyahat deneyimlerini keşfet ve paylaş</Text>
       </View>
 
       <View style={styles.formContainer}>
