@@ -37,11 +37,15 @@ CREATE TABLE IF NOT EXISTS locations (
 CREATE TABLE IF NOT EXISTS posts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+    category VARCHAR(50) DEFAULT 'ATTRACTION',
     title VARCHAR(255),
     description TEXT NOT NULL,
-    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+    rating SMALLINT CHECK (rating >= 1 AND rating <= 5),
     image_urls TEXT[],
+    locations_data JSONB NOT NULL,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    metadata JSONB,
     is_public BOOLEAN DEFAULT true,
     allow_comments BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -80,7 +84,7 @@ CREATE TABLE IF NOT EXISTS user_follows (
 
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
-CREATE INDEX IF NOT EXISTS idx_posts_location_id ON posts(location_id);
+CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
