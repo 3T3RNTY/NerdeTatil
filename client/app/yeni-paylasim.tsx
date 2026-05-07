@@ -1,6 +1,6 @@
 import { Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View, ScrollView, Alert, ActivityIndicator, Modal } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Toast from 'react-native-toast-message'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { AppHeader } from '@/src/components/AppHeader'
@@ -13,6 +13,19 @@ import ProgressStepper from './components/ProgressStepper'
 import DynamicFeatureChips from './components/DynamicFeatureChips'
 import MultiCriteriaRatingSliders from './components/MultiCriteriaRatingSliders'
 import { PostService, PostCategory, LocationData } from '@/src/api/postService'
+
+// Web date picker imports
+let DayPicker: any = null
+if (Platform.OS === 'web') {
+  try {
+    const module = require('react-day-picker')
+    DayPicker = module.DayPicker
+    // Import DayPicker CSS
+    require('react-day-picker/dist/style.css')
+  } catch (e) {
+    // Fallback if module not available
+  }
+}
 
 interface UploadedImage {
   url: string
@@ -50,6 +63,8 @@ export default function CreatePostScreen() {
   const [endDate, setEndDate] = useState<Date | null>(null)
   const [showStartDatePicker, setShowStartDatePicker] = useState(false)
   const [showEndDatePicker, setShowEndDatePicker] = useState(false)
+  const [showWebStartCalendar, setShowWebStartCalendar] = useState(false)
+  const [showWebEndCalendar, setShowWebEndCalendar] = useState(false)
   const [mealType, setMealType] = useState('')
   const [priceRange, setPriceRange] = useState('')
   const [amenities, setAmenities] = useState('')
@@ -242,21 +257,39 @@ export default function CreatePostScreen() {
   const ratingOptions = [1, 2, 3, 4, 5]
 
   const handleStartDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowStartDatePicker(false)
-    }
     if (event.type === 'set' && selectedDate) {
       setStartDate(selectedDate)
+    }
+    if (Platform.OS === 'android' || event.type === 'dismissed') {
+      setShowStartDatePicker(false)
     }
   }
 
   const handleEndDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowEndDatePicker(false)
-    }
     if (event.type === 'set' && selectedDate) {
       setEndDate(selectedDate)
     }
+    if (Platform.OS === 'android' || event.type === 'dismissed') {
+      setShowEndDatePicker(false)
+    }
+  }
+
+  const handleWebDateChange = (dateString: string, isStart: boolean) => {
+    if (!dateString) return
+    const date = new Date(dateString)
+    if (isStart) {
+      setStartDate(date)
+    } else {
+      setEndDate(date)
+    }
+  }
+
+  const formatDateForInput = (date: Date | null) => {
+    if (!date) return ''
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   const formatDateForDisplay = (date: Date | null) => {
@@ -381,73 +414,153 @@ export default function CreatePostScreen() {
                   </View>
                   <Text style={styles.dateHint}>Select at least one date or leave empty</Text>
                   
-                  {/* Start Date Picker */}
-                  <View style={styles.datePickerContainer}>
-                    <Pressable 
-                      style={styles.dateButton}
-                      onPress={() => setShowStartDatePicker(true)}
-                    >
-                      <Text style={styles.dateButtonEmoji}>📍</Text>
-                      <View style={styles.dateButtonContent}>
-                        <Text style={styles.dateButtonLabel}>Start Date</Text>
-                        <Text style={[styles.dateButtonValue, !startDate && styles.dateButtonValueEmpty]}>
-                          {formatDateForDisplay(startDate)}
-                        </Text>
+                  {Platform.OS === 'web' ? (
+                    /* Web: Use calendar date pickers */
+                    <>
+                      {/* Start Date Web Picker */}
+                      <View style={styles.dateInputRow}>
+                        <Text style={styles.dateWebLabel}>📍 Start Date</Text>
+                        <Pressable
+                          style={styles.webDateButton}
+                          onPress={() => setShowWebStartCalendar(!showWebStartCalendar)}
+                        >
+                          <Text style={[styles.webDateButtonText, !startDate && styles.webDateButtonPlaceholder]}>
+                            {formatDateForDisplay(startDate)}
+                          </Text>
+                        </Pressable>
+                        {showWebStartCalendar && DayPicker && (
+                          <View style={styles.calendarContainer}>
+                            <DayPicker
+                              mode="single"
+                              selected={startDate}
+                              onSelect={(date: Date | undefined) => {
+                                setStartDate(date || null)
+                                setShowWebStartCalendar(false)
+                              }}
+                            />
+                          </View>
+                        )}
                       </View>
-                      <Text style={styles.dateButtonChevron}>›</Text>
-                    </Pressable>
-                    {startDate && (
-                      <Pressable 
-                        style={styles.clearButton}
-                        onPress={() => setStartDate(null)}
-                      >
-                        <Text style={styles.clearButtonText}>✕</Text>
-                      </Pressable>
-                    )}
-                  </View>
 
-                  {/* End Date Picker */}
-                  <View style={[styles.datePickerContainer, { marginTop: 10 }]}>
-                    <Pressable 
-                      style={styles.dateButton}
-                      onPress={() => setShowEndDatePicker(true)}
-                    >
-                      <Text style={styles.dateButtonEmoji}>🏁</Text>
-                      <View style={styles.dateButtonContent}>
-                        <Text style={styles.dateButtonLabel}>End Date</Text>
-                        <Text style={[styles.dateButtonValue, !endDate && styles.dateButtonValueEmpty]}>
-                          {formatDateForDisplay(endDate)}
-                        </Text>
+                      {/* End Date Web Picker */}
+                      <View style={styles.dateInputRow}>
+                        <Text style={styles.dateWebLabel}>🏁 End Date</Text>
+                        <Pressable
+                          style={styles.webDateButton}
+                          onPress={() => setShowWebEndCalendar(!showWebEndCalendar)}
+                        >
+                          <Text style={[styles.webDateButtonText, !endDate && styles.webDateButtonPlaceholder]}>
+                            {formatDateForDisplay(endDate)}
+                          </Text>
+                        </Pressable>
+                        {showWebEndCalendar && DayPicker && (
+                          <View style={styles.calendarContainer}>
+                            <DayPicker
+                              mode="single"
+                              selected={endDate}
+                              onSelect={(date: Date | undefined) => {
+                                setEndDate(date || null)
+                                setShowWebEndCalendar(false)
+                              }}
+                            />
+                          </View>
+                        )}
                       </View>
-                      <Text style={styles.dateButtonChevron}>›</Text>
-                    </Pressable>
-                    {endDate && (
-                      <Pressable 
-                        style={styles.clearButton}
-                        onPress={() => setEndDate(null)}
-                      >
-                        <Text style={styles.clearButtonText}>✕</Text>
-                      </Pressable>
-                    )}
-                  </View>
+                    </>
+                  ) : (
+                    /* Mobile: Use DateTimePicker */
+                    <>
+                      {/* Start Date Picker */}
+                      <View style={styles.datePickerContainer}>
+                        <Pressable 
+                          style={styles.dateButton}
+                          onPress={() => setShowStartDatePicker(true)}
+                        >
+                          <Text style={styles.dateButtonEmoji}>📍</Text>
+                          <View style={styles.dateButtonContent}>
+                            <Text style={styles.dateButtonLabel}>Start Date</Text>
+                            <Text style={[styles.dateButtonValue, !startDate && styles.dateButtonValueEmpty]}>
+                              {formatDateForDisplay(startDate)}
+                            </Text>
+                          </View>
+                          <Text style={styles.dateButtonChevron}>›</Text>
+                        </Pressable>
+                        {startDate && (
+                          <Pressable 
+                            style={styles.clearButton}
+                            onPress={() => setStartDate(null)}
+                          >
+                            <Text style={styles.clearButtonText}>✕</Text>
+                          </Pressable>
+                        )}
+                      </View>
 
-                  {/* Date Pickers */}
-                  {showStartDatePicker && (
-                    <DateTimePicker
-                      value={startDate || new Date()}
-                      mode="date"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      onChange={handleStartDateChange}
-                    />
-                  )}
+                      {/* End Date Picker */}
+                      <View style={[styles.datePickerContainer, { marginTop: 10 }]}>
+                        <Pressable 
+                          style={styles.dateButton}
+                          onPress={() => setShowEndDatePicker(true)}
+                        >
+                          <Text style={styles.dateButtonEmoji}>🏁</Text>
+                          <View style={styles.dateButtonContent}>
+                            <Text style={styles.dateButtonLabel}>End Date</Text>
+                            <Text style={[styles.dateButtonValue, !endDate && styles.dateButtonValueEmpty]}>
+                              {formatDateForDisplay(endDate)}
+                            </Text>
+                          </View>
+                          <Text style={styles.dateButtonChevron}>›</Text>
+                        </Pressable>
+                        {endDate && (
+                          <Pressable 
+                            style={styles.clearButton}
+                            onPress={() => setEndDate(null)}
+                          >
+                            <Text style={styles.clearButtonText}>✕</Text>
+                          </Pressable>
+                        )}
+                      </View>
 
-                  {showEndDatePicker && (
-                    <DateTimePicker
-                      value={endDate || new Date()}
-                      mode="date"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      onChange={handleEndDateChange}
-                    />
+                      {/* Date Pickers */}
+                      {showStartDatePicker && (
+                        <>
+                          <DateTimePicker
+                            value={startDate || new Date()}
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={handleStartDateChange}
+                            textColor="#0d9488"
+                          />
+                          {Platform.OS === 'ios' && (
+                            <Pressable
+                              style={styles.datePickerConfirmButton}
+                              onPress={() => setShowStartDatePicker(false)}
+                            >
+                              <Text style={styles.datePickerConfirmText}>Done</Text>
+                            </Pressable>
+                          )}
+                        </>
+                      )}
+
+                      {showEndDatePicker && (
+                        <>
+                          <DateTimePicker
+                            value={endDate || new Date()}
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={handleEndDateChange}
+                            textColor="#0d9488"
+                          />
+                          {Platform.OS === 'ios' && (
+                            <Pressable
+                              style={styles.datePickerConfirmButton}
+                              onPress={() => setShowEndDatePicker(false)}
+                            >
+                              <Text style={styles.datePickerConfirmText}>Done</Text>
+                            </Pressable>
+                          )}
+                        </>
+                      )}
+                    </>
                   )}
                 </View>
               )}
@@ -1025,6 +1138,52 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 12,
   },
+  dateInputRow: {
+    marginBottom: 12,
+  },
+  dateWebLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0f766e',
+    marginBottom: 6,
+  },
+  webDateInput: {
+    backgroundColor: '#f0fdf9',
+    borderWidth: 2,
+    borderColor: '#0d9488',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 14,
+    color: '#0d9488',
+    fontWeight: '600',
+  },
+  webDateButton: {
+    backgroundColor: '#f0fdf9',
+    borderWidth: 2,
+    borderColor: '#0d9488',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+  webDateButtonText: {
+    fontSize: 14,
+    color: '#0d9488',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  webDateButtonPlaceholder: {
+    color: '#9ca3af',
+    fontStyle: 'italic',
+  },
+  calendarContainer: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    overflow: 'auto' as any,
+  },
   datePickerContainer: {
     position: 'relative',
     marginBottom: 12,
@@ -1078,6 +1237,19 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     color: '#dc2626',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  datePickerConfirmButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#0d9488',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  datePickerConfirmText: {
+    color: '#ffffff',
     fontWeight: '700',
     fontSize: 14,
   },
