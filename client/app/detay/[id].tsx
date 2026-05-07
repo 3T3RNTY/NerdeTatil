@@ -146,6 +146,83 @@ export default function DetailScreen() {
                 </View>
               )}
 
+              {/* Features Display */}
+              {post.metadata?.features && post.metadata.features.length > 0 && (
+                <View style={styles.featuresContainer}>
+                  <Text style={styles.featuresTitle}>⭐ Özellikler</Text>
+                  <View style={styles.featureChips}>
+                    {post.metadata.features.map((feature, index) => (
+                      <View key={index} style={styles.featureChip}>
+                        <Text style={styles.featureChipText}>{feature}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Multi-Criteria Ratings Display */}
+              {post.metadata?.ratings && (post.metadata.ratings.cleanliness || post.metadata.ratings.service || post.metadata.ratings.pricePerformance) && (
+                <View style={styles.ratingsContainer}>
+                  <Text style={styles.ratingsTitle}>📊 Detaylı Değerlendirme</Text>
+                  {post.metadata.ratings.cleanliness && (
+                    <View style={styles.ratingRow}>
+                      <Text style={styles.ratingLabel}>Temizlik</Text>
+                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.cleanliness)}{'☆'.repeat(5 - post.metadata.ratings.cleanliness)}</Text>
+                    </View>
+                  )}
+                  {post.metadata.ratings.service && (
+                    <View style={styles.ratingRow}>
+                      <Text style={styles.ratingLabel}>Hizmet</Text>
+                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.service)}{'☆'.repeat(5 - post.metadata.ratings.service)}</Text>
+                    </View>
+                  )}
+                  {post.metadata.ratings.pricePerformance && (
+                    <View style={styles.ratingRow}>
+                      <Text style={styles.ratingLabel}>Fiyat/Değer</Text>
+                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.pricePerformance)}{'☆'.repeat(5 - post.metadata.ratings.pricePerformance)}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Meal Type Display */}
+              {post.metadata?.mealType && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>🍽️ Yemek Türü</Text>
+                  <Text style={styles.infoValue}>{post.metadata.mealType}</Text>
+                </View>
+              )}
+
+              {/* Price Range Display */}
+              {post.metadata?.priceRange && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>💰 Fiyat Aralığı</Text>
+                  <Text style={styles.infoValue}>{post.metadata.priceRange}</Text>
+                </View>
+              )}
+
+              {/* Amenities Display */}
+              {post.metadata?.amenities && Array.isArray(post.metadata.amenities) && post.metadata.amenities.length > 0 && (
+                <View style={styles.amenitiesContainer}>
+                  <Text style={styles.amenitiesTitle}>🏢 Olanaklar</Text>
+                  <View style={styles.amenitiesList}>
+                    {post.metadata.amenities.map((amenity, index) => (
+                      <View key={index} style={styles.amenityItem}>
+                        <Text style={styles.amenityText}>✓ {amenity}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Hours Display */}
+              {post.metadata?.hours && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>⏰ Açılış Saatleri</Text>
+                  <Text style={styles.infoValue}>{post.metadata.hours}</Text>
+                </View>
+              )}
+
               {/* Locations Display */}
               {post.locations && post.locations.length > 0 && (
                 <View style={styles.locationsContainer}>
@@ -522,5 +599,109 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 26,
     fontWeight: '600',
+  },
+  featuresContainer: {
+    gap: 8,
+    marginBottom: 14,
+  },
+  featuresTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0d9488',
+    marginBottom: 4,
+  },
+  featureChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  featureChip: {
+    backgroundColor: '#d1fae5',
+    borderColor: '#10b981',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  featureChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#065f46',
+  },
+  ratingsContainer: {
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    padding: 14,
+    gap: 12,
+    marginBottom: 14,
+  },
+  ratingsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  ratingLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  ratingValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#f59e0b',
+    letterSpacing: 2,
+  },
+  infoCard: {
+    borderRadius: 16,
+    backgroundColor: '#e0e7ff',
+    borderWidth: 1,
+    borderColor: '#818cf8',
+    padding: 14,
+    gap: 6,
+    marginBottom: 14,
+  },
+  infoLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#3730a3',
+  },
+  infoValue: {
+    fontSize: 13,
+    color: '#4f46e5',
+    fontWeight: '500',
+  },
+  amenitiesContainer: {
+    gap: 8,
+    marginBottom: 14,
+  },
+  amenitiesTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0d9488',
+    marginBottom: 4,
+  },
+  amenitiesList: {
+    gap: 6,
+  },
+  amenityItem: {
+    borderRadius: 8,
+    backgroundColor: '#f0fdf9',
+    borderLeftWidth: 3,
+    borderLeftColor: '#10b981',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  amenityText: {
+    fontSize: 13,
+    color: '#065f46',
+    fontWeight: '500',
   },
 })

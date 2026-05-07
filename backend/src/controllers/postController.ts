@@ -81,7 +81,14 @@ export class PostController {
           .status(400)
           .json({ error: 'User not found' });
       }
-      res.status(500).json({ error: 'Internal server error' });
+      // Return detailed Prisma error for debugging
+      if (error.code && error.code.startsWith('P')) {
+        return res.status(400).json({
+          error: `Database error: ${error.message}`,
+          code: error.code,
+        });
+      }
+      res.status(500).json({ error: error.message || 'Internal server error' });
     }
   }
 

@@ -1,18 +1,28 @@
-import { Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View, ScrollView, Alert, ActivityIndicator } from 'react-native'
+import { Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View, ScrollView, Alert, ActivityIndicator, Modal } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import Toast from 'react-native-toast-message'
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
 import { useAuth } from '@/src/hooks/useAuth'
 import MultiLocationPicker from './components/MultiLocationPicker'
 import CategorySelector from './components/CategorySelector'
 import ImageUploader from './components/ImageUploader'
+import ProgressStepper from './components/ProgressStepper'
+import DynamicFeatureChips from './components/DynamicFeatureChips'
+import MultiCriteriaRatingSliders from './components/MultiCriteriaRatingSliders'
 import { PostService, PostCategory, LocationData } from '@/src/api/postService'
 
 interface UploadedImage {
   url: string
   publicId: string
+}
+
+interface MultiCriteriaRatingValues {
+  cleanliness: number
+  service: number
+  pricePerformance: number
 }
 
 export default function CreatePostScreen() {
@@ -21,15 +31,25 @@ export default function CreatePostScreen() {
   const { user, token } = useAuth()
   const isWideWeb = Platform.OS === 'web' && width >= 980
 
+  // Step navigation state
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
+
   // Form state
   const [category, setCategory] = useState<PostCategory | null>(null)
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [rating, setRating] = useState<number | undefined>(undefined)
+  const [ratings, setRatings] = useState<MultiCriteriaRatingValues>({
+    cleanliness: 3,
+    service: 3,
+    pricePerformance: 3,
+  })
   const [selectedLocations, setSelectedLocations] = useState<LocationData[]>([])
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [startDate, setStartDate] = useState<Date | null>(null)
+  const [endDate, setEndDate] = useState<Date | null>(null)
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false)
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false)
   const [mealType, setMealType] = useState('')
   const [priceRange, setPriceRange] = useState('')
   const [amenities, setAmenities] = useState('')
@@ -44,12 +64,75 @@ export default function CreatePostScreen() {
   const textAreaStyle = StyleSheet.flatten([styles.textArea, isWideWeb && styles.textAreaWide])
   const primaryButtonStyle = StyleSheet.flatten([styles.primaryButton, isSubmitting && styles.primaryButtonDisabled])
 
-  // Validate form
+  // Step navigation helpers
+  const canProceedToNext = (): boolean => {
+    setFormError('')
+
+    if (currentStep === 1) {
+      if (!category) {
+        setFormError('Please select a category')
+        return false
+      }
+      return true
+    }
+
+    if (currentStep === 2) {
+      if (!description.trim()) {
+        setFormError('Description is required')
+        return false
+      }
+      if (description.trim().length < 10) {
+        setFormError('Description must be at least 10 characters')
+        return false
+      }
+      if (selectedLocations.length === 0) {
+        setFormError('Please add at least one location')
+        return false
+      }
+      return true
+    }
+
+    if (currentStep === 3) {
+      if (uploadedImages.length === 0) {
+        setFormError('Please upload at least one image')
+        return false
+      }
+      return true
+    }
+
+    return true
+  }
+
+  const goNextStep = () => {
+    if (canProceedToNext() && currentStep < 3) {
+      setCurrentStep((currentStep + 1) as 1 | 2 | 3)
+      setFormError('')
+    }
+  }
+
+  const goPreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep((currentStep - 1) as 1 | 2 | 3)
+      setFormError('')
+    }
+  }
+
+  // Validate entire form before submission
   const validateForm = (): boolean => {
     setFormError('')
-    
+
     if (!category) {
       setFormError('Please select a category')
+      return false
+    }
+
+    if (!title.trim()) {
+      setFormError('Title is required')
+      return false
+    }
+
+    if (title.trim().length < 3) {
+      setFormError('Title must be at least 3 characters')
       return false
     }
 
@@ -73,11 +156,6 @@ export default function CreatePostScreen() {
       return false
     }
 
-    if (rating == null) {
-      setFormError('Please select a rating')
-      return false
-    }
-
     return true
   }
 
@@ -96,7 +174,10 @@ export default function CreatePostScreen() {
 
     try {
       // Build metadata based on category
-      const metadata: any = {}
+      const metadata: any = {
+        features: selectedFeatures,
+        ratings,
+      }
       
       if (category === 'FOOD_PLACE') {
         if (mealType) metadata.mealType = mealType
@@ -117,13 +198,12 @@ export default function CreatePostScreen() {
       const postData = {
         userId: user.id,
         category: category!,
-        title: title || undefined,
+        title: title.trim(),
         description,
-        rating: rating ?? undefined,
         imageUrls: uploadedImages.map((img) => img.url),
         locations: selectedLocations,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
+        startDate: startDate ? startDate.toISOString() : undefined,
+        endDate: endDate ? endDate.toISOString() : undefined,
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       }
 
@@ -161,23 +241,38 @@ export default function CreatePostScreen() {
 
   const ratingOptions = [1, 2, 3, 4, 5]
 
+  const handleStartDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowStartDatePicker(false)
+    }
+    if (event.type === 'set' && selectedDate) {
+      setStartDate(selectedDate)
+    }
+  }
+
+  const handleEndDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowEndDatePicker(false)
+    }
+    if (event.type === 'set' && selectedDate) {
+      setEndDate(selectedDate)
+    }
+  }
+
+  const formatDateForDisplay = (date: Date | null) => {
+    if (!date) return 'Select date'
+    return date.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })
+  }
+
+
+
   return (
     <View style={styles.screen}>
       <AppHeader />
+      <ProgressStepper currentStep={currentStep} />
+      
       <PageShell>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.titleArea}>
-            <View style={styles.titleHeader}>
-              <View>
-                <Text style={styles.title}>✍️ Yeni Paylaşım</Text>
-                <Text style={styles.subtitle}>Deneyimlerini kategorize ederek ve fotoğraflarla anlatarak başka seyahatseverleri ilham ver</Text>
-              </View>
-              <Pressable style={styles.exitButton} onPress={() => router.back()} disabled={isSubmitting}>
-                <Text style={styles.exitButtonText}>✕</Text>
-              </Pressable>
-            </View>
-          </View>
-
           {/* Error Message */}
           {formError ? (
             <View style={styles.errorContainer}>
@@ -185,240 +280,388 @@ export default function CreatePostScreen() {
             </View>
           ) : null}
 
-          <View style={layoutStyle}>
-            {/* Category Selector */}
-            <View style={cardStyle}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.sectionEmoji}>📂</Text>
-                <Text style={styles.sectionTitle}>Kategori Seç</Text>
+          {/* STEP 1: Category & Features */}
+          {currentStep === 1 && (
+            <View style={styles.stepContainer}>
+              <View style={styles.titleArea}>
+                <Text style={styles.stepTitle}>✨ Select Category & Features</Text>
+                <Text style={styles.stepSubtitle}>Choose what you're sharing and highlight key features</Text>
               </View>
-              <CategorySelector selected={category} onSelect={setCategory} />
-            </View>
 
-            {/* Multi-Location Picker */}
-            <View style={cardStyle}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.sectionEmoji}>📍</Text>
-                <Text style={styles.sectionTitle}>Konumlar</Text>
+              {/* Category Selector */}
+              <View style={cardStyle}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.sectionEmoji}>📂</Text>
+                  <Text style={styles.sectionTitle}>Category</Text>
+                </View>
+                <CategorySelector selected={category} onSelect={setCategory} />
               </View>
-              <MultiLocationPicker
-                onLocationsSelect={setSelectedLocations}
-                maxLocations={10}
-              />
-              {selectedLocations.length > 0 && (
-                <View style={styles.selectedLocationBadge}>
-                  <Text style={styles.selectedLocationText}>✓ {selectedLocations.length} konum seçildi</Text>
+
+              {/* Dynamic Feature Chips */}
+              {category && (
+                <View style={cardStyle}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.sectionEmoji}>⭐</Text>
+                    <Text style={styles.sectionTitle}>Features</Text>
+                  </View>
+                  <DynamicFeatureChips
+                    category={category}
+                    selectedFeatures={selectedFeatures}
+                    onFeaturesSelect={setSelectedFeatures}
+                  />
                 </View>
               )}
             </View>
+          )}
 
-            {/* Trip Dates (for TRIP category) */}
-            {category === 'TRIP' && (
-              <View style={cardStyle}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.sectionEmoji}>📅</Text>
-                  <Text style={styles.sectionTitle}>Seyahat Tarihleri</Text>
-                </View>
-                <View style={styles.dateRow}>
-                  <TextInput
-                    style={[styles.dateInput, { flex: 1 }]}
-                    placeholder="Başlangıç (YYYY-MM-DD)"
-                    placeholderTextColor="#9ca3af"
-                    value={startDate}
-                    onChangeText={setStartDate}
-                    editable={!isSubmitting}
-                  />
-                  <Text style={styles.dateSeperator}>-</Text>
-                  <TextInput
-                    style={[styles.dateInput, { flex: 1 }]}
-                    placeholder="Bitiş (YYYY-MM-DD)"
-                    placeholderTextColor="#9ca3af"
-                    value={endDate}
-                    onChangeText={setEndDate}
-                    editable={!isSubmitting}
-                  />
-                </View>
+          {/* STEP 2: Details & Location */}
+          {currentStep === 2 && (
+            <View style={styles.stepContainer}>
+              <View style={styles.titleArea}>
+                <Text style={styles.stepTitle}>📝 Details & Location</Text>
+                <Text style={styles.stepSubtitle}>Tell us more about your experience</Text>
               </View>
-            )}
 
-            {/* Category-Specific Fields */}
-            {category === 'FOOD_PLACE' && (
+              {/* Description */}
               <View style={cardStyle}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.sectionEmoji}>🍽️</Text>
-                  <Text style={styles.sectionTitle}>Restoran Bilgileri</Text>
+                  <Text style={styles.sectionEmoji}>✏️</Text>
+                  <Text style={styles.sectionTitle}>Title *</Text>
                 </View>
                 <TextInput
-                  style={styles.input}
-                  placeholder="Yemek Türü (Örn: İtalyan, Türk, ...)"
+                  style={styles.titleInput}
+                  placeholder="Give your post a title..."
                   placeholderTextColor="#9ca3af"
-                  value={mealType}
-                  onChangeText={setMealType}
-                  editable={!isSubmitting}
-                />
-                <TextInput
-                  style={[styles.input, { marginTop: 8 }]}
-                  placeholder="Fiyat Aralığı (Örn: €€€, €€€€, ...)"
-                  placeholderTextColor="#9ca3af"
-                  value={priceRange}
-                  onChangeText={setPriceRange}
+                  value={title}
+                  onChangeText={setTitle}
                   editable={!isSubmitting}
                 />
               </View>
-            )}
 
-            {category === 'HOTEL' && (
               <View style={cardStyle}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.sectionEmoji}>🏨</Text>
-                  <Text style={styles.sectionTitle}>Otel Bilgileri</Text>
+                  <Text style={styles.sectionEmoji}>📝</Text>
+                  <Text style={styles.sectionTitle}>Description *</Text>
                 </View>
                 <TextInput
-                  style={styles.input}
-                  placeholder="Fiyat Aralığı (Örn: €€€, €€€€, ...)"
+                  style={textAreaStyle}
+                  placeholder="Describe your experience in detail..."
                   placeholderTextColor="#9ca3af"
-                  value={priceRange}
-                  onChangeText={setPriceRange}
-                  editable={!isSubmitting}
-                />
-                <TextInput
-                  style={[styles.input, { marginTop: 8 }]}
-                  placeholder="Olanaklar (virgülle ayrılmış, örn: WiFi, Yüzme Havuzu)"
-                  placeholderTextColor="#9ca3af"
-                  value={amenities}
-                  onChangeText={setAmenities}
-                  editable={!isSubmitting}
                   multiline
-                />
-              </View>
-            )}
-
-            {category === 'ATTRACTION' && (
-              <View style={cardStyle}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.sectionEmoji}>🏛️</Text>
-                  <Text style={styles.sectionTitle}>Sehenlik Bilgileri</Text>
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Açılış Saatleri (Örn: 09:00-18:00)"
-                  placeholderTextColor="#9ca3af"
-                  value={hours}
-                  onChangeText={setHours}
+                  textAlignVertical="top"
+                  value={description}
+                  onChangeText={setDescription}
                   editable={!isSubmitting}
                 />
               </View>
+
+              {/* Location */}
+              <View style={cardStyle}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.sectionEmoji}>📍</Text>
+                  <Text style={styles.sectionTitle}>Locations *</Text>
+                </View>
+                <MultiLocationPicker
+                  onLocationsSelect={setSelectedLocations}
+                  maxLocations={10}
+                />
+                {selectedLocations.length > 0 && (
+                  <View style={styles.selectedLocationBadge}>
+                    <Text style={styles.selectedLocationText}>✓ {selectedLocations.length} location(s) selected</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Trip Dates (for TRIP category) */}
+              {category === 'TRIP' && (
+                <View style={cardStyle}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.sectionEmoji}>📅</Text>
+                    <Text style={styles.sectionTitle}>Travel Dates (Optional)</Text>
+                  </View>
+                  <Text style={styles.dateHint}>Select at least one date or leave empty</Text>
+                  
+                  {/* Start Date Picker */}
+                  <View style={styles.datePickerContainer}>
+                    <Pressable 
+                      style={styles.dateButton}
+                      onPress={() => setShowStartDatePicker(true)}
+                    >
+                      <Text style={styles.dateButtonEmoji}>📍</Text>
+                      <View style={styles.dateButtonContent}>
+                        <Text style={styles.dateButtonLabel}>Start Date</Text>
+                        <Text style={[styles.dateButtonValue, !startDate && styles.dateButtonValueEmpty]}>
+                          {formatDateForDisplay(startDate)}
+                        </Text>
+                      </View>
+                      <Text style={styles.dateButtonChevron}>›</Text>
+                    </Pressable>
+                    {startDate && (
+                      <Pressable 
+                        style={styles.clearButton}
+                        onPress={() => setStartDate(null)}
+                      >
+                        <Text style={styles.clearButtonText}>✕</Text>
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {/* End Date Picker */}
+                  <View style={[styles.datePickerContainer, { marginTop: 10 }]}>
+                    <Pressable 
+                      style={styles.dateButton}
+                      onPress={() => setShowEndDatePicker(true)}
+                    >
+                      <Text style={styles.dateButtonEmoji}>🏁</Text>
+                      <View style={styles.dateButtonContent}>
+                        <Text style={styles.dateButtonLabel}>End Date</Text>
+                        <Text style={[styles.dateButtonValue, !endDate && styles.dateButtonValueEmpty]}>
+                          {formatDateForDisplay(endDate)}
+                        </Text>
+                      </View>
+                      <Text style={styles.dateButtonChevron}>›</Text>
+                    </Pressable>
+                    {endDate && (
+                      <Pressable 
+                        style={styles.clearButton}
+                        onPress={() => setEndDate(null)}
+                      >
+                        <Text style={styles.clearButtonText}>✕</Text>
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {/* Date Pickers */}
+                  {showStartDatePicker && (
+                    <DateTimePicker
+                      value={startDate || new Date()}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={handleStartDateChange}
+                    />
+                  )}
+
+                  {showEndDatePicker && (
+                    <DateTimePicker
+                      value={endDate || new Date()}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={handleEndDateChange}
+                    />
+                  )}
+                </View>
+              )}
+
+              {/* Category-Specific Fields */}
+              {category === 'FOOD_PLACE' && (
+                <View style={cardStyle}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.sectionEmoji}>🍽️</Text>
+                    <Text style={styles.sectionTitle}>Restaurant Info</Text>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Cuisine type (e.g., Italian, Turkish...)"
+                    placeholderTextColor="#9ca3af"
+                    value={mealType}
+                    onChangeText={setMealType}
+                    editable={!isSubmitting}
+                  />
+                  <TextInput
+                    style={[styles.input, { marginTop: 8 }]}
+                    placeholder="Price range (e.g., €€€, $$$$...)"
+                    placeholderTextColor="#9ca3af"
+                    value={priceRange}
+                    onChangeText={setPriceRange}
+                    editable={!isSubmitting}
+                  />
+                </View>
+              )}
+
+              {category === 'HOTEL' && (
+                <View style={cardStyle}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.sectionEmoji}>🏨</Text>
+                    <Text style={styles.sectionTitle}>Hotel Info</Text>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Price range (e.g., €€€, $$$$...)"
+                    placeholderTextColor="#9ca3af"
+                    value={priceRange}
+                    onChangeText={setPriceRange}
+                    editable={!isSubmitting}
+                  />
+                  <TextInput
+                    style={[styles.input, { marginTop: 8 }]}
+                    placeholder="Amenities (comma-separated)"
+                    placeholderTextColor="#9ca3af"
+                    value={amenities}
+                    onChangeText={setAmenities}
+                    editable={!isSubmitting}
+                    multiline
+                  />
+                </View>
+              )}
+
+              {category === 'ATTRACTION' && (
+                <View style={cardStyle}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.sectionEmoji}>🏛️</Text>
+                    <Text style={styles.sectionTitle}>Attraction Info</Text>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Opening hours (e.g., 09:00-18:00)"
+                    placeholderTextColor="#9ca3af"
+                    value={hours}
+                    onChangeText={setHours}
+                    editable={!isSubmitting}
+                  />
+                </View>
+              )}
+
+              {/* Multi-Criteria Rating Sliders */}
+              <View style={cardStyle}>
+                <MultiCriteriaRatingSliders
+                  onRatingsChange={setRatings}
+                  initialValues={ratings}
+                />
+              </View>
+            </View>
+          )}
+
+          {/* STEP 3: Media & Review */}
+          {currentStep === 3 && (
+            <View style={styles.stepContainer}>
+              <View style={styles.titleArea}>
+                <Text style={styles.stepTitle}>📸 Media & Review</Text>
+                <Text style={styles.stepSubtitle}>Upload images and review your post</Text>
+              </View>
+
+              {/* Image Uploader */}
+              <View style={cardStyle}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.sectionEmoji}>📸</Text>
+                  <Text style={styles.sectionTitle}>Images *</Text>
+                </View>
+                <ImageUploader
+                  onImagesUploaded={setUploadedImages}
+                  maxImages={10}
+                  token={token ?? undefined}
+                />
+                {uploadedImages.length > 0 && (
+                  <View style={styles.imageCountBadge}>
+                    <Text style={styles.imageCountText}>✓ {uploadedImages.length} image(s) uploaded</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Review Summary */}
+              <View style={cardStyle}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.sectionEmoji}>✅</Text>
+                  <Text style={styles.sectionTitle}>Review Your Post</Text>
+                </View>
+
+                {/* Category & Features Badge */}
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Category:</Text>
+                  <View style={styles.badgeContainer}>
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{category}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {selectedFeatures.length > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Features:</Text>
+                    <View style={styles.badgeContainer}>
+                      {selectedFeatures.map((feature) => (
+                        <View key={feature} style={styles.badge}>
+                          <Text style={styles.badgeText}>{feature}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Locations Badge */}
+                {selectedLocations.length > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Locations:</Text>
+                    <View style={styles.badgeContainer}>
+                      {selectedLocations.slice(0, 3).map((location) => (
+                        <View key={location.name} style={styles.badge}>
+                          <Text style={styles.badgeText}>{location.name}</Text>
+                        </View>
+                      ))}
+                      {selectedLocations.length > 3 && (
+                        <View style={styles.badge}>
+                          <Text style={styles.badgeText}>+{selectedLocations.length - 3}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+
+                {/* Ratings Badge */}
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Ratings:</Text>
+                  <View style={styles.badgeContainer}>
+                    <View style={styles.ratingBadge}>
+                      <Text style={styles.ratingBadgeEmoji}>✨</Text>
+                      <Text style={styles.ratingBadgeText}>{ratings.cleanliness}/5</Text>
+                    </View>
+                    <View style={styles.ratingBadge}>
+                      <Text style={styles.ratingBadgeEmoji}>👥</Text>
+                      <Text style={styles.ratingBadgeText}>{ratings.service}/5</Text>
+                    </View>
+                    <View style={styles.ratingBadge}>
+                      <Text style={styles.ratingBadgeEmoji}>💰</Text>
+                      <Text style={styles.ratingBadgeText}>{ratings.pricePerformance}/5</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Navigation Buttons */}
+          <View style={styles.navigationContainer}>
+            <Pressable
+              style={[styles.navButton, styles.navButtonSecondary, currentStep === 1 && styles.navButtonDisabled]}
+              onPress={goPreviousStep}
+              disabled={currentStep === 1 || isSubmitting}
+            >
+              <Text style={[styles.navButtonText, styles.navButtonSecondaryText]}>← Previous</Text>
+            </Pressable>
+
+            {currentStep < 3 ? (
+              <Pressable
+                style={[styles.navButton, styles.navButtonPrimary]}
+                onPress={goNextStep}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.navButtonText}>Next →</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                style={[styles.navButton, styles.navButtonSuccess, isSubmitting && styles.navButtonDisabled]}
+                onPress={handleCreatePost}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <ActivityIndicator color="#fff" size="small" />
+                    <Text style={styles.navButtonText}>Publishing...</Text>
+                  </>
+                ) : (
+                  <Text style={styles.navButtonText}>📤 Publish</Text>
+                )}
+              </Pressable>
             )}
-
-            {/* Image Uploader */}
-            <View style={cardStyle}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.sectionEmoji}>📸</Text>
-                <Text style={styles.sectionTitle}>Görseller</Text>
-              </View>
-              <ImageUploader
-                onImagesUploaded={setUploadedImages}
-                maxImages={10}
-                token={token ?? undefined}
-              />
-              {uploadedImages.length > 0 && (
-                <View style={styles.imageCountBadge}>
-                  <Text style={styles.imageCountText}>✓ {uploadedImages.length} resim yüklendi</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Rating Selector */}
-            <View style={cardStyle}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.sectionEmoji}>⭐</Text>
-                <Text style={styles.sectionTitle}>Puan Ver (1-5)</Text>
-              </View>
-              <View style={styles.ratingContainer}>
-                {ratingOptions.map((option) => {
-                  const ratingButtonStyle = StyleSheet.flatten([styles.ratingButton, rating === option && styles.ratingButtonActive])
-                  const ratingButtonTextStyle = StyleSheet.flatten([styles.ratingButtonText, rating === option && styles.ratingButtonTextActive])
-                  return (
-                  <Pressable
-                    key={option}
-                    style={ratingButtonStyle}
-                    onPress={() => setRating(option)}
-                    disabled={isSubmitting}
-                  >
-                    <Text style={ratingButtonTextStyle}>
-                      {option}
-                    </Text>
-                  </Pressable>
-                );
-                })}
-              </View>
-              {rating && (
-                <View style={styles.ratingBadge}>
-                  <Text style={styles.ratingBadgeText}>✓ Puan: {rating}/5</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Description Section */}
-            <View style={cardStyle}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.sectionEmoji}>✏️</Text>
-                <Text style={styles.sectionTitle}>Başlık (İsteğe bağlı)</Text>
-              </View>
-              <TextInput
-                style={styles.titleInput}
-                placeholder="Başlık gir..."
-                placeholderTextColor="#9ca3af"
-                value={title}
-                onChangeText={setTitle}
-                editable={!isSubmitting}
-              />
-
-              <View style={styles.cardHeader} >
-                <Text style={styles.sectionEmoji}>📝</Text>
-                <Text style={styles.sectionTitle}>Açıklama (Zorunlu)</Text>
-              </View>
-              <TextInput
-                style={textAreaStyle}
-                placeholder="Deneyimini detaylıca anlatarak başka seyahatseverleri ilham ver..."
-                placeholderTextColor="#9ca3af"
-                multiline
-                textAlignVertical="top"
-                value={description}
-                onChangeText={setDescription}
-                editable={!isSubmitting}
-              />
-            </View>
-          </View>
-
-          <View style={styles.footerActions}>
-            <Pressable
-              style={primaryButtonStyle}
-              onPress={handleCreatePost}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text style={styles.primaryButtonText}>Yükleniyor...</Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.primaryButtonEmoji}>📤</Text>
-                  <Text style={styles.primaryButtonText}>Paylaş</Text>
-                </>
-              )}
-            </Pressable>
-            <Pressable
-              style={styles.secondaryButton}
-              onPress={() => {
-                Alert.alert('Bilgi', 'Taslak kaydetme özelliği yakında gelecek')
-              }}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.secondaryButtonEmoji}>💾</Text>
-              <Text style={styles.secondaryButtonText}>Taslak Kaydet</Text>
-            </Pressable>
           </View>
         </ScrollView>
       </PageShell>
@@ -429,16 +672,32 @@ export default function CreatePostScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: '#f3f4f6',
+  },
+  stepContainer: {
+    marginBottom: 24,
   },
   titleArea: {
-    marginBottom: 20,
+    marginBottom: 24,
+    paddingHorizontal: 16,
   },
   titleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: 12,
+  },
+  stepTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0d9488',
+    marginBottom: 8,
+  },
+  stepSubtitle: {
+    fontSize: 14,
+    color: '#0f766e',
+    fontWeight: '500',
+    lineHeight: 20,
   },
   title: {
     fontSize: 28,
@@ -471,10 +730,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fee2e2',
     borderLeftWidth: 4,
     borderLeftColor: '#dc2626',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
     marginBottom: 16,
+    marginHorizontal: 16,
   },
   errorText: {
     fontSize: 13,
@@ -484,6 +744,7 @@ const styles = StyleSheet.create({
   layout: {
     flexDirection: 'column',
     gap: 16,
+    paddingHorizontal: 16,
   },
   layoutWide: {
     flexDirection: 'row',
@@ -492,11 +753,17 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    marginBottom: 0,
+    borderColor: '#e5e7eb',
+    marginBottom: 16,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   fullWidthCard: {
     width: '100%',
@@ -504,11 +771,11 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 16,
   },
   sectionEmoji: {
-    fontSize: 20,
+    fontSize: 22,
   },
   sectionTitle: {
     fontSize: 16,
@@ -516,30 +783,30 @@ const styles = StyleSheet.create({
     color: '#0f766e',
   },
   selectedLocationBadge: {
-    backgroundColor: '#d1fae5',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginTop: 8,
+    backgroundColor: '#e0f7f5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 12,
     alignSelf: 'flex-start',
   },
   selectedLocationText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#047857',
+    color: '#0d9488',
   },
   imageCountBadge: {
-    backgroundColor: '#d1fae5',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginTop: 8,
+    backgroundColor: '#e0f7f5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 12,
     alignSelf: 'flex-start',
   },
   imageCountText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#047857',
+    color: '#0d9488',
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -548,58 +815,62 @@ const styles = StyleSheet.create({
   },
   ratingButton: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#f0fdf9',
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#f9fafb',
     borderWidth: 2,
-    borderColor: '#ccf0e8',
+    borderColor: '#e5e7eb',
     alignItems: 'center',
   },
   ratingButtonActive: {
-    backgroundColor: '#d1fae5',
-    borderColor: '#10b981',
+    backgroundColor: '#e0f7f5',
+    borderColor: '#0d9488',
   },
   ratingButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0f766e',
+    color: '#6b7280',
   },
   ratingButtonTextActive: {
-    color: '#047857',
+    color: '#0d9488',
   },
   ratingBadge: {
-    backgroundColor: '#d1fae5',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    backgroundColor: '#e0f7f5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     alignSelf: 'flex-start',
   },
   ratingBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#047857',
+    color: '#0d9488',
+  },
+  ratingBadgeEmoji: {
+    fontSize: 14,
+    marginRight: 4,
   },
   titleInput: {
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
+    backgroundColor: '#f9fafb',
+    color: '#0f172a',
     marginBottom: 12,
   },
   textArea: {
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
-    minHeight: 120,
+    backgroundColor: '#f9fafb',
+    color: '#0f172a',
+    minHeight: 140,
     textAlignVertical: 'top',
   },
   textAreaWide: {
@@ -607,33 +878,71 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
+    backgroundColor: '#f9fafb',
+    color: '#0f172a',
   },
   dateRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
     alignItems: 'center',
   },
   dateInput: {
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
+    backgroundColor: '#f9fafb',
+    color: '#0f172a',
   },
   dateSeperator: {
     fontSize: 16,
     fontWeight: '700',
     color: '#0f766e',
+  },
+  navigationContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingBottom: 40,
+  },
+  navButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  navButtonPrimary: {
+    backgroundColor: '#0d9488',
+  },
+  navButtonSecondary: {
+    backgroundColor: '#e5e7eb',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  navButtonSecondaryText: {
+    color: '#374151',
+  },
+  navButtonSuccess: {
+    backgroundColor: '#10b981',
+  },
+  navButtonDisabled: {
+    opacity: 0.5,
+  },
+  navButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
   },
   primaryButton: {
     flex: 1,
@@ -680,6 +989,97 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 20,
+    paddingHorizontal: 16,
     paddingBottom: 20,
   },
+  summaryRow: {
+    marginBottom: 16,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  badge: {
+    backgroundColor: '#e0f7f5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0d9488',
+  },
+  dateHint: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontStyle: 'italic',
+    marginBottom: 12,
+  },
+  datePickerContainer: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  dateButton: {
+    backgroundColor: '#f0fdf9',
+    borderWidth: 2,
+    borderColor: '#0d9488',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dateButtonEmoji: {
+    fontSize: 20,
+  },
+  dateButtonContent: {
+    flex: 1,
+  },
+  dateButtonLabel: {
+    fontSize: 12,
+    color: '#0f766e',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  dateButtonValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0d9488',
+  },
+  dateButtonValueEmpty: {
+    color: '#9ca3af',
+    fontStyle: 'italic',
+  },
+  dateButtonChevron: {
+    fontSize: 20,
+    color: '#0d9488',
+    fontWeight: '300',
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fee2e2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: '#dc2626',
+    fontWeight: '700',
+    fontSize: 14,
+  },
 })
+

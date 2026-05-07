@@ -4,6 +4,9 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Create enum types
+CREATE TYPE "public"."PostCategory" AS ENUM ('TRIP', 'FOOD_PLACE', 'HOTEL', 'ATTRACTION');
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -37,7 +40,7 @@ CREATE TABLE IF NOT EXISTS locations (
 CREATE TABLE IF NOT EXISTS posts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    category VARCHAR(50) DEFAULT 'ATTRACTION',
+    category "public"."PostCategory" DEFAULT 'ATTRACTION',
     title VARCHAR(255),
     description TEXT NOT NULL,
     rating SMALLINT CHECK (rating >= 1 AND rating <= 5),

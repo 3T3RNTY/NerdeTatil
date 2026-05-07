@@ -39,6 +39,9 @@ services:
       CORS_ORIGIN: "*"
       JWT_SECRET: your_super_secret_jwt_key_change_in_production
       DATABASE_URL: postgresql://nerdetatil_user:nerdetatil_password@postgres:5432/nerdetatil_db
+      CLOUDINARY_CLOUD_NAME: diyrduzus
+      CLOUDINARY_API_KEY: 314912443481943
+      CLOUDINARY_API_SECRET: ug9k-Q1u0WnC8AvV9sM9qv7ywi0
     ports:
       - "5000:5000"
     networks:

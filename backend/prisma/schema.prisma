@@ -68,7 +68,7 @@ model Post {
   locationsData  Json          @map("locations_data") // Array of {id, name, address, city, country, latitude, longitude, visitDate?}
   startDate      DateTime?     @map("start_date") // For TRIP category: trip start date
   endDate        DateTime?     @map("end_date") // For TRIP category: trip end date
-  metadata       Json?         // Category-specific data: {mealType?, priceRange?, amenities?, etc}
+  metadata       Json?         // Category-specific data: {features?: string[], ratings?: {cleanliness: 1-5, service: 1-5, pricePerformance: 1-5}, mealType?, priceRange?, amenities?, hours?, ...}
   isPublic       Boolean       @default(true) @map("is_public")
   allowComments  Boolean       @default(true) @map("allow_comments")
   createdAt      DateTime      @default(now()) @map("created_at")

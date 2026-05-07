@@ -24,10 +24,19 @@ interface CreatePostInput {
   startDate?: string; // ISO date string for TRIP category
   endDate?: string; // ISO date string for TRIP category
   metadata?: {
+    // Feature selection and ratings (multi-criteria)
+    features?: string[]; // Selected feature chips (category-dependent)
+    ratings?: {
+      cleanliness?: number; // 1-5
+      service?: number; // 1-5
+      pricePerformance?: number; // 1-5
+    };
+    // Category-specific fields
     mealType?: string; // For FOOD_PLACE
     priceRange?: string; // For FOOD_PLACE, HOTEL
     amenities?: string[]; // For HOTEL
     hours?: string; // For ATTRACTION
+    // Allow any other custom fields
     [key: string]: any;
   };
 }
@@ -40,7 +49,21 @@ interface UpdatePostInput {
   locations?: LocationData[];
   startDate?: string;
   endDate?: string;
-  metadata?: Record<string, any>;
+  metadata?: {
+    // Feature selection and ratings (multi-criteria)
+    features?: string[]; // Selected feature chips (category-dependent)
+    ratings?: {
+      cleanliness?: number; // 1-5
+      service?: number; // 1-5
+      pricePerformance?: number; // 1-5
+    };
+    // Category-specific fields
+    mealType?: string;
+    priceRange?: string;
+    amenities?: string[];
+    hours?: string;
+    [key: string]: any;
+  };
 }
 
 export class PostService {
@@ -238,17 +261,75 @@ export class PostService {
       throw new Error('Missing required fields: userId, description, locations');
     }
 
+    // Validate description
+    if (typeof data.description !== 'string' || data.description.trim().length === 0) {
+      throw new Error('Description must be a non-empty string');
+    }
+
+    // Validate category
+    const validCategories = ['TRIP', 'FOOD_PLACE', 'HOTEL', 'ATTRACTION'];
+    if (!validCategories.includes(data.category)) {
+      throw new Error(`Invalid category. Must be one of: ${validCategories.join(', ')}`);
+    }
+
+    // Validate rating if provided
+    if (data.rating !== undefined && (typeof data.rating !== 'number' || data.rating < 1 || data.rating > 5)) {
+      throw new Error('Rating must be a number between 1 and 5');
+    }
+
+    // Validate imageUrls
+    if (!Array.isArray(data.imageUrls)) {
+      data.imageUrls = [];
+    }
+    if (!data.imageUrls.every((url) => typeof url === 'string')) {
+      throw new Error('All image URLs must be strings');
+    }
+
+    // Validate locations
+    if (!Array.isArray(data.locations)) {
+      throw new Error('Locations must be an array');
+    }
+    for (const loc of data.locations) {
+      if (!loc.name || typeof loc.name !== 'string') {
+        throw new Error('Each location must have a name');
+      }
+      if (loc.latitude !== undefined && typeof loc.latitude !== 'number') {
+        throw new Error('Location latitude must be a number');
+      }
+      if (loc.longitude !== undefined && typeof loc.longitude !== 'number') {
+        throw new Error('Location longitude must be a number');
+      }
+    }
+
+    // Validate and parse dates
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    if (data.startDate) {
+      startDate = new Date(data.startDate);
+      if (isNaN(startDate.getTime())) {
+        throw new Error('Invalid startDate format. Use ISO 8601 format (e.g., 2024-01-15T10:30:00Z)');
+      }
+    }
+
+    if (data.endDate) {
+      endDate = new Date(data.endDate);
+      if (isNaN(endDate.getTime())) {
+        throw new Error('Invalid endDate format. Use ISO 8601 format (e.g., 2024-01-15T10:30:00Z)');
+      }
+    }
+
     return prisma.post.create({
       data: {
         userId: data.userId,
         category: data.category,
         title: data.title,
-        description: data.description,
+        description: data.description.trim(),
         rating: data.rating,
         imageUrls: data.imageUrls || [],
         locationsData: data.locations as unknown as Prisma.InputJsonValue,
-        startDate: data.startDate ? new Date(data.startDate) : null,
-        endDate: data.endDate ? new Date(data.endDate) : null,
+        startDate,
+        endDate,
         metadata: data.metadata || {},
       },
       select: {

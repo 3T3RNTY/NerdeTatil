@@ -14,6 +14,14 @@ export interface LocationData {
 }
 
 export interface PostMetadata {
+  // Feature selection and ratings (multi-criteria)
+  features?: string[]; // Selected feature chips (category-dependent)
+  ratings?: {
+    cleanliness?: number; // 1-5
+    service?: number; // 1-5
+    pricePerformance?: number; // 1-5
+  };
+  // Category-specific fields
   mealType?: string;
   priceRange?: string;
   amenities?: string[];
