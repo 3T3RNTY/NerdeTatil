@@ -85,7 +85,7 @@ export default function CreatePostScreen() {
 
     if (currentStep === 1) {
       if (!category) {
-        setFormError('Please select a category')
+        setFormError('Lütfen bir kategori seçin')
         return false
       }
       return true
@@ -93,15 +93,15 @@ export default function CreatePostScreen() {
 
     if (currentStep === 2) {
       if (!description.trim()) {
-        setFormError('Description is required')
+        setFormError('Açıklama gereklidir')
         return false
       }
       if (description.trim().length < 10) {
-        setFormError('Description must be at least 10 characters')
+        setFormError('Açıklama en az 10 karakter olmalı')
         return false
       }
       if (selectedLocations.length === 0) {
-        setFormError('Please add at least one location')
+        setFormError('Lütfen en az bir konum ekleyin')
         return false
       }
       return true
@@ -109,7 +109,7 @@ export default function CreatePostScreen() {
 
     if (currentStep === 3) {
       if (uploadedImages.length === 0) {
-        setFormError('Please upload at least one image')
+        setFormError('Lütfen en az bir görüntü yükleyin')
         return false
       }
       return true
@@ -137,37 +137,37 @@ export default function CreatePostScreen() {
     setFormError('')
 
     if (!category) {
-      setFormError('Please select a category')
+      setFormError('Lütfen bir kategori seçin')
       return false
     }
 
     if (!title.trim()) {
-      setFormError('Title is required')
+      setFormError('Başlık gereklidir')
       return false
     }
 
     if (title.trim().length < 3) {
-      setFormError('Title must be at least 3 characters')
+      setFormError('Başlık en az 3 karakter olmalı')
       return false
     }
 
     if (!description.trim()) {
-      setFormError('Description is required')
+      setFormError('Açıklama gereklidir')
       return false
     }
 
     if (description.trim().length < 10) {
-      setFormError('Description must be at least 10 characters')
+      setFormError('Açıklama en az 10 karakter olmalı')
       return false
     }
 
     if (selectedLocations.length === 0) {
-      setFormError('Please add at least one location')
+      setFormError('Lütfen en az bir konum ekleyin')
       return false
     }
 
     if (uploadedImages.length === 0) {
-      setFormError('Please upload at least one image')
+      setFormError('Lütfen en az bir görüntü yükleyin')
       return false
     }
 
@@ -181,7 +181,7 @@ export default function CreatePostScreen() {
     }
 
     if (!user?.id || !token) {
-      setFormError('Not authenticated')
+      setFormError('Kimlik doğrulaması yapılmamış')
       return
     }
 
@@ -246,9 +246,9 @@ export default function CreatePostScreen() {
         router.push('/profil')
       }, 500)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create post'
+      const errorMessage = error instanceof Error ? error.message : 'Paylaşım oluşturulamadı'
       setFormError(errorMessage)
-      Alert.alert('Error', errorMessage)
+      Alert.alert('Hata', errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -293,7 +293,7 @@ export default function CreatePostScreen() {
   }
 
   const formatDateForDisplay = (date: Date | null) => {
-    if (!date) return 'Select date'
+    if (!date) return 'Tarih seçin'
     return date.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })
   }
 
@@ -317,15 +317,15 @@ export default function CreatePostScreen() {
           {currentStep === 1 && (
             <View style={styles.stepContainer}>
               <View style={styles.titleArea}>
-                <Text style={styles.stepTitle}>✨ Select Category & Features</Text>
-                <Text style={styles.stepSubtitle}>Choose what you're sharing and highlight key features</Text>
+                <Text style={styles.stepTitle}>✨ Kategori ve Özellikleri Seçin</Text>
+                <Text style={styles.stepSubtitle}>Paylaştığınız içeriği seçin ve önemli özellikleri vurgulayın</Text>
               </View>
 
               {/* Category Selector */}
               <View style={cardStyle}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.sectionEmoji}>📂</Text>
-                  <Text style={styles.sectionTitle}>Category</Text>
+                  <Text style={styles.sectionTitle}>Kategori</Text>
                 </View>
                 <CategorySelector selected={category} onSelect={setCategory} />
               </View>
@@ -335,7 +335,7 @@ export default function CreatePostScreen() {
                 <View style={cardStyle}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.sectionEmoji}>⭐</Text>
-                    <Text style={styles.sectionTitle}>Features</Text>
+                    <Text style={styles.sectionTitle}>Özellikler</Text>
                   </View>
                   <DynamicFeatureChips
                     category={category}
@@ -351,19 +351,19 @@ export default function CreatePostScreen() {
           {currentStep === 2 && (
             <View style={styles.stepContainer}>
               <View style={styles.titleArea}>
-                <Text style={styles.stepTitle}>📝 Details & Location</Text>
-                <Text style={styles.stepSubtitle}>Tell us more about your experience</Text>
+                <Text style={styles.stepTitle}>📝 Detaylar ve Konum</Text>
+                <Text style={styles.stepSubtitle}>Deneyiminiz hakkında bize daha fazla bilgi verin</Text>
               </View>
 
               {/* Description */}
               <View style={cardStyle}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.sectionEmoji}>✏️</Text>
-                  <Text style={styles.sectionTitle}>Title *</Text>
+                  <Text style={styles.sectionTitle}>Başlık *</Text>
                 </View>
                 <TextInput
                   style={styles.titleInput}
-                  placeholder="Give your post a title..."
+                  placeholder="Paylaşımınıza bir başlık verin..."
                   placeholderTextColor="#9ca3af"
                   value={title}
                   onChangeText={setTitle}
@@ -374,11 +374,11 @@ export default function CreatePostScreen() {
               <View style={cardStyle}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.sectionEmoji}>📝</Text>
-                  <Text style={styles.sectionTitle}>Description *</Text>
+                  <Text style={styles.sectionTitle}>Açıklama *</Text>
                 </View>
                 <TextInput
                   style={textAreaStyle}
-                  placeholder="Describe your experience in detail..."
+                  placeholder="Deneyiminizi ayrıntılı olarak açıklayın..."
                   placeholderTextColor="#9ca3af"
                   multiline
                   textAlignVertical="top"
@@ -392,7 +392,7 @@ export default function CreatePostScreen() {
               <View style={cardStyle}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.sectionEmoji}>📍</Text>
-                  <Text style={styles.sectionTitle}>Locations *</Text>
+                  <Text style={styles.sectionTitle}>Konumlar *</Text>
                 </View>
                 <MultiLocationPicker
                   onLocationsSelect={setSelectedLocations}
@@ -400,7 +400,7 @@ export default function CreatePostScreen() {
                 />
                 {selectedLocations.length > 0 && (
                   <View style={styles.selectedLocationBadge}>
-                    <Text style={styles.selectedLocationText}>✓ {selectedLocations.length} location(s) selected</Text>
+                    <Text style={styles.selectedLocationText}>✓ {selectedLocations.length} konum seçildi</Text>
                   </View>
                 )}
               </View>
@@ -410,16 +410,16 @@ export default function CreatePostScreen() {
                 <View style={cardStyle}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.sectionEmoji}>📅</Text>
-                    <Text style={styles.sectionTitle}>Travel Dates (Optional)</Text>
+                    <Text style={styles.sectionTitle}>Seyahat Tarihleri (İsteğe Bağlı)</Text>
                   </View>
-                  <Text style={styles.dateHint}>Select at least one date or leave empty</Text>
+                  <Text style={styles.dateHint}>En az bir tarih seçin veya boş bırakın</Text>
                   
                   {Platform.OS === 'web' ? (
                     /* Web: Use calendar date pickers */
                     <>
                       {/* Start Date Web Picker */}
                       <View style={styles.dateInputRow}>
-                        <Text style={styles.dateWebLabel}>📍 Start Date</Text>
+                        <Text style={styles.dateWebLabel}>📍 Başlangıç Tarihi</Text>
                         <Pressable
                           style={styles.webDateButton}
                           onPress={() => setShowWebStartCalendar(!showWebStartCalendar)}
@@ -444,7 +444,7 @@ export default function CreatePostScreen() {
 
                       {/* End Date Web Picker */}
                       <View style={styles.dateInputRow}>
-                        <Text style={styles.dateWebLabel}>🏁 End Date</Text>
+                        <Text style={styles.dateWebLabel}>🏁 Bitiş Tarihi</Text>
                         <Pressable
                           style={styles.webDateButton}
                           onPress={() => setShowWebEndCalendar(!showWebEndCalendar)}
@@ -478,7 +478,7 @@ export default function CreatePostScreen() {
                         >
                           <Text style={styles.dateButtonEmoji}>📍</Text>
                           <View style={styles.dateButtonContent}>
-                            <Text style={styles.dateButtonLabel}>Start Date</Text>
+                            <Text style={styles.dateButtonLabel}>Başlangıç Tarihi</Text>
                             <Text style={[styles.dateButtonValue, !startDate && styles.dateButtonValueEmpty]}>
                               {formatDateForDisplay(startDate)}
                             </Text>
@@ -503,7 +503,7 @@ export default function CreatePostScreen() {
                         >
                           <Text style={styles.dateButtonEmoji}>🏁</Text>
                           <View style={styles.dateButtonContent}>
-                            <Text style={styles.dateButtonLabel}>End Date</Text>
+                            <Text style={styles.dateButtonLabel}>Bitiş Tarihi</Text>
                             <Text style={[styles.dateButtonValue, !endDate && styles.dateButtonValueEmpty]}>
                               {formatDateForDisplay(endDate)}
                             </Text>
@@ -535,7 +535,7 @@ export default function CreatePostScreen() {
                               style={styles.datePickerConfirmButton}
                               onPress={() => setShowStartDatePicker(false)}
                             >
-                              <Text style={styles.datePickerConfirmText}>Done</Text>
+                              <Text style={styles.datePickerConfirmText}>Tamam</Text>
                             </Pressable>
                           )}
                         </>
@@ -555,7 +555,7 @@ export default function CreatePostScreen() {
                               style={styles.datePickerConfirmButton}
                               onPress={() => setShowEndDatePicker(false)}
                             >
-                              <Text style={styles.datePickerConfirmText}>Done</Text>
+                              <Text style={styles.datePickerConfirmText}>Tamam</Text>
                             </Pressable>
                           )}
                         </>
@@ -570,11 +570,11 @@ export default function CreatePostScreen() {
                 <View style={cardStyle}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.sectionEmoji}>🍽️</Text>
-                    <Text style={styles.sectionTitle}>Restaurant Info</Text>
+                    <Text style={styles.sectionTitle}>Restoran Bilgileri</Text>
                   </View>
                   <TextInput
                     style={styles.input}
-                    placeholder="Cuisine type (e.g., Italian, Turkish...)"
+                    placeholder="Mutfak türü (örn. İtalyan, Türk...)"
                     placeholderTextColor="#9ca3af"
                     value={mealType}
                     onChangeText={setMealType}
@@ -582,7 +582,7 @@ export default function CreatePostScreen() {
                   />
                   <TextInput
                     style={[styles.input, { marginTop: 8 }]}
-                    placeholder="Price range (e.g., €€€, $$$$...)"
+                    placeholder="Fiyat aralığı (örn. €€€, $$$$...)"
                     placeholderTextColor="#9ca3af"
                     value={priceRange}
                     onChangeText={setPriceRange}
@@ -595,11 +595,11 @@ export default function CreatePostScreen() {
                 <View style={cardStyle}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.sectionEmoji}>🏨</Text>
-                    <Text style={styles.sectionTitle}>Hotel Info</Text>
+                    <Text style={styles.sectionTitle}>Otel Bilgileri</Text>
                   </View>
                   <TextInput
                     style={styles.input}
-                    placeholder="Price range (e.g., €€€, $$$$...)"
+                    placeholder="Fiyat aralığı (örn. €€€, $$$$...)"
                     placeholderTextColor="#9ca3af"
                     value={priceRange}
                     onChangeText={setPriceRange}
@@ -607,7 +607,7 @@ export default function CreatePostScreen() {
                   />
                   <TextInput
                     style={[styles.input, { marginTop: 8 }]}
-                    placeholder="Amenities (comma-separated)"
+                    placeholder="Tesisler (virgülle ayrılmış)"
                     placeholderTextColor="#9ca3af"
                     value={amenities}
                     onChangeText={setAmenities}
@@ -621,11 +621,11 @@ export default function CreatePostScreen() {
                 <View style={cardStyle}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.sectionEmoji}>🏛️</Text>
-                    <Text style={styles.sectionTitle}>Attraction Info</Text>
+                    <Text style={styles.sectionTitle}>Mekan Bilgileri</Text>
                   </View>
                   <TextInput
                     style={styles.input}
-                    placeholder="Opening hours (e.g., 09:00-18:00)"
+                    placeholder="Açılış saatleri (örn. 09:00-18:00)"
                     placeholderTextColor="#9ca3af"
                     value={hours}
                     onChangeText={setHours}
@@ -648,15 +648,15 @@ export default function CreatePostScreen() {
           {currentStep === 3 && (
             <View style={styles.stepContainer}>
               <View style={styles.titleArea}>
-                <Text style={styles.stepTitle}>📸 Media & Review</Text>
-                <Text style={styles.stepSubtitle}>Upload images and review your post</Text>
+                <Text style={styles.stepTitle}>📸 Medya ve İnceleme</Text>
+                <Text style={styles.stepSubtitle}>Görüntüleri yükleyin ve paylaşımınızı gözden geçirin</Text>
               </View>
 
               {/* Image Uploader */}
               <View style={cardStyle}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.sectionEmoji}>📸</Text>
-                  <Text style={styles.sectionTitle}>Images *</Text>
+                  <Text style={styles.sectionTitle}>Görüntüler *</Text>
                 </View>
                 <ImageUploader
                   onImagesUploaded={setUploadedImages}
@@ -665,7 +665,7 @@ export default function CreatePostScreen() {
                 />
                 {uploadedImages.length > 0 && (
                   <View style={styles.imageCountBadge}>
-                    <Text style={styles.imageCountText}>✓ {uploadedImages.length} image(s) uploaded</Text>
+                    <Text style={styles.imageCountText}>✓ {uploadedImages.length} görüntü yüklendi</Text>
                   </View>
                 )}
               </View>
@@ -674,7 +674,7 @@ export default function CreatePostScreen() {
               <View style={cardStyle}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.sectionEmoji}>✅</Text>
-                  <Text style={styles.sectionTitle}>Review Your Post</Text>
+                  <Text style={styles.sectionTitle}>Paylaşımınızı Gözden Geçirin</Text>
                 </View>
 
                 {/* Category & Features Badge */}
@@ -703,7 +703,7 @@ export default function CreatePostScreen() {
                 {/* Locations Badge */}
                 {selectedLocations.length > 0 && (
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Locations:</Text>
+                    <Text style={styles.summaryLabel}>Konumlar:</Text>
                     <View style={styles.badgeContainer}>
                       {selectedLocations.slice(0, 3).map((location) => (
                         <View key={location.name} style={styles.badge}>
@@ -721,7 +721,7 @@ export default function CreatePostScreen() {
 
                 {/* Ratings Badge */}
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Ratings:</Text>
+                  <Text style={styles.summaryLabel}>Derecelendirmeler:</Text>
                   <View style={styles.badgeContainer}>
                     <View style={styles.ratingBadge}>
                       <Text style={styles.ratingBadgeEmoji}>✨</Text>
@@ -748,7 +748,7 @@ export default function CreatePostScreen() {
               onPress={goPreviousStep}
               disabled={currentStep === 1 || isSubmitting}
             >
-              <Text style={[styles.navButtonText, styles.navButtonSecondaryText]}>← Previous</Text>
+              <Text style={[styles.navButtonText, styles.navButtonSecondaryText]}>← Önceki</Text>
             </Pressable>
 
             {currentStep < 3 ? (
@@ -757,7 +757,7 @@ export default function CreatePostScreen() {
                 onPress={goNextStep}
                 disabled={isSubmitting}
               >
-                <Text style={styles.navButtonText}>Next →</Text>
+                <Text style={styles.navButtonText}>Sonraki →</Text>
               </Pressable>
             ) : (
               <Pressable
@@ -768,10 +768,10 @@ export default function CreatePostScreen() {
                 {isSubmitting ? (
                   <>
                     <ActivityIndicator color="#fff" size="small" />
-                    <Text style={styles.navButtonText}>Publishing...</Text>
+                    <Text style={styles.navButtonText}>Yayınlanıyor...</Text>
                   </>
                 ) : (
-                  <Text style={styles.navButtonText}>📤 Publish</Text>
+                  <Text style={styles.navButtonText}>📤 Yayınla</Text>
                 )}
               </Pressable>
             )}

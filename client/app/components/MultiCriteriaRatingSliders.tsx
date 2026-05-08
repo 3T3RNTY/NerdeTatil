@@ -14,12 +14,12 @@ interface MultiCriteriaRatingSlidersProps {
 }
 
 const criteria = [
-  { key: 'cleanliness', label: 'Cleanliness', emoji: '✨' },
-  { key: 'service', label: 'Service', emoji: '👥' },
-  { key: 'pricePerformance', label: 'Price/Performance', emoji: '💰' },
+  { key: 'cleanliness', label: 'Temizlik', emoji: '✨' },
+  { key: 'service', label: 'Hizmet', emoji: '👥' },
+  { key: 'pricePerformance', label: 'Fiyat/Değer', emoji: '💰' },
 ]
 
-const ratingLabels = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
+const ratingLabels = ['Kötü', 'Uygun', 'İyi', 'Çok İyi', 'Mükemmel']
 
 export default function MultiCriteriaRatingSliders({
   onRatingsChange,
@@ -74,7 +74,7 @@ export default function MultiCriteriaRatingSliders({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Rate Your Experience</Text>
+      <Text style={styles.title}>Deneyiminizi Değerlendirin</Text>
       <View style={styles.divider} />
 
       {criteria.map((item) =>

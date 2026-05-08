@@ -10,10 +10,10 @@ interface DynamicFeatureChipsProps {
 }
 
 const featuresByCategory: Record<PostCategory, string[]> = {
-  HOTEL: ['Free WiFi', 'Pool', 'Pet Friendly', 'Gym', 'Spa', 'Restaurant', 'Air Conditioning', 'Parking'],
-  FOOD_PLACE: ['Vegan Options', 'Live Music', 'Outdoor Seating', 'Delivery', 'Takeaway', "Kids' Menu", 'Halal', 'Reservation'],
-  ATTRACTION: ['Guided Tours', 'Photography Allowed', 'Wheelchair Accessible', 'Audio Guide', 'Souvenir Shop', 'Cafeteria', 'Parking', 'Family Friendly'],
-  TRIP: ['Camping', 'Adventure Sports', 'Beach', 'Mountain', 'Cultural', 'Food Tour', 'Night Life', 'Shopping'],
+  HOTEL: ['Ücretsiz WiFi', 'Havuz', 'Evcil Hayvan Dostça', 'Spor Salonu', 'Spa', 'Restoran', 'Klima', 'Otopark'],
+  FOOD_PLACE: ['Vegan Seçenekler', 'Canlı Müzik', 'Açık Alan', 'Teslimat', 'Paket Servis', 'Çocuk Menüsü', 'Halal', 'Rezervasyon'],
+  ATTRACTION: ['Rehberli Turlar', 'Fotoğrafçılık İzin', 'Tekerlekli Sandalye Erişimi', 'Ses Rehberi', 'Hatıra Dükkanı', 'Kafe', 'Otopark', 'Aile Dostça'],
+  TRIP: ['Kamp', 'Macera Sporları', 'Plaj', 'Dağ', 'Kültürel', 'Yemek Turu', 'Gece Yaşantısı', 'Alışveriş'],
 }
 
 export default function DynamicFeatureChips({
@@ -26,7 +26,7 @@ export default function DynamicFeatureChips({
   if (!category || !featuresByCategory[category]) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyStateText}>Select a category to see available features</Text>
+        <Text style={styles.emptyStateText}>Mevcut özellikleri görmek için bir kategori seçin</Text>
       </View>
     )
   }
@@ -48,7 +48,7 @@ export default function DynamicFeatureChips({
     <View style={styles.container}>
       <View style={styles.selectedCountBadge}>
         <Text style={styles.selectedCountText}>
-          {selected.size} {selected.size === 1 ? 'feature' : 'features'} selected
+          {selected.size} {selected.size === 1 ? 'özellik' : 'özellik'} seçildi
         </Text>
       </View>
 

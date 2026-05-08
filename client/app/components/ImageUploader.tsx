@@ -83,7 +83,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         setSelectedImages([...selectedImages, ...newImages]);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick images');
+      Alert.alert('Hata', 'Görüntüleri seçmek başarısız oldu');
       console.error('Image picker error:', error);
     }
   }, [maxImages, uploadedImages.length, selectedImages]);
@@ -91,7 +91,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   // Upload selected images
   const handleUploadImages = useCallback(async () => {
     if (selectedImages.length === 0) {
-      Alert.alert('No images', 'Please select images to upload');
+      Alert.alert('Görüntü yok', 'Lütfen yüklemek için görüntüleri seçin');
       return;
     }
 
@@ -109,7 +109,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           // Fetch image from URI and convert to Blob
           const imageResponse = await fetch(image.uri);
           if (!imageResponse.ok) {
-            throw new Error('Failed to fetch image');
+            throw new Error('Görüntü alınalamadı');
           }
           const blob = await imageResponse.blob();
 
@@ -140,13 +140,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           } else {
             errors.push({
               filename,
-              error: data.message || 'Upload failed',
+              error: data.message || 'Yükleme başarısız',
             });
           }
         } catch (error) {
           errors.push({
             filename,
-            error: error instanceof Error ? error.message : 'Upload error',
+            error: error instanceof Error ? error.message : 'Yükleme hatası',
           });
         }
 
@@ -164,14 +164,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       if (errors.length > 0) {
         setUploadErrors(errors);
         Alert.alert(
-          'Partial upload',
-          `${uploadedResults.length} images uploaded, ${errors.length} failed`
+          'Kısmi yükleme',
+          `${uploadedResults.length} görüntü yüklendi, ${errors.length} başarısız`
         );
       } else {
-        Alert.alert('Success', `${uploadedResults.length} images uploaded`);
+        Alert.alert('Başarı', `${uploadedResults.length} görüntü yüklendi`);
       }
     } catch (error) {
-      Alert.alert('Error', 'Upload failed');
+      Alert.alert('Hata', 'Yükleme başarısız');
       console.error('Upload error:', error);
     } finally {
       setIsUploading(false);
@@ -194,7 +194,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Upload Images</Text>
+      <Text style={styles.label}>Görüntüleri Yükle</Text>
 
       {/* Add Images Button */}
       <TouchableOpacity
@@ -203,7 +203,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         disabled={!canAddMore || isUploading}
       >
         <Text style={styles.addButtonText}>
-          {canAddMore ? '+ Add Images' : 'Max images reached'}
+          {canAddMore ? '+ Görüntü Ekle' : 'Maksimum görüntüsü ulaştı'}
         </Text>
       </TouchableOpacity>
 
@@ -211,7 +211,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       {selectedImages.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            Selected Images ({selectedImages.length})
+            Seçilen Görüntüler ({selectedImages.length})
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {selectedImages.map((image, index) => (
@@ -240,11 +240,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               <>
                 <ActivityIndicator color={tokens.colors.background} size="small" />
                 <Text style={styles.uploadButtonText}>
-                  Uploading {Math.round(uploadProgress)}%
+                  Yükleniyor {Math.round(uploadProgress)}%
                 </Text>
               </>
             ) : (
-              <Text style={styles.uploadButtonText}>Upload Images</Text>
+              <Text style={styles.uploadButtonText}>Görüntüleri Yükle</Text>
             )}
           </TouchableOpacity>
         </View>

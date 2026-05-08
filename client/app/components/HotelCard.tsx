@@ -142,8 +142,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardWide: {
-    width: '48%',
-    marginRight: '4%',
+    flex: 1,
+    minWidth: '45%',
   },
   cardImage: {
     width: '100%',

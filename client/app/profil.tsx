@@ -9,6 +9,8 @@ import {
   View,
   ActivityIndicator,
   ScrollView,
+  Modal,
+  TextInput,
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
@@ -32,6 +34,13 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editForm, setEditForm] = useState({
+    fullName: '',
+    bio: '',
+  })
+  const [editError, setEditError] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -52,6 +61,60 @@ export default function ProfileScreen() {
       console.error('Error fetching profile:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const openEditModal = () => {
+    if (profile) {
+      setEditForm({
+        fullName: profile.fullName || '',
+        bio: profile.bio || '',
+      })
+      setEditError(null)
+      setIsEditModalVisible(true)
+    }
+  }
+
+  const closeEditModal = () => {
+    setIsEditModalVisible(false)
+    setEditForm({ fullName: '', bio: '' })
+    setEditError(null)
+  }
+
+  const handleSaveProfile = async () => {
+    try {
+      setEditError(null)
+      setIsSubmitting(true)
+
+      if (!editForm.fullName.trim()) {
+        setEditError('Ad Soyad alanı boş bırakılamaz')
+        setIsSubmitting(false)
+        return
+      }
+
+      if (!user) {
+        setEditError('Kullanıcı bilgisi yüklenemedi')
+        setIsSubmitting(false)
+        return
+      }
+
+      const updatedProfile = await UserService.updateUser(user.id, {
+        fullName: editForm.fullName.trim(),
+        bio: editForm.bio.trim(),
+      })
+
+      setProfile({
+        ...profile!,
+        fullName: updatedProfile.fullName,
+        bio: updatedProfile.bio,
+      })
+
+      closeEditModal()
+    } catch (err: any) {
+      setEditError(err?.error || 'Profil güncellenirken hata oluştu')
+      console.error('Error updating profile:', err)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -137,7 +200,12 @@ export default function ProfileScreen() {
 
           <View style={sectionsStyle}>
             <View style={StyleSheet.flatten([styles.card, isWideWeb && styles.profileCardWide])}>
-              <Text style={styles.cardTitle}>👤 Profil Detayı</Text>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>👤 Profil Detayı</Text>
+                <Pressable style={styles.editButton} onPress={openEditModal}>
+                  <Text style={styles.editButtonText}>✏️ Düzenle</Text>
+                </Pressable>
+              </View>
               <InfoRow label="Kullanıcı Adı" value={profile.username} />
               <InfoRow label="Ad Soyad" value={profile.fullName} />
               <InfoRow label="E-posta" value={profile.email} />
@@ -161,6 +229,86 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
       </PageShell>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        visible={isEditModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={closeEditModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Profili Düzenle</Text>
+              <Pressable onPress={closeEditModal}>
+                <Text style={styles.modalCloseButton}>✕</Text>
+              </Pressable>
+            </View>
+
+            {editError && (
+              <View style={styles.editErrorBox}>
+                <Text style={styles.editErrorText}>{editError}</Text>
+              </View>
+            )}
+
+            <View style={styles.modalFormGroup}>
+              <Text style={styles.modalLabel}>Ad Soyad *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Adınız ve Soyadınız"
+                value={editForm.fullName}
+                onChangeText={(text) =>
+                  setEditForm({ ...editForm, fullName: text })
+                }
+                editable={!isSubmitting}
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.modalFormGroup}>
+              <Text style={styles.modalLabel}>Hakkımda</Text>
+              <TextInput
+                style={[styles.modalInput, styles.bioInput]}
+                placeholder="Kendiniz hakkında bir şeyler yazınız..."
+                value={editForm.bio}
+                onChangeText={(text) =>
+                  setEditForm({ ...editForm, bio: text })
+                }
+                editable={!isSubmitting}
+                placeholderTextColor="#9ca3af"
+                multiline={true}
+                numberOfLines={4}
+              />
+            </View>
+
+            <View style={styles.modalButtonGroup}>
+              <Pressable
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={closeEditModal}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.cancelButtonText}>İptal</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.modalButton,
+                  styles.saveButton,
+                  isSubmitting && styles.saveButtonDisabled,
+                ]}
+                onPress={handleSaveProfile}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#ffffff" size="small" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Kaydet</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -379,5 +527,133 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  editButton: {
+    backgroundColor: '#d1f3ed',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#99ebe2',
+  },
+  editButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0d9488',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0d9488',
+  },
+  modalCloseButton: {
+    fontSize: 24,
+    color: '#6b7280',
+    fontWeight: '400',
+  },
+  editErrorBox: {
+    backgroundColor: '#fee2e2',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#dc2626',
+  },
+  editErrorText: {
+    color: '#7c2d12',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  modalFormGroup: {
+    marginBottom: 16,
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0f766e',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ccf0e8',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
+    color: '#0f172a',
+    backgroundColor: '#f0fdf9',
+  },
+  bioInput: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  modalButtonGroup: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  modalButton: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  saveButton: {
+    backgroundColor: '#0d9488',
+    shadowColor: '#0d9488',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 })

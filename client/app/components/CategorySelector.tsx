@@ -34,7 +34,7 @@ const CATEGORIES: CategoryOption[] = [
   },
   {
     value: 'ATTRACTION',
-    label: 'Sehenlik',
+    label: 'Mekan',
     emoji: '🏛️',
     description: 'Yerler ve mekanlar',
   },

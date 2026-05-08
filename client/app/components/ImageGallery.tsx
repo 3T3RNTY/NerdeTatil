@@ -47,7 +47,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   if (!images || images.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No images available</Text>
+        <Text style={styles.emptyText}>Görüntü kullanılabilir değil</Text>
       </View>
     );
   }

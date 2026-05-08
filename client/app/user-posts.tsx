@@ -35,8 +35,13 @@ const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean, onEdi
     }
   })()
 
+  const cardWrapperStyle = StyleSheet.flatten([
+    styles.cardWrapper,
+    isWideWeb && styles.cardWrapperWide
+  ])
+
   return (
-    <View key={post.id}>
+    <View key={post.id} style={cardWrapperStyle}>
       {cardComponent}
       <View style={styles.editDeleteContainer}>
         <Pressable
@@ -255,6 +260,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 16,
+    justifyContent: 'space-between',
+  },
+  cardWrapper: {
+    flex: 1,
+  },
+  cardWrapperWide: {
+    minWidth: '45%',
   },
   emptyContainer: {
     alignItems: 'center',

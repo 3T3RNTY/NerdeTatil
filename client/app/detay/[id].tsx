@@ -129,7 +129,7 @@ export default function DetailScreen() {
                 <View style={styles.categoryBadge}>
                   <Text style={styles.categoryBadgeText}>
                     {post.category === 'TRIP' && '🗺️ Seyahat'}
-                    {post.category === 'FOOD_PLACE' && '🍽️ Restorant'}
+                    {post.category === 'FOOD_PLACE' && '🍽️ Restoran'}
                     {post.category === 'HOTEL' && '🏨 Otel'}
                     {post.category === 'ATTRACTION' && '🎡 Mekan'}
                   </Text>
