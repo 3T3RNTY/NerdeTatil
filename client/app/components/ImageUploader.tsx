@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { tokens } from '@/src/theme/tokens';
 
 interface UploadedImage {
   url: string;
@@ -82,7 +83,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         setSelectedImages([...selectedImages, ...newImages]);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick images');
+      Alert.alert('Hata', 'Görüntüleri seçmek başarısız oldu');
       console.error('Image picker error:', error);
     }
   }, [maxImages, uploadedImages.length, selectedImages]);
@@ -90,7 +91,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   // Upload selected images
   const handleUploadImages = useCallback(async () => {
     if (selectedImages.length === 0) {
-      Alert.alert('No images', 'Please select images to upload');
+      Alert.alert('Görüntü yok', 'Lütfen yüklemek için görüntüleri seçin');
       return;
     }
 
@@ -108,7 +109,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           // Fetch image from URI and convert to Blob
           const imageResponse = await fetch(image.uri);
           if (!imageResponse.ok) {
-            throw new Error('Failed to fetch image');
+            throw new Error('Görüntü alınalamadı');
           }
           const blob = await imageResponse.blob();
 
@@ -139,13 +140,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           } else {
             errors.push({
               filename,
-              error: data.message || 'Upload failed',
+              error: data.message || 'Yükleme başarısız',
             });
           }
         } catch (error) {
           errors.push({
             filename,
-            error: error instanceof Error ? error.message : 'Upload error',
+            error: error instanceof Error ? error.message : 'Yükleme hatası',
           });
         }
 
@@ -163,14 +164,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       if (errors.length > 0) {
         setUploadErrors(errors);
         Alert.alert(
-          'Partial upload',
-          `${uploadedResults.length} images uploaded, ${errors.length} failed`
+          'Kısmi yükleme',
+          `${uploadedResults.length} görüntü yüklendi, ${errors.length} başarısız`
         );
       } else {
-        Alert.alert('Success', `${uploadedResults.length} images uploaded`);
+        Alert.alert('Başarı', `${uploadedResults.length} görüntü yüklendi`);
       }
     } catch (error) {
-      Alert.alert('Error', 'Upload failed');
+      Alert.alert('Hata', 'Yükleme başarısız');
       console.error('Upload error:', error);
     } finally {
       setIsUploading(false);
@@ -193,7 +194,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Upload Images</Text>
+      <Text style={styles.label}>Görüntüleri Yükle</Text>
 
       {/* Add Images Button */}
       <TouchableOpacity
@@ -202,7 +203,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         disabled={!canAddMore || isUploading}
       >
         <Text style={styles.addButtonText}>
-          {canAddMore ? '+ Add Images' : 'Max images reached'}
+          {canAddMore ? '+ Görüntü Ekle' : 'Maksimum görüntüsü ulaştı'}
         </Text>
       </TouchableOpacity>
 
@@ -210,7 +211,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       {selectedImages.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            Selected Images ({selectedImages.length})
+            Seçilen Görüntüler ({selectedImages.length})
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {selectedImages.map((image, index) => (
@@ -237,13 +238,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           >
             {isUploading ? (
               <>
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={tokens.colors.background} size="small" />
                 <Text style={styles.uploadButtonText}>
-                  Uploading {Math.round(uploadProgress)}%
+                  Yükleniyor {Math.round(uploadProgress)}%
                 </Text>
               </>
             ) : (
-              <Text style={styles.uploadButtonText}>Upload Images</Text>
+              <Text style={styles.uploadButtonText}>Görüntüleri Yükle</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -300,117 +301,117 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
-    paddingHorizontal: 15,
+    marginBottom: tokens.spacing[5],
+    paddingHorizontal: tokens.spacing[4],
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333',
+    fontSize: tokens.typography.fontSize.base,
+    fontWeight: tokens.typography.fontWeight.semibold as any,
+    marginBottom: tokens.spacing[3],
+    color: tokens.colors.text,
   },
   addButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: tokens.colors.primary,
+    paddingVertical: tokens.spacing[3],
+    borderRadius: tokens.borderRadius.base,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: tokens.spacing[3],
   },
   addButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: tokens.colors.border,
   },
   addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    color: tokens.colors.background,
+    fontWeight: tokens.typography.fontWeight.semibold as any,
+    fontSize: tokens.typography.fontSize.sm,
   },
   section: {
-    marginBottom: 16,
+    marginBottom: tokens.spacing[4],
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
+    fontSize: tokens.typography.fontSize.sm,
+    fontWeight: tokens.typography.fontWeight.semibold as any,
+    color: tokens.colors.text,
+    marginBottom: tokens.spacing[2],
   },
   imagePreview: {
     position: 'relative',
-    marginRight: 10,
-    borderRadius: 8,
+    marginRight: tokens.spacing[2],
+    borderRadius: tokens.borderRadius.base,
     overflow: 'hidden',
   },
   previewImage: {
     width: 100,
     height: 100,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    borderRadius: tokens.borderRadius.base,
+    backgroundColor: tokens.colors.backgroundSecondary,
   },
   removeButton: {
     position: 'absolute',
     top: -8,
     right: -8,
-    backgroundColor: '#ff3b30',
-    borderRadius: 12,
+    backgroundColor: tokens.colors.error,
+    borderRadius: tokens.borderRadius.full,
     width: 24,
     height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
   removeButtonUploaded: {
-    backgroundColor: '#ff9500',
+    backgroundColor: tokens.colors.warning,
   },
   removeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: tokens.colors.background,
+    fontWeight: tokens.typography.fontWeight.bold as any,
+    fontSize: tokens.typography.fontSize.lg,
   },
   uploadButton: {
-    backgroundColor: '#34C759',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: tokens.colors.success,
+    paddingVertical: tokens.spacing[3],
+    borderRadius: tokens.borderRadius.base,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
-    gap: 8,
+    marginTop: tokens.spacing[2],
+    gap: tokens.spacing[2],
   },
   uploadButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: tokens.colors.border,
   },
   uploadButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    color: tokens.colors.background,
+    fontWeight: tokens.typography.fontWeight.semibold as any,
+    fontSize: tokens.typography.fontSize.sm,
   },
   errorsSection: {
-    backgroundColor: '#fee',
+    backgroundColor: tokens.colors.errorLight,
     borderWidth: 1,
-    borderColor: '#fcc',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
+    borderColor: tokens.colors.error,
+    borderRadius: tokens.borderRadius.base,
+    padding: tokens.spacing[2],
+    marginBottom: tokens.spacing[3],
   },
   errorTitle: {
-    fontWeight: '600',
-    color: '#c33',
-    marginBottom: 6,
+    fontWeight: tokens.typography.fontWeight.semibold as any,
+    color: tokens.colors.error,
+    marginBottom: tokens.spacing[1],
   },
   errorMessage: {
-    color: '#c33',
-    fontSize: 12,
-    marginBottom: 4,
+    color: tokens.colors.error,
+    fontSize: tokens.typography.fontSize.xs,
+    marginBottom: tokens.spacing[1],
   },
   infoContainer: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: tokens.colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
+    borderColor: tokens.colors.border,
+    borderRadius: tokens.borderRadius.base,
+    padding: tokens.spacing[3],
+    marginTop: tokens.spacing[3],
   },
   infoText: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.textSecondary,
     textAlign: 'center',
   },
 });

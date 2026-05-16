@@ -1,5 +1,34 @@
 import apiClient from './client';
 
+export type PostCategory = 'TRIP' | 'FOOD_PLACE' | 'HOTEL' | 'ATTRACTION';
+
+export interface LocationData {
+  id?: string;
+  name: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+  visitDate?: string; // ISO date string
+}
+
+export interface PostMetadata {
+  // Feature selection and ratings (multi-criteria)
+  features?: string[]; // Selected feature chips (category-dependent)
+  ratings?: {
+    cleanliness?: number; // 1-5
+    service?: number; // 1-5
+    pricePerformance?: number; // 1-5
+  };
+  // Category-specific fields
+  mealType?: string;
+  priceRange?: string;
+  amenities?: string[];
+  hours?: string;
+  [key: string]: any;
+}
+
 export interface Location {
   id: string;
   name: string;
@@ -17,16 +46,19 @@ export interface Post {
   id: string;
   title?: string;
   description: string;
+  category: PostCategory;
   rating?: number;
   imageUrls: string[];
+  locations: LocationData[];
+  startDate?: string;
+  endDate?: string;
+  metadata?: PostMetadata;
   isPublic: boolean;
   allowComments: boolean;
   createdAt: string;
   updatedAt: string;
   userId: string;
-  locationId: string;
   user: PostUser;
-  location: Location;
   likesCount: number;
   commentsCount: number;
 }
@@ -99,15 +131,19 @@ export class PostService {
   }
 
   /**
-   * Create a new post
+   * Create a new post with multiple locations and category
    */
   static async createPost(data: {
     userId: string;
-    locationId: string;
+    category: PostCategory;
     title?: string;
     description: string;
     rating?: number;
     imageUrls?: string[];
+    locations: LocationData[];
+    startDate?: string;
+    endDate?: string;
+    metadata?: PostMetadata;
   }): Promise<Post> {
     try {
       const response = await apiClient.post<Post>('/posts', data);

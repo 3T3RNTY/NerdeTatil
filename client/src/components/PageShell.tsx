@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { ScrollView, StyleSheet, useWindowDimensions, View, Platform } from 'react-native'
+import { tokens } from '@/src/theme/tokens'
 
 type PageShellProps = {
   children: ReactNode
@@ -9,8 +10,15 @@ type PageShellProps = {
 export function PageShell({ children, withScroll = true }: PageShellProps) {
   const { width } = useWindowDimensions()
   const isMobile = Platform.OS !== 'web'
-  const horizontalPadding = width >= 1200 ? 28 : width >= 768 ? 22 : 16
+  
+  // Responsive padding based on breakpoints from tokens
+  const horizontalPadding = 
+    width >= tokens.breakpoints.desktop ? tokens.spacing[7] :
+    width >= tokens.breakpoints.tablet ? tokens.spacing[6] :
+    tokens.spacing[4]
+  
   const bottomPadding = isMobile ? 70 : 0
+  
   const flattenedStyle = StyleSheet.flatten([
     styles.container,
     { paddingHorizontal: horizontalPadding, paddingBottom: bottomPadding },
@@ -36,8 +44,7 @@ const styles = StyleSheet.create({
     maxWidth: 1100,
     alignSelf: 'center',
     marginHorizontal: 'auto' as any,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 16,
+    paddingVertical: tokens.spacing[4],
+    gap: tokens.spacing[4],
   },
 })

@@ -1,5 +1,6 @@
 import type { StyleProp, ViewStyle } from 'react-native'
 import { StyleSheet, Text, View } from 'react-native'
+import { tokens } from '@/src/theme/tokens'
 
 type ImagePlaceholderProps = {
   compact?: boolean
@@ -18,23 +19,23 @@ export function ImagePlaceholder({ compact = false, style }: ImagePlaceholderPro
 const styles = StyleSheet.create({
   box: {
     minHeight: 180,
-    borderRadius: 18,
-    backgroundColor: '#dbeafe',
+    borderRadius: tokens.borderRadius.xl,
+    backgroundColor: tokens.colors.borderLight,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: tokens.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: tokens.spacing[1],
   },
   compact: {
     minHeight: 120,
   },
   icon: {
-    fontSize: 30,
+    fontSize: tokens.typography.fontSize['2xl'],
   },
   label: {
-    fontSize: 14,
-    color: '#1e3a8a',
-    fontWeight: '600',
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.primary,
+    fontWeight: tokens.typography.fontWeight.semibold as any,
   },
 })

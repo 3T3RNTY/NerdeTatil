@@ -1,5 +1,6 @@
 import { Link, usePathname } from 'expo-router'
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import { tokens } from '@/src/theme/tokens'
 
 interface NavItem {
   label: string
@@ -63,10 +64,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#d1f3ed',
-    backgroundColor: '#f0fdf9',
+    borderTopColor: tokens.colors.secondaryLight,
+    backgroundColor: tokens.colors.primaryLighter,
     paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-    paddingTop: 8,
+    paddingTop: tokens.spacing[2],
     height: Platform.OS === 'ios' ? 80 : 60,
     justifyContent: 'space-around',
     alignItems: 'flex-start',
@@ -76,22 +77,22 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 8,
+    gap: tokens.spacing[1],
+    paddingVertical: tokens.spacing[2],
     opacity: 0.6,
   },
   buttonActive: {
     opacity: 1,
   },
   icon: {
-    fontSize: 24,
+    fontSize: tokens.typography.fontSize['2xl'],
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#0f766e',
+    fontSize: tokens.typography.fontSize.xs,
+    fontWeight: tokens.typography.fontWeight.semibold as any,
+    color: tokens.colors.primaryDark,
   },
   labelActive: {
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
 })

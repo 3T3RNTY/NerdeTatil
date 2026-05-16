@@ -7,8 +7,6 @@ services:
       POSTGRES_PASSWORD: nerdetatil_password
       POSTGRES_DB: nerdetatil_db
       PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/db/migrations/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
@@ -19,6 +17,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nerdetatil_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: postgres
+      DATABASE_URL: postgresql://nerdetatil_user:nerdetatil_password@postgres:5432/nerdetatil_db
+    ports:
+      - "5000:5000"
+    networks:
+      - nerdetatil_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:

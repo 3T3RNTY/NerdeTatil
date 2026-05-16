@@ -124,24 +124,133 @@ export default function DetailScreen() {
                 />
               )}
 
-              {/* Location Display */}
-              {post.location && (
-                <View style={styles.locationCard}>
-                  <View style={styles.locationHeader}>
-                    <Text style={styles.locationEmoji}>📍</Text>
-                    <View style={styles.locationInfo}>
-                      <Text style={styles.locationName}>{post.location.name}</Text>
-                      <Text style={styles.locationAddress}>
-                        {post.location.city && `${post.location.city}, `}
-                        {post.location.country}
-                      </Text>
-                    </View>
+              {/* Category Badge */}
+              {post.category && (
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryBadgeText}>
+                    {post.category === 'TRIP' && '🗺️ Seyahat'}
+                    {post.category === 'FOOD_PLACE' && '🍽️ Restoran'}
+                    {post.category === 'HOTEL' && '🏨 Otel'}
+                    {post.category === 'ATTRACTION' && '🎡 Mekan'}
+                  </Text>
+                </View>
+              )}
+
+              {/* Trip Dates */}
+              {post.category === 'TRIP' && post.startDate && post.endDate && (
+                <View style={styles.dateRangeCard}>
+                  <Text style={styles.dateRangeTitle}>📅 Seyahat Tarihleri</Text>
+                  <Text style={styles.dateRangeText}>
+                    {new Date(post.startDate).toLocaleDateString('tr-TR')} - {new Date(post.endDate).toLocaleDateString('tr-TR')}
+                  </Text>
+                </View>
+              )}
+
+              {/* Features Display */}
+              {post.metadata?.features && post.metadata.features.length > 0 && (
+                <View style={styles.featuresContainer}>
+                  <Text style={styles.featuresTitle}>⭐ Özellikler</Text>
+                  <View style={styles.featureChips}>
+                    {post.metadata.features.map((feature, index) => (
+                      <View key={index} style={styles.featureChip}>
+                        <Text style={styles.featureChipText}>{feature}</Text>
+                      </View>
+                    ))}
                   </View>
-                  {post.location.latitude && post.location.longitude && (
-                    <Text style={styles.locationCoordinates}>
-                      {post.location.latitude.toFixed(4)}°, {post.location.longitude.toFixed(4)}°
-                    </Text>
+                </View>
+              )}
+
+              {/* Multi-Criteria Ratings Display */}
+              {post.metadata?.ratings && (post.metadata.ratings.cleanliness || post.metadata.ratings.service || post.metadata.ratings.pricePerformance) && (
+                <View style={styles.ratingsContainer}>
+                  <Text style={styles.ratingsTitle}>📊 Detaylı Değerlendirme</Text>
+                  {post.metadata.ratings.cleanliness && (
+                    <View style={styles.ratingRow}>
+                      <Text style={styles.ratingLabel}>Temizlik</Text>
+                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.cleanliness)}{'☆'.repeat(5 - post.metadata.ratings.cleanliness)}</Text>
+                    </View>
                   )}
+                  {post.metadata.ratings.service && (
+                    <View style={styles.ratingRow}>
+                      <Text style={styles.ratingLabel}>Hizmet</Text>
+                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.service)}{'☆'.repeat(5 - post.metadata.ratings.service)}</Text>
+                    </View>
+                  )}
+                  {post.metadata.ratings.pricePerformance && (
+                    <View style={styles.ratingRow}>
+                      <Text style={styles.ratingLabel}>Fiyat/Değer</Text>
+                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.pricePerformance)}{'☆'.repeat(5 - post.metadata.ratings.pricePerformance)}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Meal Type Display */}
+              {post.metadata?.mealType && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>🍽️ Yemek Türü</Text>
+                  <Text style={styles.infoValue}>{post.metadata.mealType}</Text>
+                </View>
+              )}
+
+              {/* Price Range Display */}
+              {post.metadata?.priceRange && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>💰 Fiyat Aralığı</Text>
+                  <Text style={styles.infoValue}>{post.metadata.priceRange}</Text>
+                </View>
+              )}
+
+              {/* Amenities Display */}
+              {post.metadata?.amenities && Array.isArray(post.metadata.amenities) && post.metadata.amenities.length > 0 && (
+                <View style={styles.amenitiesContainer}>
+                  <Text style={styles.amenitiesTitle}>🏢 Olanaklar</Text>
+                  <View style={styles.amenitiesList}>
+                    {post.metadata.amenities.map((amenity, index) => (
+                      <View key={index} style={styles.amenityItem}>
+                        <Text style={styles.amenityText}>✓ {amenity}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Hours Display */}
+              {post.metadata?.hours && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>⏰ Açılış Saatleri</Text>
+                  <Text style={styles.infoValue}>{post.metadata.hours}</Text>
+                </View>
+              )}
+
+              {/* Locations Display */}
+              {post.locations && post.locations.length > 0 && (
+                <View style={styles.locationsContainer}>
+                  <Text style={styles.locationsTitle}>📍 Konumlar ({post.locations.length})</Text>
+                  {post.locations.map((location, index) => (
+                    <View key={index} style={styles.locationCard}>
+                      <View style={styles.locationHeader}>
+                        <Text style={styles.locationNumber}>{index + 1}</Text>
+                        <View style={styles.locationInfo}>
+                          <Text style={styles.locationName}>{location.name}</Text>
+                          <Text style={styles.locationAddress}>
+                            {location.city && `${location.city}, `}
+                            {location.country}
+                          </Text>
+                          {location.visitDate && (
+                            <Text style={styles.visitDate}>
+                              Ziyaret: {new Date(location.visitDate).toLocaleDateString('tr-TR')}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      {location.latitude && location.longitude && (
+                        <Text style={styles.locationCoordinates}>
+                          {location.latitude.toFixed(4)}°, {location.longitude.toFixed(4)}°
+                        </Text>
+                      )}
+                    </View>
+                  ))}
                 </View>
               )}
 
@@ -298,6 +407,64 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: 'hidden',
   },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#dbeafe',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#7dd3fc',
+  },
+  categoryBadgeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0369a1',
+  },
+  dateRangeCard: {
+    borderRadius: 16,
+    backgroundColor: '#f0e8ff',
+    borderWidth: 2,
+    borderColor: '#8b5cf6',
+    padding: 14,
+    gap: 8,
+    marginBottom: 14,
+  },
+  dateRangeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6d28d9',
+  },
+  dateRangeText: {
+    fontSize: 13,
+    color: '#6d28d9',
+    fontWeight: '600',
+  },
+  locationsContainer: {
+    gap: 12,
+    marginBottom: 14,
+  },
+  locationsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0d9488',
+    marginBottom: 4,
+  },
+  locationNumber: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0d9488',
+    width: 28,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  visitDate: {
+    fontSize: 11,
+    color: '#0f766e',
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
   contentLayout: {
     gap: 14,
   },
@@ -432,5 +599,109 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 26,
     fontWeight: '600',
+  },
+  featuresContainer: {
+    gap: 8,
+    marginBottom: 14,
+  },
+  featuresTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0d9488',
+    marginBottom: 4,
+  },
+  featureChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  featureChip: {
+    backgroundColor: '#d1fae5',
+    borderColor: '#10b981',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  featureChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#065f46',
+  },
+  ratingsContainer: {
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    padding: 14,
+    gap: 12,
+    marginBottom: 14,
+  },
+  ratingsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  ratingLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  ratingValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#f59e0b',
+    letterSpacing: 2,
+  },
+  infoCard: {
+    borderRadius: 16,
+    backgroundColor: '#e0e7ff',
+    borderWidth: 1,
+    borderColor: '#818cf8',
+    padding: 14,
+    gap: 6,
+    marginBottom: 14,
+  },
+  infoLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#3730a3',
+  },
+  infoValue: {
+    fontSize: 13,
+    color: '#4f46e5',
+    fontWeight: '500',
+  },
+  amenitiesContainer: {
+    gap: 8,
+    marginBottom: 14,
+  },
+  amenitiesTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0d9488',
+    marginBottom: 4,
+  },
+  amenitiesList: {
+    gap: 6,
+  },
+  amenityItem: {
+    borderRadius: 8,
+    backgroundColor: '#f0fdf9',
+    borderLeftWidth: 3,
+    borderLeftColor: '#10b981',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  amenityText: {
+    fontSize: 13,
+    color: '#065f46',
+    fontWeight: '500',
   },
 })
