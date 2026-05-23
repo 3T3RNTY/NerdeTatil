@@ -19,7 +19,29 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
     isMobile && styles.cardImageMobile,
   ])
 
-  const hours = post.metadata?.hours
+  // Get theme badge text - use new format if available
+  const getThemeBadge = () => {
+    if (post.theme?.emoji) {
+      return `${post.theme.emoji} ${post.theme.name}`
+    }
+    return '🏛️ Sehenlik'
+  }
+
+  // Calculate average rating from multi-criteria ratings
+  const getAverageRating = () => {
+    if (!post.multiCriteriaRatings) return null
+    const ratings = Object.values(post.multiCriteriaRatings).filter(r => r)
+    if (ratings.length === 0) return null
+    return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+  }
+
+  // Render stars based on rating
+  const renderStars = (rating: number | string | null) => {
+    if (!rating) return '★☆☆☆☆'
+    const num = typeof rating === 'string' ? parseFloat(rating) : rating
+    const filled = Math.round(num)
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled)
+  }
 
   return (
     <View style={cardStyle}>
@@ -38,7 +60,7 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
               </View>
             )}
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>🏛️ Sehenlik</Text>
+              <Text style={styles.categoryBadgeText}>{getThemeBadge()}</Text>
             </View>
           </>
         ) : (
@@ -55,6 +77,14 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
           {post.description}
         </Text>
 
+        {/* Theme Info (New Format) */}
+        {post.theme?.name && (
+          <View style={styles.themeContainer}>
+            <Text style={styles.themeLabel}>📂 Tema</Text>
+            <Text style={styles.themeName}>{post.theme.name}</Text>
+          </View>
+        )}
+
         {/* Location */}
         {post.locations && post.locations.length > 0 && (
           <View style={styles.locationContainer}>
@@ -67,16 +97,34 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
           </View>
         )}
 
-        {/* Hours */}
-        {hours && (
-          <View style={styles.hoursContainer}>
-            <Text style={styles.hoursLabel}>🕐 Açılış Saatleri</Text>
-            <Text style={styles.hoursValue}>{hours}</Text>
+        {/* Multi-Criteria Ratings (New Format) */}
+        {post.multiCriteriaRatings && (
+          <View style={styles.multiRatingContainer}>
+            <View style={styles.ratingRow}>
+              <View style={styles.ratingCol}>
+                <Text style={styles.ratingLabel}>Çeşitlilik</Text>
+                <Text style={styles.ratingStars}>{renderStars(post.multiCriteriaRatings.optionVariety)}</Text>
+              </View>
+              <View style={styles.ratingCol}>
+                <Text style={styles.ratingLabel}>Konum</Text>
+                <Text style={styles.ratingStars}>{renderStars(post.multiCriteriaRatings.location)}</Text>
+              </View>
+            </View>
+            <View style={styles.ratingRow}>
+              <View style={styles.ratingCol}>
+                <Text style={styles.ratingLabel}>Erişim</Text>
+                <Text style={styles.ratingStars}>{renderStars(post.multiCriteriaRatings.accessibility)}</Text>
+              </View>
+              <View style={styles.ratingCol}>
+                <Text style={styles.ratingLabel}>Fiyat</Text>
+                <Text style={styles.ratingStars}>{renderStars(post.multiCriteriaRatings.priceValue)}</Text>
+              </View>
+            </View>
           </View>
         )}
 
-        {/* Rating */}
-        {post.rating && (
+        {/* Old-Format Rating */}
+        {!post.multiCriteriaRatings && post.rating && (
           <View style={styles.ratingBadge}>
             <Text style={styles.ratingEmoji}>⭐</Text>
             <Text style={styles.ratingText}>{post.rating}/5</Text>
@@ -202,6 +250,55 @@ const styles = StyleSheet.create({
   locationCity: {
     fontSize: 11,
     color: '#be185d',
+  },
+  themeContainer: {
+    backgroundColor: '#f0f9ff',
+    borderLeftWidth: 3,
+    borderLeftColor: '#0284c7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 8,
+    borderRadius: 4,
+  },
+  themeLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#0369a1',
+    marginBottom: 2,
+  },
+  themeName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0284c7',
+  },
+  multiRatingContainer: {
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 8,
+    borderRadius: 6,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  ratingCol: {
+    flex: 1,
+    marginRight: 6,
+  },
+  ratingLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  ratingStars: {
+    fontSize: 12,
+    color: '#fbbf24',
+    letterSpacing: 1,
   },
   hoursContainer: {
     backgroundColor: '#fef3c7',

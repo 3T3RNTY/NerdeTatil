@@ -31,6 +31,30 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
     return `${new Date(post.endDate!).toLocaleDateString('tr-TR')} bitiş`
   }
 
+  // Calculate average rating from multi-criteria ratings
+  const getAverageRating = () => {
+    if (!post.multiCriteriaRatings) return null
+    const ratings = Object.values(post.multiCriteriaRatings).filter(r => r)
+    if (ratings.length === 0) return null
+    return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+  }
+
+  // Render stars based on rating
+  const renderStars = (rating: number | string | null) => {
+    if (!rating) return '★☆☆☆☆'
+    const num = typeof rating === 'string' ? parseFloat(rating) : rating
+    const filled = Math.round(num)
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled)
+  }
+
+  // Get theme badge text - use new format if available
+  const getThemeBadge = () => {
+    if (post.theme?.emoji) {
+      return `${post.theme.emoji} ${post.theme.name}`
+    }
+    return '✈️ Seyahat'
+  }
+
   return (
     <View style={cardStyle}>
       {/* Image */}
@@ -48,7 +72,7 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
               </View>
             )}
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>✈️ Seyahat</Text>
+              <Text style={styles.categoryBadgeText}>{getThemeBadge()}</Text>
             </View>
           </>
         ) : (
@@ -81,13 +105,41 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
           </View>
         )}
 
-        {/* Date Range */}
-        <View style={styles.dateRangeContainer}>
-          <Text style={styles.dateRangeLabel}>📅 {formatDateRange()}</Text>
-        </View>
+        {/* Multi-Criteria Ratings (New Format) */}
+        {post.multiCriteriaRatings && (
+          <View style={styles.multiRatingContainer}>
+            <View style={styles.ratingRow}>
+              <View style={styles.ratingCol}>
+                <Text style={styles.ratingLabel}>Çeşitlilik</Text>
+                <Text style={styles.ratingStars}>{renderStars(post.multiCriteriaRatings.optionVariety)}</Text>
+              </View>
+              <View style={styles.ratingCol}>
+                <Text style={styles.ratingLabel}>Konum</Text>
+                <Text style={styles.ratingStars}>{renderStars(post.multiCriteriaRatings.location)}</Text>
+              </View>
+            </View>
+            <View style={styles.ratingRow}>
+              <View style={styles.ratingCol}>
+                <Text style={styles.ratingLabel}>Erişim</Text>
+                <Text style={styles.ratingStars}>{renderStars(post.multiCriteriaRatings.accessibility)}</Text>
+              </View>
+              <View style={styles.ratingCol}>
+                <Text style={styles.ratingLabel}>Fiyat</Text>
+                <Text style={styles.ratingStars}>{renderStars(post.multiCriteriaRatings.priceValue)}</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
-        {/* Rating */}
-        {post.rating && (
+        {/* Old-Format Date Range */}
+        {post.startDate && (
+          <View style={styles.dateRangeContainer}>
+            <Text style={styles.dateRangeLabel}>📅 {formatDateRange()}</Text>
+          </View>
+        )}
+
+        {/* Old-Format Rating */}
+        {!post.multiCriteriaRatings && post.rating && (
           <View style={styles.ratingBadge}>
             <Text style={styles.ratingEmoji}>★</Text>
             <Text style={styles.ratingText}>{post.rating}/5</Text>
@@ -222,6 +274,35 @@ const styles = StyleSheet.create({
     color: '#3b82f6',
     fontWeight: '600',
     marginTop: 2,
+  },
+  multiRatingContainer: {
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 8,
+    borderRadius: 6,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  ratingCol: {
+    flex: 1,
+    marginRight: 6,
+  },
+  ratingLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  ratingStars: {
+    fontSize: 12,
+    color: '#fbbf24',
+    letterSpacing: 1,
   },
   dateRangeContainer: {
     backgroundColor: '#efe6ff',

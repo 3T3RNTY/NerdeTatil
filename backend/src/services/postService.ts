@@ -1,4 +1,5 @@
-import { PrismaClient, Prisma, PostCategory } from '@prisma/client';
+import { PrismaClient, Prisma, PostType } from '@prisma/client';
+import { ThemeService } from './themeService';
 
 const prisma = new PrismaClient();
 
@@ -10,60 +11,33 @@ interface LocationData {
   country?: string;
   latitude?: number;
   longitude?: number;
-  visitDate?: string; // ISO date string
+}
+
+interface MultiCriteriaRatings {
+  optionVariety?: number; // 1-5
+  location?: number; // 1-5
+  accessibility?: number; // 1-5
+  priceValue?: number; // 1-5
 }
 
 interface CreatePostInput {
   userId: string;
-  category: PostCategory;
-  title?: string;
+  postType: PostType; // TRIP or LOCATION
+  themeId: string;
+  subThemeIds: string[];
+  title: string;
   description: string;
-  rating?: number;
-  imageUrls?: string[];
   locations: LocationData[];
-  startDate?: string; // ISO date string for TRIP category
-  endDate?: string; // ISO date string for TRIP category
-  metadata?: {
-    // Feature selection and ratings (multi-criteria)
-    features?: string[]; // Selected feature chips (category-dependent)
-    ratings?: {
-      cleanliness?: number; // 1-5
-      service?: number; // 1-5
-      pricePerformance?: number; // 1-5
-    };
-    // Category-specific fields
-    mealType?: string; // For FOOD_PLACE
-    priceRange?: string; // For FOOD_PLACE, HOTEL
-    amenities?: string[]; // For HOTEL
-    hours?: string; // For ATTRACTION
-    // Allow any other custom fields
-    [key: string]: any;
-  };
+  imageUrls?: string[];
+  rating?: number;
+  multiCriteriaRatings?: MultiCriteriaRatings;
 }
 
 interface UpdatePostInput {
-  title?: string;
   description?: string;
   rating?: number;
   imageUrls?: string[];
-  locations?: LocationData[];
-  startDate?: string;
-  endDate?: string;
-  metadata?: {
-    // Feature selection and ratings (multi-criteria)
-    features?: string[]; // Selected feature chips (category-dependent)
-    ratings?: {
-      cleanliness?: number; // 1-5
-      service?: number; // 1-5
-      pricePerformance?: number; // 1-5
-    };
-    // Category-specific fields
-    mealType?: string;
-    priceRange?: string;
-    amenities?: string[];
-    hours?: string;
-    [key: string]: any;
-  };
+  multiCriteriaRatings?: MultiCriteriaRatings;
 }
 
 export class PostService {
@@ -80,13 +54,13 @@ export class PostService {
           id: true,
           title: true,
           description: true,
-          category: true,
+          postType: true,
+          themeId: true,
+          subThemeIds: true,
           rating: true,
           imageUrls: true,
           locationsData: true,
-          startDate: true,
-          endDate: true,
-          metadata: true,
+          multiCriteriaRatings: true,
           isPublic: true,
           allowComments: true,
           createdAt: true,
@@ -97,6 +71,13 @@ export class PostService {
               id: true,
               username: true,
               profileImageUrl: true,
+            },
+          },
+          theme: {
+            select: {
+              id: true,
+              name: true,
+              emoji: true,
             },
           },
           _count: {
@@ -140,13 +121,13 @@ export class PostService {
         id: true,
         title: true,
         description: true,
-        category: true,
+        postType: true,
+        themeId: true,
+        subThemeIds: true,
         rating: true,
         imageUrls: true,
         locationsData: true,
-        startDate: true,
-        endDate: true,
-        metadata: true,
+        multiCriteriaRatings: true,
         isPublic: true,
         allowComments: true,
         createdAt: true,
@@ -157,6 +138,13 @@ export class PostService {
             id: true,
             username: true,
             profileImageUrl: true,
+          },
+        },
+        theme: {
+          select: {
+            id: true,
+            name: true,
+            emoji: true,
           },
         },
         comments: {
@@ -202,13 +190,13 @@ export class PostService {
           id: true,
           title: true,
           description: true,
-          category: true,
+          postType: true,
+          themeId: true,
+          subThemeIds: true,
           rating: true,
           imageUrls: true,
           locationsData: true,
-          startDate: true,
-          endDate: true,
-          metadata: true,
+          multiCriteriaRatings: true,
           isPublic: true,
           allowComments: true,
           createdAt: true,
@@ -219,6 +207,13 @@ export class PostService {
               id: true,
               username: true,
               profileImageUrl: true,
+            },
+          },
+          theme: {
+            select: {
+              id: true,
+              name: true,
+              emoji: true,
             },
           },
           _count: {
@@ -253,42 +248,78 @@ export class PostService {
   }
 
   /**
-   * Create a new post with multiple locations and category
+   * Create a new post with theme system
    */
   static async createPost(data: CreatePostInput) {
-    // Validate required fields
-    if (!data.userId || !data.description || !data.locations || data.locations.length === 0) {
-      throw new Error('Missing required fields: userId, description, locations');
+    // Initial validation
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data provided to createPost');
+    }
+
+    // Validate required fields with strict type checking
+    if (!data.userId || typeof data.userId !== 'string') {
+      throw new Error('userId is required and must be a string');
+    }
+
+    if (!data.postType || typeof data.postType !== 'string') {
+      throw new Error('postType is required and must be a string');
+    }
+
+    if (!data.themeId || typeof data.themeId !== 'string') {
+      throw new Error('themeId is required and must be a string');
+    }
+
+    if (!Array.isArray(data.subThemeIds) || data.subThemeIds.length === 0) {
+      throw new Error('subThemeIds is required and must be a non-empty array');
+    }
+
+    // CRITICAL: Ensure title is a non-empty string - triple check
+    if (data.title === null || data.title === undefined) {
+      throw new Error('title cannot be null or undefined');
+    }
+
+    if (typeof data.title !== 'string') {
+      throw new Error(`title must be a string, received ${typeof data.title}`);
+    }
+
+    // Validate title
+    if (typeof data.title !== 'string' || data.title.trim().length < 1) {
+      throw new Error('Title must be at least 1 character long');
+    }
+
+    // CRITICAL: Ensure description is a non-empty string - triple check
+    if (data.description === null || data.description === undefined) {
+      throw new Error('description cannot be null or undefined');
+    }
+
+    if (typeof data.description !== 'string') {
+      throw new Error(`description must be a string, received ${typeof data.description}`);
     }
 
     // Validate description
-    if (typeof data.description !== 'string' || data.description.trim().length === 0) {
-      throw new Error('Description must be a non-empty string');
+    if (typeof data.description !== 'string' || data.description.trim().length < 10) {
+      throw new Error('Description must be at least 10 characters long');
     }
 
-    // Validate category
-    const validCategories = ['TRIP', 'FOOD_PLACE', 'HOTEL', 'ATTRACTION'];
-    if (!validCategories.includes(data.category)) {
-      throw new Error(`Invalid category. Must be one of: ${validCategories.join(', ')}`);
+    // Validate postType
+    if (!['TRIP', 'LOCATION'].includes(data.postType)) {
+      throw new Error('postType must be TRIP or LOCATION');
     }
 
-    // Validate rating if provided
-    if (data.rating !== undefined && (typeof data.rating !== 'number' || data.rating < 1 || data.rating > 5)) {
-      throw new Error('Rating must be a number between 1 and 5');
+    // Validate locations based on postType
+    if (!Array.isArray(data.locations) || data.locations.length === 0) {
+      throw new Error('At least one location is required');
     }
 
-    // Validate imageUrls
-    if (!Array.isArray(data.imageUrls)) {
-      data.imageUrls = [];
-    }
-    if (!data.imageUrls.every((url) => typeof url === 'string')) {
-      throw new Error('All image URLs must be strings');
+    if (data.postType === 'LOCATION' && data.locations.length !== 1) {
+      throw new Error('LOCATION type requires exactly 1 location');
     }
 
-    // Validate locations
-    if (!Array.isArray(data.locations)) {
-      throw new Error('Locations must be an array');
+    if (data.postType === 'TRIP' && data.locations.length < 2) {
+      throw new Error('TRIP type requires at least 2 locations');
     }
+
+    // Validate locations structure
     for (const loc of data.locations) {
       if (!loc.name || typeof loc.name !== 'string') {
         throw new Error('Each location must have a name');
@@ -301,48 +332,207 @@ export class PostService {
       }
     }
 
-    // Validate and parse dates
-    let startDate: Date | null = null;
-    let endDate: Date | null = null;
+    // Validate theme
+    const theme = await ThemeService.getThemeById(data.themeId);
+    if (!theme) {
+      throw new Error('Theme not found');
+    }
 
-    if (data.startDate) {
-      startDate = new Date(data.startDate);
-      if (isNaN(startDate.getTime())) {
-        throw new Error('Invalid startDate format. Use ISO 8601 format (e.g., 2024-01-15T10:30:00Z)');
+    // Validate sub-themes
+    if (!Array.isArray(data.subThemeIds) || data.subThemeIds.length === 0) {
+      throw new Error('At least one sub-theme must be selected');
+    }
+
+    await ThemeService.validateSubThemes(data.themeId, data.subThemeIds);
+
+    // Validate imageUrls
+    if (data.imageUrls && !Array.isArray(data.imageUrls)) {
+      throw new Error('imageUrls must be an array');
+    }
+
+    const imageUrls = data.imageUrls || [];
+    if (imageUrls.length < 1 || imageUrls.length > 20) {
+      throw new Error('Must upload between 1 and 20 images');
+    }
+
+    if (!imageUrls.every((url) => typeof url === 'string')) {
+      throw new Error('All image URLs must be strings');
+    }
+
+    // Validate rating if provided
+    if (data.rating !== undefined) {
+      if (typeof data.rating !== 'number' || data.rating < 1 || data.rating > 5) {
+        throw new Error('Rating must be a number between 1 and 5');
       }
     }
 
-    if (data.endDate) {
-      endDate = new Date(data.endDate);
-      if (isNaN(endDate.getTime())) {
-        throw new Error('Invalid endDate format. Use ISO 8601 format (e.g., 2024-01-15T10:30:00Z)');
+    // Validate multi-criteria ratings if provided
+    if (data.multiCriteriaRatings) {
+      const ratings = data.multiCriteriaRatings;
+      if (ratings.optionVariety && (ratings.optionVariety < 1 || ratings.optionVariety > 5)) {
+        throw new Error('optionVariety rating must be between 1 and 5');
+      }
+      if (ratings.location && (ratings.location < 1 || ratings.location > 5)) {
+        throw new Error('location rating must be between 1 and 5');
+      }
+      if (ratings.accessibility && (ratings.accessibility < 1 || ratings.accessibility > 5)) {
+        throw new Error('accessibility rating must be between 1 and 5');
+      }
+      if (ratings.priceValue && (ratings.priceValue < 1 || ratings.priceValue > 5)) {
+        throw new Error('priceValue rating must be between 1 and 5');
       }
     }
 
-    return prisma.post.create({
-      data: {
-        userId: data.userId,
-        category: data.category,
-        title: data.title,
-        description: data.description.trim(),
-        rating: data.rating,
-        imageUrls: data.imageUrls || [],
-        locationsData: data.locations as unknown as Prisma.InputJsonValue,
-        startDate,
-        endDate,
-        metadata: data.metadata || {},
-      },
+    // Final defensive preparations - ensure no null values will be passed
+    const finalTitle = String(data.title).trim();
+    const finalDescription = String(data.description).trim();
+
+    if (!finalTitle || finalTitle.length === 0) {
+      throw new Error('Final title validation failed: title is empty');
+    }
+
+    if (!finalDescription || finalDescription.length === 0) {
+      throw new Error('Final description validation failed: description is empty');
+    }
+
+    console.log('Creating post with:');
+    console.log('- title:', finalTitle);
+    console.log('- title type:', typeof finalTitle);
+    console.log('- title length:', finalTitle.length);
+    console.log('- title is truthy:', !!finalTitle);
+    console.log('- description length:', finalDescription.length);
+    console.log('- postType:', data.postType);
+    console.log('- imageUrls count:', imageUrls.length);
+    console.log('- userId:', data.userId);
+    console.log('- themeId:', data.themeId);
+
+    // One final check before Prisma - this should never fail if we got here
+    if (!finalTitle || typeof finalTitle !== 'string' || finalTitle.length === 0) {
+      throw new Error(`CRITICAL ERROR: Title validation failed before Prisma insert. Title: "${finalTitle}", Type: ${typeof finalTitle}`);
+    }
+
+    try {
+      return prisma.post.create({
+        data: {
+          userId: data.userId,
+          postType: data.postType,
+          themeId: data.themeId,
+          subThemeIds: data.subThemeIds,
+          title: finalTitle,
+          description: finalDescription,
+          rating: data.rating,
+          imageUrls: imageUrls,
+          locationsData: data.locations as unknown as Prisma.InputJsonValue,
+          multiCriteriaRatings: data.multiCriteriaRatings
+            ? (data.multiCriteriaRatings as unknown as Prisma.InputJsonValue)
+            : undefined,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          postType: true,
+          themeId: true,
+          subThemeIds: true,
+          rating: true,
+          imageUrls: true,
+          locationsData: true,
+          multiCriteriaRatings: true,
+          isPublic: true,
+          allowComments: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              profileImageUrl: true,
+            },
+          },
+          theme: {
+            select: {
+              id: true,
+              name: true,
+              emoji: true,
+            },
+          },
+        },
+      }).then((post) => ({
+        ...post,
+        locations: post.locationsData as unknown as LocationData[],
+      }));
+    } catch (prismaError: any) {
+      console.error('Prisma error details:', {
+        code: prismaError.code,
+        message: prismaError.message,
+        meta: prismaError.meta,
+        clientVersion: prismaError.clientVersion,
+      });
+      throw prismaError;
+    }
+  }
+
+  /**
+   * Update post
+   */
+  static async updatePost(postId: string, data: UpdatePostInput) {
+    const updateData: any = {};
+
+    if (data.description !== undefined) {
+      if (data.description.trim().length < 10) {
+        throw new Error('Description must be at least 10 characters long');
+      }
+      updateData.description = data.description.trim();
+    }
+
+    if (data.rating !== undefined) {
+      if (typeof data.rating !== 'number' || data.rating < 1 || data.rating > 5) {
+        throw new Error('Rating must be a number between 1 and 5');
+      }
+      updateData.rating = data.rating;
+    }
+
+    if (data.imageUrls !== undefined) {
+      if (!Array.isArray(data.imageUrls)) {
+        throw new Error('imageUrls must be an array');
+      }
+      if (data.imageUrls.length < 1 || data.imageUrls.length > 20) {
+        throw new Error('Must have between 1 and 20 images');
+      }
+      updateData.imageUrls = data.imageUrls;
+    }
+
+    if (data.multiCriteriaRatings !== undefined) {
+      const ratings = data.multiCriteriaRatings;
+      if (ratings.optionVariety && (ratings.optionVariety < 1 || ratings.optionVariety > 5)) {
+        throw new Error('optionVariety rating must be between 1 and 5');
+      }
+      if (ratings.location && (ratings.location < 1 || ratings.location > 5)) {
+        throw new Error('location rating must be between 1 and 5');
+      }
+      if (ratings.accessibility && (ratings.accessibility < 1 || ratings.accessibility > 5)) {
+        throw new Error('accessibility rating must be between 1 and 5');
+      }
+      if (ratings.priceValue && (ratings.priceValue < 1 || ratings.priceValue > 5)) {
+        throw new Error('priceValue rating must be between 1 and 5');
+      }
+      updateData.multiCriteriaRatings = ratings;
+    }
+
+    return prisma.post.update({
+      where: { id: postId },
+      data: updateData,
       select: {
         id: true,
-        title: true,
         description: true,
-        category: true,
+        postType: true,
+        themeId: true,
+        subThemeIds: true,
         rating: true,
         imageUrls: true,
         locationsData: true,
-        startDate: true,
-        endDate: true,
-        metadata: true,
+        multiCriteriaRatings: true,
         isPublic: true,
         allowComments: true,
         createdAt: true,
@@ -355,52 +545,11 @@ export class PostService {
             profileImageUrl: true,
           },
         },
-      },
-    }).then((post) => ({
-      ...post,
-      locations: post.locationsData as unknown as LocationData[],
-    }));
-  }
-
-  /**
-   * Update post
-   */
-  static async updatePost(postId: string, data: UpdatePostInput) {
-    const updateData: any = {};
-
-    if (data.title !== undefined) updateData.title = data.title;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (data.rating !== undefined) updateData.rating = data.rating;
-    if (data.imageUrls !== undefined) updateData.imageUrls = data.imageUrls;
-    if (data.locations !== undefined) updateData.locationsData = data.locations;
-    if (data.startDate !== undefined) updateData.startDate = data.startDate ? new Date(data.startDate) : null;
-    if (data.endDate !== undefined) updateData.endDate = data.endDate ? new Date(data.endDate) : null;
-    if (data.metadata !== undefined) updateData.metadata = data.metadata;
-
-    return prisma.post.update({
-      where: { id: postId },
-      data: updateData,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        category: true,
-        rating: true,
-        imageUrls: true,
-        locationsData: true,
-        startDate: true,
-        endDate: true,
-        metadata: true,
-        isPublic: true,
-        allowComments: true,
-        createdAt: true,
-        updatedAt: true,
-        userId: true,
-        user: {
+        theme: {
           select: {
             id: true,
-            username: true,
-            profileImageUrl: true,
+            name: true,
+            emoji: true,
           },
         },
       },

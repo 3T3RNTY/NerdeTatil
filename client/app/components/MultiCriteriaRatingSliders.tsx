@@ -2,30 +2,57 @@ import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { useState } from 'react'
 import { tokens } from '@/src/theme/tokens'
 
+// Support both old and new rating systems
 interface MultiCriteriaRatingValues {
-  cleanliness: number
-  service: number
-  pricePerformance: number
+  cleanliness?: number
+  service?: number
+  pricePerformance?: number
+  optionVariety?: number
+  location?: number
+  accessibility?: number
+  priceValue?: number
+  [key: string]: number | undefined
 }
 
 interface MultiCriteriaRatingSlidersProps {
   onRatingsChange: (ratings: MultiCriteriaRatingValues) => void
   initialValues?: MultiCriteriaRatingValues
+  ratings?: MultiCriteriaRatingValues
 }
 
-const criteria = [
+// Determine which criteria to show based on provided values
+const oldCriteria = [
   { key: 'cleanliness', label: 'Temizlik', emoji: '✨' },
   { key: 'service', label: 'Hizmet', emoji: '👥' },
   { key: 'pricePerformance', label: 'Fiyat/Değer', emoji: '💰' },
+]
+
+const newCriteria = [
+  { key: 'optionVariety', label: 'Seçenek Çeşitliliği', emoji: '🎯' },
+  { key: 'location', label: 'Konumu', emoji: '📍' },
+  { key: 'accessibility', label: 'Erişebilirlik', emoji: '♿' },
+  { key: 'priceValue', label: 'Fiyat/Değer', emoji: '💰' },
 ]
 
 const ratingLabels = ['Kötü', 'Uygun', 'İyi', 'Çok İyi', 'Mükemmel']
 
 export default function MultiCriteriaRatingSliders({
   onRatingsChange,
-  initialValues = { cleanliness: 3, service: 3, pricePerformance: 3 },
+  initialValues,
+  ratings: externalRatings,
 }: MultiCriteriaRatingSlidersProps) {
-  const [ratings, setRatings] = useState<MultiCriteriaRatingValues>(initialValues)
+  const defaultInitialValues = initialValues || {
+    optionVariety: 3,
+    location: 3,
+    accessibility: 3,
+    priceValue: 3,
+  }
+
+  const [ratings, setRatings] = useState<MultiCriteriaRatingValues>(defaultInitialValues)
+
+  // Determine which criteria to use
+  const hasOldKeys = initialValues?.cleanliness !== undefined || defaultInitialValues.cleanliness !== undefined
+  const criteria = hasOldKeys ? oldCriteria : newCriteria
 
   const handleSliderChange = (key: keyof MultiCriteriaRatingValues, value: number) => {
     const newRatings = { ...ratings, [key]: value }
@@ -34,7 +61,7 @@ export default function MultiCriteriaRatingSliders({
   }
 
   const renderSlider = (key: keyof MultiCriteriaRatingValues, label: string, emoji: string) => {
-    const currentValue = ratings[key]
+    const currentValue = ratings[key] || 3
 
     return (
       <View key={key} style={styles.sliderContainer}>

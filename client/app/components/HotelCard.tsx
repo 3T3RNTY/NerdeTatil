@@ -19,8 +19,8 @@ export default function HotelCard({ post, isWideWeb = false, isMobile = false }:
     isMobile && styles.cardImageMobile,
   ])
 
-  const priceRange = post.metadata?.priceRange || 'Bilgisiz'
-  const amenities = Array.isArray(post.metadata?.amenities) ? post.metadata.amenities : []
+  const priceRange = post.theme?.name || 'Bilgisiz'
+  const amenities: string[] = []
 
   return (
     <View style={cardStyle}>

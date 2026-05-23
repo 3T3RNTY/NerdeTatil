@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { PostCategory } from '@/src/api/postService'
+
+// Legacy PostCategory for backward compatibility
+type PostCategory = 'TRIP' | 'FOOD_PLACE' | 'HOTEL' | 'ATTRACTION'
 
 interface CategoryOption {
   value: PostCategory

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PostService } from '../services/postService';
+import { ThemeService } from '../services/themeService';
 
 export class PostController {
   /**
@@ -16,6 +17,20 @@ export class PostController {
       res.json(result);
     } catch (error) {
       console.error('Error fetching posts:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/themes
+   * Get all themes with sub-themes
+   */
+  static async getThemes(req: Request, res: Response) {
+    try {
+      const themes = await ThemeService.getAllThemes();
+      res.json(themes);
+    } catch (error) {
+      console.error('Error fetching themes:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -43,31 +58,103 @@ export class PostController {
 
   /**
    * POST /api/posts
-   * Create a new post with multiple locations and category
+   * Create a new post with theme system
    */
   static async create(req: Request, res: Response) {
     try {
-      const { userId, category, title, description, rating, imageUrls, locations, startDate, endDate, metadata } =
-        req.body;
+      console.log('Post creation request received:');
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
+      
+      const {
+        userId,
+        postType,
+        themeId,
+        subThemeIds,
+        title,
+        description,
+        locations,
+        imageUrls,
+        rating,
+        multiCriteriaRatings,
+      } = req.body;
 
-      if (!userId || !category || !description || !locations || locations.length === 0) {
+      console.log('Extracted fields:');
+      console.log('- userId:', userId);
+      console.log('- title:', title, '(type:', typeof title, ')');
+      console.log('- description:', description);
+      console.log('- postType:', postType);
+
+      // Defensive null/undefined checks
+      if (!userId || typeof userId !== 'string') {
         return res.status(400).json({
-          error:
-            'Missing required fields: userId, category, description, locations',
+          error: 'userId is required and must be a string',
+        });
+      }
+
+      if (!postType || typeof postType !== 'string') {
+        return res.status(400).json({
+          error: 'postType is required and must be a string',
+        });
+      }
+
+      if (!themeId || typeof themeId !== 'string') {
+        return res.status(400).json({
+          error: 'themeId is required and must be a string',
+        });
+      }
+
+      if (!subThemeIds || !Array.isArray(subThemeIds) || subThemeIds.length === 0) {
+        return res.status(400).json({
+          error: 'subThemeIds is required and must be a non-empty array',
+        });
+      }
+
+      // CRITICAL: Ensure title is a non-empty string
+      if (!title || typeof title !== 'string' || title.trim().length === 0) {
+        return res.status(400).json({
+          error: 'title is required and must be a non-empty string',
+        });
+      }
+
+      if (!description || typeof description !== 'string' || description.trim().length === 0) {
+        return res.status(400).json({
+          error: 'description is required and must be a non-empty string',
+        });
+      }
+
+      if (!locations || !Array.isArray(locations) || locations.length === 0) {
+        return res.status(400).json({
+          error: 'locations is required and must be a non-empty array',
+        });
+      }
+
+      // Ensure title and description are not null
+      const sanitizedTitle = String(title).trim();
+      const sanitizedDescription = String(description).trim();
+
+      if (!sanitizedTitle) {
+        return res.status(400).json({
+          error: 'title cannot be empty after trimming',
+        });
+      }
+
+      if (!sanitizedDescription) {
+        return res.status(400).json({
+          error: 'description cannot be empty after trimming',
         });
       }
 
       const post = await PostService.createPost({
         userId,
-        category,
-        title,
-        description,
-        rating,
-        imageUrls,
+        postType: postType as any,
+        themeId,
+        subThemeIds,
+        title: sanitizedTitle,
+        description: sanitizedDescription,
         locations,
-        startDate,
-        endDate,
-        metadata,
+        imageUrls,
+        rating,
+        multiCriteriaRatings,
       });
 
       res.status(201).json(post);
@@ -77,9 +164,7 @@ export class PostController {
         return res.status(400).json({ error: error.message });
       }
       if (error.code === 'P2025') {
-        return res
-          .status(400)
-          .json({ error: 'User not found' });
+        return res.status(400).json({ error: 'User or theme not found' });
       }
       // Return detailed Prisma error for debugging
       if (error.code && error.code.startsWith('P')) {
@@ -88,7 +173,7 @@ export class PostController {
           code: error.code,
         });
       }
-      res.status(500).json({ error: error.message || 'Internal server error' });
+      res.status(400).json({ error: error.message || 'Internal server error' });
     }
   }
 
@@ -99,13 +184,13 @@ export class PostController {
   static async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { title, description, rating, imageUrls } = req.body;
+      const { description, rating, imageUrls, multiCriteriaRatings } = req.body;
 
       const post = await PostService.updatePost(id, {
-        title,
         description,
         rating,
         imageUrls,
+        multiCriteriaRatings,
       });
 
       res.json(post);
@@ -114,7 +199,7 @@ export class PostController {
       if (error.code === 'P2025') {
         return res.status(404).json({ error: 'Post not found' });
       }
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(400).json({ error: error.message || 'Internal server error' });
     }
   }
 

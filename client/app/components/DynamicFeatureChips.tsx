@@ -1,7 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
 import { useState } from 'react'
-import { PostCategory } from '@/src/api/postService'
 import { tokens } from '@/src/theme/tokens'
+
+// Legacy PostCategory for backward compatibility
+type PostCategory = 'TRIP' | 'FOOD_PLACE' | 'HOTEL' | 'ATTRACTION'
 
 interface DynamicFeatureChipsProps {
   category: PostCategory | null

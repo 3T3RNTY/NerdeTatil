@@ -204,9 +204,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
                       {location.city && `${location.city}, `}
                       {location.country}
                     </Text>
-                    {location.visitDate && (
-                      <Text style={styles.visitDateDisplay}>Tarih: {location.visitDate}</Text>
-                    )}
+                    {/* visitDate display removed in new schema */}
                   </View>
                   <Pressable
                     style={styles.removeButton}
@@ -234,7 +232,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
                           <DayPicker
                             mode="single"
                             selected={visitDates[index]}
-                            onSelect={(date) => handleSetDate(index, date)}
+                            onSelect={(date: Date) => handleSetDate(index, date)}
                           />
                         </View>
                       )}
@@ -453,7 +451,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     marginBottom: 8,
-    overflowY: 'auto' as any,
   },
   mobileeDateButton: {
     backgroundColor: '#f0fdf9',

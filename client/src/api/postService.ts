@@ -1,6 +1,26 @@
 import apiClient from './client';
 
-export type PostCategory = 'TRIP' | 'FOOD_PLACE' | 'HOTEL' | 'ATTRACTION';
+export type PostType = 'TRIP' | 'LOCATION';
+
+export interface SubTheme {
+  id: string;
+  name: string;
+}
+
+export interface Theme {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  subThemes: SubTheme[];
+}
+
+export interface MultiCriteriaRatings {
+  optionVariety?: number; // 1-5
+  location?: number; // 1-5
+  accessibility?: number; // 1-5
+  priceValue?: number; // 1-5
+}
 
 export interface LocationData {
   id?: string;
@@ -10,23 +30,6 @@ export interface LocationData {
   country?: string;
   latitude?: number;
   longitude?: number;
-  visitDate?: string; // ISO date string
-}
-
-export interface PostMetadata {
-  // Feature selection and ratings (multi-criteria)
-  features?: string[]; // Selected feature chips (category-dependent)
-  ratings?: {
-    cleanliness?: number; // 1-5
-    service?: number; // 1-5
-    pricePerformance?: number; // 1-5
-  };
-  // Category-specific fields
-  mealType?: string;
-  priceRange?: string;
-  amenities?: string[];
-  hours?: string;
-  [key: string]: any;
 }
 
 export interface Location {
@@ -44,21 +47,26 @@ export interface PostUser {
 
 export interface Post {
   id: string;
-  title?: string;
+  title: string;
   description: string;
-  category: PostCategory;
+  postType: PostType;
+  themeId: string;
+  subThemeIds: string[];
   rating?: number;
   imageUrls: string[];
   locations: LocationData[];
-  startDate?: string;
-  endDate?: string;
-  metadata?: PostMetadata;
+  multiCriteriaRatings?: MultiCriteriaRatings;
   isPublic: boolean;
   allowComments: boolean;
   createdAt: string;
   updatedAt: string;
   userId: string;
   user: PostUser;
+  theme: {
+    id: string;
+    name: string;
+    emoji: string;
+  };
   likesCount: number;
   commentsCount: number;
 }
@@ -85,6 +93,18 @@ export interface PostsResponse {
 }
 
 export class PostService {
+  /**
+   * Get all themes with sub-themes
+   */
+  static async getThemes(): Promise<Theme[]> {
+    try {
+      const response = await apiClient.get<Theme[]>('/themes');
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch themes' };
+    }
+  }
+
   /**
    * Get all posts with pagination
    */
@@ -131,19 +151,19 @@ export class PostService {
   }
 
   /**
-   * Create a new post with multiple locations and category
+   * Create a new post with theme system
    */
   static async createPost(data: {
     userId: string;
-    category: PostCategory;
-    title?: string;
+    postType: PostType;
+    themeId: string;
+    subThemeIds: string[];
+    title: string;
     description: string;
     rating?: number;
     imageUrls?: string[];
     locations: LocationData[];
-    startDate?: string;
-    endDate?: string;
-    metadata?: PostMetadata;
+    multiCriteriaRatings?: MultiCriteriaRatings;
   }): Promise<Post> {
     try {
       const response = await apiClient.post<Post>('/posts', data);

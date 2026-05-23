@@ -7,6 +7,8 @@
     "start": "npm run build && node dist/server.js",
     "dev": "ts-node src/server.ts",
     "build": "tsc",
+    "seed": "ts-node src/seeds/seed.ts",
+    "reset-themes": "ts-node src/seeds/resetThemes.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

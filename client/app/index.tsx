@@ -20,8 +20,21 @@ import FoodPlaceCard from './components/FoodPlaceCard'
 import HotelCard from './components/HotelCard'
 import AttractionCard from './components/AttractionCard'
 
-// Helper function to render the correct card component based on category
+// Helper function to render the correct card component based on category or postType
 const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean) => {
+  // Handle new post format (postType)
+  if (post.postType) {
+    switch (post.postType) {
+      case 'TRIP':
+        return <TripCard key={post.id} post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+      case 'LOCATION':
+        return <AttractionCard key={post.id} post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+      default:
+        return <AttractionCard key={post.id} post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+    }
+  }
+
+  // Handle legacy post format (category)
   switch (post.category) {
     case 'TRIP':
       return <TripCard key={post.id} post={post} isWideWeb={isWideWeb} isMobile={isMobile} />

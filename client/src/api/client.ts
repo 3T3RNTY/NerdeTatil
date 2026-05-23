@@ -12,7 +12,9 @@ const apiClient: AxiosInstance = axios.create({
 });
 
 // Log API configuration on startup
-console.log('API Client initialized with baseURL:', appConfig.apiBaseUrl);
+if (__DEV__) {
+  console.log('API Client initialized with baseURL:', appConfig.apiBaseUrl);
+}
 
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
@@ -25,7 +27,9 @@ apiClient.interceptors.request.use(
     } catch (error) {
       console.error('Error retrieving auth token:', error);
     }
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    if (__DEV__) {
+      console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    }
     return config;
   },
   (error) => {
@@ -37,7 +41,9 @@ apiClient.interceptors.request.use(
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`API Response: ${response.status} ${response.config.url}`);
+    if (__DEV__) {
+      console.log(`API Response: ${response.status} ${response.config.url}`);
+    }
     return response;
   },
   async (error: AxiosError) => {

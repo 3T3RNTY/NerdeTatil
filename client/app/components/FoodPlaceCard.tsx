@@ -19,8 +19,8 @@ export default function FoodPlaceCard({ post, isWideWeb = false, isMobile = fals
     isMobile && styles.cardImageMobile,
   ])
 
-  const mealType = post.metadata?.mealType || 'Yemek'
-  const priceRange = post.metadata?.priceRange || 'Bilgisiz'
+  const mealType = post.theme?.name || 'Yemek'
+  const priceRange = post.theme?.name || 'Bilgisiz'
 
   return (
     <View style={cardStyle}>

@@ -46,6 +46,7 @@ router.put('/users/:id', authMiddleware, UserController.update);
 // POSTS ROUTES
 // ============================================
 
+router.get('/themes', PostController.getThemes);
 router.get('/posts', optionalAuthMiddleware, PostController.list);
 router.get('/posts/user/:userId', PostController.getByUserId);
 router.get('/posts/:id', optionalAuthMiddleware, PostController.getById);
