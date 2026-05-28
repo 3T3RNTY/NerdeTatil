@@ -124,10 +124,48 @@ export default function YeniPaylasimScreen() {
         setFormError('Lütfen tüm puanlamalar yapın');
         return false;
       }
+      // For TRIP posts, validate that locations have ratings
+      if (postType === 'TRIP') {
+        const locationsWithoutRating = selectedLocations.filter(loc => !loc.rating);
+        if (locationsWithoutRating.length > 0) {
+          setFormError('Lütfen tüm konumları puanlandırın');
+          return false;
+        }
+      }
       return true;
     }
 
     return true;
+  };
+
+  // Handler for location-level rating updates
+  const handleLocationRatingChange = (locationIndex: number, rating: number) => {
+    const updatedLocations = [...selectedLocations];
+    updatedLocations[locationIndex] = {
+      ...updatedLocations[locationIndex],
+      rating,
+    };
+    setSelectedLocations(updatedLocations);
+  };
+
+  // Handler for location-level description updates
+  const handleLocationDescriptionChange = (locationIndex: number, description: string) => {
+    const updatedLocations = [...selectedLocations];
+    updatedLocations[locationIndex] = {
+      ...updatedLocations[locationIndex],
+      description,
+    };
+    setSelectedLocations(updatedLocations);
+  };
+
+  // Handler for location-level multi-criteria rating updates
+  const handleLocationMultiCriteriaChange = (locationIndex: number, multiCriteria: any) => {
+    const updatedLocations = [...selectedLocations];
+    updatedLocations[locationIndex] = {
+      ...updatedLocations[locationIndex],
+      multiCriteriaRatings: multiCriteria,
+    };
+    setSelectedLocations(updatedLocations);
   };
 
   const handleNext = () => {
@@ -261,6 +299,11 @@ export default function YeniPaylasimScreen() {
               ratings={ratings}
               onRatingsChange={setRatings}
               token={token}
+              selectedLocations={selectedLocations}
+              postType={postType}
+              onLocationRatingChange={handleLocationRatingChange}
+              onLocationDescriptionChange={handleLocationDescriptionChange}
+              onLocationMultiCriteriaChange={handleLocationMultiCriteriaChange}
             />
           )}
 

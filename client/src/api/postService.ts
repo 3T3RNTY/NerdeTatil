@@ -31,6 +31,10 @@ export interface LocationData {
   latitude?: number;
   longitude?: number;
   visitDate?: string | null;
+  // Location-specific ratings (for TRIP posts only)
+  rating?: number; // 1-5 overall rating for this location
+  description?: string; // User's review/description for this location
+  multiCriteriaRatings?: MultiCriteriaRatings; // Per-location multi-criteria ratings
 }
 
 export interface Location {

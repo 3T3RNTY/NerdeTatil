@@ -272,8 +272,67 @@ export default function DetailScreen() {
                                   Ziyaret: {new Date(location.visitDate).toLocaleDateString('tr-TR')}
                                 </Text>
                               )}
+                              {/* Location-specific rating badge */}
+                              {location.rating && (
+                                <View style={styles.locationRatingBadge}>
+                                  <Text style={styles.locationRatingBadgeText}>
+                                    ⭐ {location.rating?.toFixed(1)} / 5
+                                  </Text>
+                                </View>
+                              )}
                             </View>
                           </View>
+
+                          {/* Location-specific description */}
+                          {location.description && (
+                            <View style={styles.locationDescription}>
+                              <Text style={styles.locationDescriptionText}>{location.description}</Text>
+                            </View>
+                          )}
+
+                          {/* Location-specific multi-criteria ratings */}
+                          {location.multiCriteriaRatings && (
+                            <View style={styles.locationMultiCriteria}>
+                              <Text style={styles.locationCriteriaTitle}>Detaylı Puanlama</Text>
+                              {location.multiCriteriaRatings.optionVariety && (
+                                <View style={styles.criteriaRow}>
+                                  <Text style={styles.criteriaLabel}>Çeşitlilik</Text>
+                                  <Text style={styles.criteriaStars}>
+                                    {'⭐'.repeat(location.multiCriteriaRatings.optionVariety)}
+                                    {'☆'.repeat(5 - location.multiCriteriaRatings.optionVariety)}
+                                  </Text>
+                                </View>
+                              )}
+                              {location.multiCriteriaRatings.location && (
+                                <View style={styles.criteriaRow}>
+                                  <Text style={styles.criteriaLabel}>Konum</Text>
+                                  <Text style={styles.criteriaStars}>
+                                    {'⭐'.repeat(location.multiCriteriaRatings.location)}
+                                    {'☆'.repeat(5 - location.multiCriteriaRatings.location)}
+                                  </Text>
+                                </View>
+                              )}
+                              {location.multiCriteriaRatings.accessibility && (
+                                <View style={styles.criteriaRow}>
+                                  <Text style={styles.criteriaLabel}>Erişilebilirlik</Text>
+                                  <Text style={styles.criteriaStars}>
+                                    {'⭐'.repeat(location.multiCriteriaRatings.accessibility)}
+                                    {'☆'.repeat(5 - location.multiCriteriaRatings.accessibility)}
+                                  </Text>
+                                </View>
+                              )}
+                              {location.multiCriteriaRatings.priceValue && (
+                                <View style={styles.criteriaRow}>
+                                  <Text style={styles.criteriaLabel}>Fiyat/Değer</Text>
+                                  <Text style={styles.criteriaStars}>
+                                    {'⭐'.repeat(location.multiCriteriaRatings.priceValue)}
+                                    {'☆'.repeat(5 - location.multiCriteriaRatings.priceValue)}
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
+                          )}
+
                           {location.latitude && location.longitude && (
                             <View style={styles.locationFooter}>
                               <Text style={styles.locationCoordinates}>
@@ -752,5 +811,60 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: tokens.colors.secondary,
     fontWeight: '500',
+  },
+  // Location-specific rating styles
+  locationRatingBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: tokens.colors.accentLight,
+    borderRadius: 6,
+  },
+  locationRatingBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: tokens.colors.accentDark,
+  },
+  locationDescription: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: tokens.colors.backgroundSecondary,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: tokens.colors.primary,
+  },
+  locationDescriptionText: {
+    fontSize: 12,
+    color: tokens.colors.textSecondary,
+    lineHeight: 16,
+  },
+  locationMultiCriteria: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: tokens.colors.backgroundSecondary,
+    borderRadius: 8,
+    gap: 6,
+  },
+  locationCriteriaTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: tokens.colors.text,
+    marginBottom: 4,
+  },
+  criteriaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  criteriaLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: tokens.colors.textSecondary,
+    flex: 1,
+  },
+  criteriaStars: {
+    fontSize: 12,
+    letterSpacing: 1,
   },
 })

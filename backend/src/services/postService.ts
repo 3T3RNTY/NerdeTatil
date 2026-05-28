@@ -12,6 +12,10 @@ interface LocationData {
   country?: string;
   latitude?: number;
   longitude?: number;
+  // Location-specific ratings (for TRIP posts only)
+  rating?: number; // 1-5 overall rating for this location
+  description?: string; // User's review/description for this location
+  multiCriteriaRatings?: MultiCriteriaRatings; // Per-location multi-criteria ratings
 }
 
 interface MultiCriteriaRatings {
@@ -45,6 +49,7 @@ export class PostService {
   /**
    * Enrich location data with missing city and country information
    * Uses reverse geocoding if coordinates are available but city/country is missing
+   * Preserves location-specific ratings and descriptions during enrichment
    */
   static async enrichLocations(locations: LocationData[]): Promise<LocationData[]> {
     try {
@@ -68,6 +73,10 @@ export class PostService {
                 city: result.city || location.city,
                 country: result.country || location.country,
                 address: result.address || location.address,
+                // Preserve location-specific ratings and description
+                rating: location.rating,
+                description: location.description,
+                multiCriteriaRatings: location.multiCriteriaRatings,
               };
             } catch (error) {
               console.warn(
@@ -381,6 +390,38 @@ export class PostService {
       }
       if (loc.longitude !== undefined && typeof loc.longitude !== 'number') {
         throw new Error('Location longitude must be a number');
+      }
+
+      // Validate location-level ratings for TRIP posts
+      if (data.postType === 'TRIP') {
+        if (loc.rating !== undefined) {
+          if (typeof loc.rating !== 'number' || loc.rating < 1 || loc.rating > 5) {
+            throw new Error(`Location "${loc.name}": rating must be a number between 1 and 5`);
+          }
+        }
+
+        if (loc.description !== undefined && loc.description !== null) {
+          if (typeof loc.description !== 'string') {
+            throw new Error(`Location "${loc.name}": description must be a string`);
+          }
+          // Description is optional but can be any length if provided
+        }
+
+        if (loc.multiCriteriaRatings) {
+          const ratings = loc.multiCriteriaRatings;
+          if (ratings.optionVariety && (ratings.optionVariety < 1 || ratings.optionVariety > 5)) {
+            throw new Error(`Location "${loc.name}": optionVariety rating must be between 1 and 5`);
+          }
+          if (ratings.location && (ratings.location < 1 || ratings.location > 5)) {
+            throw new Error(`Location "${loc.name}": location rating must be between 1 and 5`);
+          }
+          if (ratings.accessibility && (ratings.accessibility < 1 || ratings.accessibility > 5)) {
+            throw new Error(`Location "${loc.name}": accessibility rating must be between 1 and 5`);
+          }
+          if (ratings.priceValue && (ratings.priceValue < 1 || ratings.priceValue > 5)) {
+            throw new Error(`Location "${loc.name}": priceValue rating must be between 1 and 5`);
+          }
+        }
       }
     }
 
