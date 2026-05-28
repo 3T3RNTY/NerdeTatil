@@ -71,6 +71,7 @@ export interface Post {
     id: string;
     name: string;
     emoji: string;
+    subThemes?: SubTheme[];
   };
   likesCount: number;
   commentsCount: number;

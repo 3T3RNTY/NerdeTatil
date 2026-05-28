@@ -203,6 +203,12 @@ export class PostService {
             id: true,
             name: true,
             emoji: true,
+            subThemes: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         comments: {

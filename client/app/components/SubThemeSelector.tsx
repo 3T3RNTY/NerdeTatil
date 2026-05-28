@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { tokens } from '@/src/theme/tokens';
 import { PostService } from '@/src/api/postService';
+import { getTagColorSchemeByHash } from '@/src/utils/tagColors';
 
 interface SubTheme {
   id: string;
@@ -69,25 +70,35 @@ export function SubThemeSelector({
       <Text style={styles.title}>Alt Temalar Seç</Text>
 
       <View style={styles.chipsContainer}>
-        {subThemes && subThemes.length > 0 && subThemes.map((subTheme) => (
-          <Pressable
-            key={subTheme.id}
-            style={[
-              styles.chip,
-              selectedSubThemeIds.includes(subTheme.id) && styles.chipSelected,
-            ]}
-            onPress={() => toggleSubTheme(subTheme.id)}
-          >
-            <Text
+        {subThemes && subThemes.length > 0 && subThemes.map((subTheme) => {
+          const isSelected = selectedSubThemeIds.includes(subTheme.id);
+          const colorScheme = getTagColorSchemeByHash(subTheme.name);
+          
+          return (
+            <Pressable
+              key={subTheme.id}
               style={[
-                styles.chipText,
-                selectedSubThemeIds.includes(subTheme.id) && styles.chipTextSelected,
+                styles.chip,
+                {
+                  backgroundColor: isSelected ? colorScheme.backgroundColor : tokens.colors.background,
+                  borderColor: colorScheme.borderColor,
+                }
               ]}
+              onPress={() => toggleSubTheme(subTheme.id)}
             >
-              {subTheme.name}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={[
+                  styles.chipText,
+                  {
+                    color: isSelected ? colorScheme.textColor : tokens.colors.textSecondary,
+                  }
+                ]}
+              >
+                {subTheme.name}
+              </Text>
+            </Pressable>
+          )
+        })}
       </View>
 
       {(!subThemes || subThemes.length === 0) && (
@@ -100,11 +111,24 @@ export function SubThemeSelector({
           <View style={styles.selectedChips}>
             {selectedSubThemeIds.map((id) => {
               const subTheme = subThemes.find((st) => st.id === id);
+              const colorScheme = getTagColorSchemeByHash(subTheme?.name || id);
+              
               return (
-                <View key={id} style={styles.reviewChip}>
-                  <Text style={styles.reviewChipText}>{subTheme?.name}</Text>
+                <View 
+                  key={id} 
+                  style={[
+                    styles.reviewChip,
+                    {
+                      backgroundColor: colorScheme.backgroundColor,
+                      borderColor: colorScheme.borderColor,
+                    }
+                  ]}
+                >
+                  <Text style={[styles.reviewChipText, { color: colorScheme.textColor }]}>
+                    {subTheme?.name}
+                  </Text>
                   <Pressable onPress={() => toggleSubTheme(id)}>
-                    <Text style={styles.removeIcon}>×</Text>
+                    <Text style={[styles.removeIcon, { color: colorScheme.textColor }]}>×</Text>
                   </Pressable>
                 </View>
               );
@@ -137,21 +161,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: tokens.colors.backgroundTertiary,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
-  },
-  chipSelected: {
-    backgroundColor: tokens.colors.infoPrimary,
-    borderColor: tokens.colors.infoPrimary,
   },
   chipText: {
     fontSize: 13,
-    color: tokens.colors.text,
     fontWeight: '500',
-  },
-  chipTextSelected: {
-    color: tokens.colors.background,
   },
   reviewSection: {
     marginTop: 20,
@@ -175,18 +189,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: tokens.colors.infoLight,
     borderRadius: 20,
     gap: 6,
+    borderWidth: 1,
   },
   reviewChipText: {
     fontSize: 12,
-    color: tokens.colors.infoPrimary,
     fontWeight: '500',
   },
   removeIcon: {
     fontSize: 18,
-    color: tokens.colors.infoPrimary,
     fontWeight: 'bold',
   },
   emptyText: {

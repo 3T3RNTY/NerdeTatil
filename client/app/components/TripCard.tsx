@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image, Platform
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 import { tokens } from '@/src/theme/tokens'
+import { getThemeColorScheme } from '@/src/utils/themeColors'
 
 interface TripCardProps {
   post: Post
@@ -12,12 +13,34 @@ interface TripCardProps {
 
 export default function TripCard({ post, isWideWeb = false, isMobile = false }: TripCardProps) {
   const { width } = useWindowDimensions()
+  const themeColors = getThemeColorScheme(post.theme?.name || 'Seyahat')
   
-  const cardStyle = StyleSheet.flatten([styles.card, isWideWeb && styles.cardWide])
+  const cardStyle = StyleSheet.flatten([
+    styles.card,
+    isWideWeb && styles.cardWide,
+    {
+      borderLeftColor: themeColors.borderColor,
+      borderTopColor: themeColors.borderColor,
+      shadowColor: themeColors.borderColor,
+    }
+  ])
   const cardImageStyle = StyleSheet.flatten([
     styles.cardImage,
     isWideWeb && styles.cardImageWide,
     isMobile && styles.cardImageMobile,
+  ])
+  const themeBadgeStyle = StyleSheet.flatten([
+    styles.categoryBadge,
+    {
+      backgroundColor: themeColors.backgroundColor,
+      borderColor: themeColors.borderColor,
+    }
+  ])
+  const themeBadgeTextStyle = StyleSheet.flatten([
+    styles.categoryBadgeText,
+    {
+      color: themeColors.textColor,
+    }
   ])
 
   // Format date range
@@ -73,8 +96,8 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
                 <Text style={styles.imageCountText}>+{post.imageUrls.length - 1}</Text>
               </View>
             )}
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>{getThemeBadge()}</Text>
+            <View style={themeBadgeStyle}>
+              <Text style={themeBadgeTextStyle}>{getThemeBadge()}</Text>
             </View>
           </>
         ) : (
@@ -165,7 +188,7 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
 
         {/* View Button */}
         <Link href={`/detay/${post.id}`} asChild>
-          <Pressable style={styles.viewButton}>
+          <Pressable style={StyleSheet.flatten([styles.viewButton, { backgroundColor: themeColors.borderColor }])}>
             <Text style={styles.viewButtonText}>İncele →</Text>
           </Pressable>
         </Link>
@@ -181,10 +204,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#0284c7',
     borderTopWidth: 2,
-    borderTopColor: '#0284c7',
-    shadowColor: '#0284c7',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 4,
@@ -228,15 +248,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     left: 8,
-    backgroundColor: '#0284c7',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: tokens.colors.background,
   },
   categoryBadgeText: {
-    color: tokens.colors.background,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -370,7 +387,6 @@ const styles = StyleSheet.create({
     color: tokens.colors.textSecondary,
   },
   viewButton: {
-    backgroundColor: '#0284c7',
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',

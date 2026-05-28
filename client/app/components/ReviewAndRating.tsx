@@ -12,6 +12,7 @@ import ImageUploader from './ImageUploader';
 import MultiCriteriaRatingSliders from './MultiCriteriaRatingSliders';
 import { tokens } from '@/src/theme/tokens'
 import { LocationData, MultiCriteriaRatings, PostType } from '@/src/api/postService';
+import { getThemeColorScheme } from '@/src/utils/themeColors';
 
 interface UploadedImage {
   url: string;
@@ -44,6 +45,8 @@ interface ReviewAndRatingProps {
   token?: string | null;
   selectedLocations?: LocationData[];
   postType?: PostType;
+  theme?: any;
+  selectedSubThemeIds?: string[];
 }
 
 export function ReviewAndRating({
@@ -61,6 +64,8 @@ export function ReviewAndRating({
   token,
   selectedLocations = [],
   postType = 'LOCATION',
+  theme,
+  selectedSubThemeIds = [],
 }: ReviewAndRatingProps) {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [expandedLocationIndex, setExpandedLocationIndex] = useState<number | null>(null);
@@ -197,6 +202,30 @@ export function ReviewAndRating({
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Theme and SubThemes Display */}
+      {theme && (
+        <View style={styles.themeAndSubThemesContainer}>
+          <View style={styles.themeBadge}>
+            <Text style={styles.themeBadgeText}>
+              {theme.emoji} {theme.name}
+            </Text>
+          </View>
+
+          {/* SubThemes Display */}
+          {theme.subThemes && theme.subThemes.length > 0 && selectedSubThemeIds.length > 0 && (
+            <View style={styles.subThemesChips}>
+              {theme.subThemes
+                .filter((st: any) => selectedSubThemeIds.includes(st.id))
+                .map((subTheme: any) => (
+                  <View key={subTheme.id} style={styles.subThemeChip}>
+                    <Text style={styles.subThemeChipText}>{subTheme.name}</Text>
+                  </View>
+                ))}
+            </View>
+          )}
+        </View>
+      )}
+
       <Text style={styles.sectionTitle}>Başlık</Text>
 
       <TextInput
@@ -451,5 +480,44 @@ const styles = StyleSheet.create({
     color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '500',
+  },
+  themeAndSubThemesContainer: {
+    gap: 10,
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.borderLight,
+  },
+  themeBadge: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: tokens.colors.primary,
+    backgroundColor: tokens.colors.primaryLighter,
+  },
+  themeBadgeText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: tokens.colors.primary,
+  },
+  subThemesChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  subThemeChip: {
+    backgroundColor: tokens.colors.primaryLighter,
+    borderWidth: 1,
+    borderColor: tokens.colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  subThemeChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: tokens.colors.primary,
   },
 });

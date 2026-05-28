@@ -18,6 +18,8 @@ import ImageGallery from '@/app/components/ImageGallery'
 import { PostService, PostDetail, Comment } from '@/src/api/postService'
 import { tokens } from '@/src/theme/tokens'
 import { useAuth } from '@/src/hooks/useAuth'
+import { getTagColorSchemeByHash } from '@/src/utils/tagColors'
+import { getThemeColorScheme } from '@/src/utils/themeColors'
 
 export default function DetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>()
@@ -29,6 +31,7 @@ export default function DetailScreen() {
   const [error, setError] = useState<string | null>(null)
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+  const themeColors = getThemeColorScheme(post?.theme?.name || 'Seyahat')
 
   useEffect(() => {
     if (params.id) {
@@ -97,6 +100,53 @@ export default function DetailScreen() {
     (submittingComment || !commentText.trim()) && styles.sendButtonDisabled,
   ])
 
+  // Comments JSX - will be conditionally rendered in main or side column
+  const commentsSection = post ? (
+    <>
+      <View style={styles.block}>
+        <Text style={styles.blockTitle}>Yorumlar ({post.comments.length})</Text>
+        {post.comments.length === 0 ? (
+          <Text style={styles.emptyText}>Henüz yorum yok</Text>
+        ) : (
+          post.comments.map((comment) => (
+            <View key={comment.id} style={styles.commentRow}>
+              <Text style={styles.commentUser}>{comment.user.username}</Text>
+              <Text style={styles.commentText}>{comment.content}</Text>
+              <Text style={styles.commentDate}>
+                {new Date(comment.createdAt).toLocaleDateString('tr-TR')}
+              </Text>
+            </View>
+          ))
+        )}
+      </View>
+
+      {user && (
+        <View style={styles.commentComposer}>
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Yorumunu yaz..."
+            placeholderTextColor={tokens.colors.textSecondary}
+            value={commentText}
+            onChangeText={setCommentText}
+            editable={!submittingComment}
+            multiline
+          />
+          <Pressable
+            style={sendButtonStyle}
+            onPress={handleAddComment}
+            disabled={submittingComment || !commentText.trim()}
+          >
+              {submittingComment ? (
+              <ActivityIndicator color={tokens.colors.background} size="small" />
+            ) : (
+              <Text style={styles.sendButtonText}>+</Text>
+            )}
+          </Pressable>
+        </View>
+      )}
+    </>
+  ) : null
+
   if (loading) {
     const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
@@ -144,104 +194,66 @@ export default function DetailScreen() {
                 />
               )}
 
-              {/* Category Badge */}
-              {post.category && (
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryBadgeText}>
-                    {post.category === 'TRIP' && '🗺️ Seyahat'}
-                    {post.category === 'FOOD_PLACE' && '🍽️ Restoran'}
-                    {post.category === 'HOTEL' && '🏨 Otel'}
-                    {post.category === 'ATTRACTION' && '🎡 Mekan'}
+              {/* Theme Badge with SubThemes */}
+              {post.theme && themeColors && (
+                <View style={styles.themeAndSubThemesContainer}>
+                  <View style={StyleSheet.flatten([
+                    styles.themeBadge,
+                    {
+                      backgroundColor: themeColors.backgroundColor,
+                      borderColor: themeColors.borderColor,
+                    }
+                  ])}>
+                    <Text style={StyleSheet.flatten([styles.themeBadgeText, { color: themeColors.textColor }])}>
+                      {post.theme.emoji} {post.theme.name}
+                    </Text>
+                  </View>
+
+                  {/* SubThemes Display */}
+                  {post.theme.subThemes && post.theme.subThemes.length > 0 && post.subThemeIds && post.subThemeIds.length > 0 && (
+                    <View style={styles.subThemesChips}>
+                      {post.theme.subThemes
+                        .filter(st => post.subThemeIds.includes(st.id))
+                        .map((subTheme) => (
+                          <View key={subTheme.id} style={styles.subThemeChip}>
+                            <Text style={styles.subThemeChipText}>{subTheme.name}</Text>
+                          </View>
+                        ))}
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Default Theme Badge for Old Posts */}
+              {!post.theme && themeColors && (
+                <View style={StyleSheet.flatten([
+                  styles.themeBadge,
+                  {
+                    backgroundColor: themeColors.backgroundColor,
+                    borderColor: themeColors.borderColor,
+                  }
+                ])}>
+                  <Text style={StyleSheet.flatten([styles.themeBadgeText, { color: themeColors.textColor }])}>
+                    ✈️ Seyahat
                   </Text>
                 </View>
               )}
 
-              {/* Trip Dates */}
-              {post.category === 'TRIP' && post.startDate && post.endDate && (
-                <View style={styles.dateRangeCard}>
-                  <Text style={styles.dateRangeTitle}>📅 Seyahat Tarihleri</Text>
-                  <Text style={styles.dateRangeText}>
-                    {new Date(post.startDate).toLocaleDateString('tr-TR')} - {new Date(post.endDate).toLocaleDateString('tr-TR')}
-                  </Text>
-                </View>
-              )}
-
-              {/* Features Display */}
-              {post.metadata?.features && post.metadata.features.length > 0 && (
-                <View style={styles.featuresContainer}>
-                  <Text style={styles.featuresTitle}>⭐ Özellikler</Text>
-                  <View style={styles.featureChips}>
-                    {post.metadata.features.map((feature: any, index: number) => (
-                      <View key={index} style={styles.featureChip}>
-                        <Text style={styles.featureChipText}>{feature}</Text>
-                      </View>
-                    ))}
+              {/* Title and Description Block */}
+              <View style={styles.block}>
+                <Text style={styles.blockTitle}>{post.title || 'Paylaşım'}</Text>
+                <Text style={styles.blockText}>{post.description}</Text>
+                {post.user && (
+                  <View style={styles.authorInfo}>
+                    <Text style={styles.authorText}>
+                      Paylaşan: {post.user.username}
+                    </Text>
+                    <Text style={styles.dateText}>
+                      {new Date(post.createdAt).toLocaleDateString('tr-TR')}
+                    </Text>
                   </View>
-                </View>
-              )}
-
-              {/* Multi-Criteria Ratings Display */}
-              {post.metadata?.ratings && (post.metadata.ratings.cleanliness || post.metadata.ratings.service || post.metadata.ratings.pricePerformance) && (
-                <View style={styles.ratingsContainer}>
-                  <Text style={styles.ratingsTitle}>📊 Detaylı Değerlendirme</Text>
-                  {post.metadata.ratings.cleanliness && (
-                    <View style={styles.ratingRow}>
-                      <Text style={styles.ratingLabel}>Temizlik</Text>
-                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.cleanliness)}{'☆'.repeat(5 - post.metadata.ratings.cleanliness)}</Text>
-                    </View>
-                  )}
-                  {post.metadata.ratings.service && (
-                    <View style={styles.ratingRow}>
-                      <Text style={styles.ratingLabel}>Hizmet</Text>
-                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.service)}{'☆'.repeat(5 - post.metadata.ratings.service)}</Text>
-                    </View>
-                  )}
-                  {post.metadata.ratings.pricePerformance && (
-                    <View style={styles.ratingRow}>
-                      <Text style={styles.ratingLabel}>Fiyat/Değer</Text>
-                      <Text style={styles.ratingValue}>{'★'.repeat(post.metadata.ratings.pricePerformance)}{'☆'.repeat(5 - post.metadata.ratings.pricePerformance)}</Text>
-                    </View>
-                  )}
-                </View>
-              )}
-
-              {/* Meal Type Display */}
-              {post.metadata?.mealType && (
-                <View style={styles.infoCard}>
-                  <Text style={styles.infoLabel}>🍽️ Yemek Türü</Text>
-                  <Text style={styles.infoValue}>{post.metadata.mealType}</Text>
-                </View>
-              )}
-
-              {/* Price Range Display */}
-              {post.metadata?.priceRange && (
-                <View style={styles.infoCard}>
-                  <Text style={styles.infoLabel}>💰 Fiyat Aralığı</Text>
-                  <Text style={styles.infoValue}>{post.metadata.priceRange}</Text>
-                </View>
-              )}
-
-              {/* Amenities Display */}
-              {post.metadata?.amenities && Array.isArray(post.metadata.amenities) && post.metadata.amenities.length > 0 && (
-                <View style={styles.amenitiesContainer}>
-                  <Text style={styles.amenitiesTitle}>🏢 Olanaklar</Text>
-                  <View style={styles.amenitiesList}>
-                    {post.metadata.amenities.map((amenity: any, index: number) => (
-                      <View key={index} style={styles.amenityItem}>
-                        <Text style={styles.amenityText}>✓ {amenity}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Hours Display */}
-              {post.metadata?.hours && (
-                <View style={styles.infoCard}>
-                  <Text style={styles.infoLabel}>⏰ Açılış Saatleri</Text>
-                  <Text style={styles.infoValue}>{post.metadata.hours}</Text>
-                </View>
-              )}
+                )}
+              </View>
 
               {/* Locations Display */}
               {post.locations && post.locations.length > 0 && (
@@ -347,24 +359,122 @@ export default function DetailScreen() {
                   ))}
                 </View>
               )}
-             
+
+              {/* Multi-Criteria Ratings Display */}
+              {post.multiCriteriaRatings && (
+                <View style={styles.ratingsContainer}>
+                  <Text style={styles.ratingsTitle}>📊 Detaylı Değerlendirme</Text>
+                  <View style={styles.ratingRow}>
+                    <Text style={styles.ratingLabel}>Çeşitlilik</Text>
+                    <Text style={styles.ratingValue}>{'★'.repeat(post.multiCriteriaRatings.optionVariety || 0)}{'☆'.repeat(5 - (post.multiCriteriaRatings.optionVariety || 0))}</Text>
+                  </View>
+                  <View style={styles.ratingRow}>
+                    <Text style={styles.ratingLabel}>Konum</Text>
+                    <Text style={styles.ratingValue}>{'★'.repeat(post.multiCriteriaRatings.location || 0)}{'☆'.repeat(5 - (post.multiCriteriaRatings.location || 0))}</Text>
+                  </View>
+                  <View style={styles.ratingRow}>
+                    <Text style={styles.ratingLabel}>Erişilebilirlik</Text>
+                    <Text style={styles.ratingValue}>{'★'.repeat(post.multiCriteriaRatings.accessibility || 0)}{'☆'.repeat(5 - (post.multiCriteriaRatings.accessibility || 0))}</Text>
+                  </View>
+                  <View style={styles.ratingRow}>
+                    <Text style={styles.ratingLabel}>Fiyat/Değer</Text>
+                    <Text style={styles.ratingValue}>{'★'.repeat(post.multiCriteriaRatings.priceValue || 0)}{'☆'.repeat(5 - (post.multiCriteriaRatings.priceValue || 0))}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Comments Section - Mobile Only */}
+              {!isWideWeb && commentsSection}
+
+              {/* Additional Details (Category, Features, etc.) */}
+              {post.category && (
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryBadgeText}>
+                    {post.category === 'TRIP' && '🗺️ Seyahat'}
+                    {post.category === 'FOOD_PLACE' && '🍽️ Restoran'}
+                    {post.category === 'HOTEL' && '🏨 Otel'}
+                    {post.category === 'ATTRACTION' && '🎡 Mekan'}
+                  </Text>
+                </View>
+              )}
+
+              {/* Trip Dates */}
+              {post.category === 'TRIP' && post.startDate && post.endDate && (
+                <View style={styles.dateRangeCard}>
+                  <Text style={styles.dateRangeTitle}>📅 Seyahat Tarihleri</Text>
+                  <Text style={styles.dateRangeText}>
+                    {new Date(post.startDate).toLocaleDateString('tr-TR')} - {new Date(post.endDate).toLocaleDateString('tr-TR')}
+                  </Text>
+                </View>
+              )}
+
+              {/* Features Display */}
+              {post.metadata?.features && post.metadata.features.length > 0 && (
+                <View style={styles.featuresContainer}>
+                  <Text style={styles.featuresTitle}>⭐ Özellikler</Text>
+                  <View style={styles.featureChips}>
+                    {post.metadata.features.map((feature: any, index: number) => {
+                      const colorScheme = getTagColorSchemeByHash(feature)
+                      return (
+                        <View 
+                          key={index} 
+                          style={[
+                            styles.featureChip,
+                            {
+                              backgroundColor: colorScheme.backgroundColor,
+                              borderColor: colorScheme.borderColor,
+                            }
+                          ]}
+                        >
+                          <Text style={[styles.featureChipText, { color: colorScheme.textColor }]}>
+                            {feature}
+                          </Text>
+                        </View>
+                      )
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Meal Type Display */}
+              {post.metadata?.mealType && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>🍽️ Yemek Türü</Text>
+                  <Text style={styles.infoValue}>{post.metadata.mealType}</Text>
+                </View>
+              )}
+
+              {/* Price Range Display */}
+              {post.metadata?.priceRange && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>💰 Fiyat Aralığı</Text>
+                  <Text style={styles.infoValue}>{post.metadata.priceRange}</Text>
+                </View>
+              )}
+
+              {/* Amenities Display */}
+              {post.metadata?.amenities && Array.isArray(post.metadata.amenities) && post.metadata.amenities.length > 0 && (
+                <View style={styles.amenitiesContainer}>
+                  <Text style={styles.amenitiesTitle}>🏢 Olanaklar</Text>
+                  <View style={styles.amenitiesList}>
+                    {post.metadata.amenities.map((amenity: any, index: number) => (
+                      <View key={index} style={styles.amenityItem}>
+                        <Text style={styles.amenityText}>✓ {amenity}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Hours Display */}
+              {post.metadata?.hours && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>⏰ Açılış Saatleri</Text>
+                  <Text style={styles.infoValue}>{post.metadata.hours}</Text>
+                </View>
+              )}
 
               <Text style={styles.meta}>ID: {post.id}</Text>
-
-              <View style={styles.block}>
-                <Text style={styles.blockTitle}>{post.title || 'Paylaşım'}</Text>
-                <Text style={styles.blockText}>{post.description}</Text>
-                {post.user && (
-                  <View style={styles.authorInfo}>
-                    <Text style={styles.authorText}>
-                      Paylaşan: {post.user.username}
-                    </Text>
-                    <Text style={styles.dateText}>
-                      {new Date(post.createdAt).toLocaleDateString('tr-TR')}
-                    </Text>
-                  </View>
-                )}
-              </View>
             </View>
 
             <View style={sideColumnStyle}>
@@ -375,47 +485,8 @@ export default function DetailScreen() {
                 </View>
               )}
 
-              <View style={styles.block}>
-                <Text style={styles.blockTitle}>Yorumlar ({post.comments.length})</Text>
-                {post.comments.length === 0 ? (
-                  <Text style={styles.emptyText}>Henüz yorum yok</Text>
-                ) : (
-                  post.comments.map((comment) => (
-                    <View key={comment.id} style={styles.commentRow}>
-                      <Text style={styles.commentUser}>{comment.user.username}</Text>
-                      <Text style={styles.commentText}>{comment.content}</Text>
-                      <Text style={styles.commentDate}>
-                        {new Date(comment.createdAt).toLocaleDateString('tr-TR')}
-                      </Text>
-                    </View>
-                  ))
-                )}
-              </View>
-
-              {user && (
-                <View style={styles.commentComposer}>
-                  <TextInput
-                    style={styles.commentInput}
-                    placeholder="Yorumunu yaz..."
-                    placeholderTextColor={tokens.colors.textSecondary}
-                    value={commentText}
-                    onChangeText={setCommentText}
-                    editable={!submittingComment}
-                    multiline
-                  />
-                  <Pressable
-                    style={sendButtonStyle}
-                    onPress={handleAddComment}
-                    disabled={submittingComment || !commentText.trim()}
-                  >
-                      {submittingComment ? (
-                      <ActivityIndicator color={tokens.colors.background} size="small" />
-                    ) : (
-                      <Text style={styles.sendButtonText}>+</Text>
-                    )}
-                  </Pressable>
-                </View>
-              )}
+              {/* Comments Section - Web Only */}
+              {isWideWeb && commentsSection}
             </View>
           </View>
       </PageShell>
@@ -529,6 +600,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: tokens.colors.infoDark,
+  },
+  themeBadge: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 2,
+  },
+  themeBadgeText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  themeAndSubThemesContainer: {
+    gap: 10,
+    marginBottom: 12,
+  },
+  subThemesChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  subThemeChip: {
+    backgroundColor: tokens.colors.primaryLighter,
+    borderWidth: 1,
+    borderColor: tokens.colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  subThemeChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: tokens.colors.primary,
   },
   dateRangeCard: {
     borderRadius: 16,
@@ -724,8 +829,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   featureChip: {
-    backgroundColor: tokens.colors.secondaryLight,
-    borderColor: tokens.colors.secondary,
     borderWidth: 1,
     borderRadius: 16,
     paddingHorizontal: 12,
@@ -734,7 +837,6 @@ const styles = StyleSheet.create({
   featureChipText: {
     fontSize: 12,
     fontWeight: '600',
-    color: tokens.colors.secondary,
   },
   ratingsContainer: {
     borderRadius: 16,

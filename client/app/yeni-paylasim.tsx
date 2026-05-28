@@ -46,6 +46,7 @@ export default function YeniPaylasimScreen() {
   // Form state
   const [postType, setPostType] = useState<PostType | undefined>(undefined);
   const [themeId, setThemeId] = useState<string | undefined>(undefined);
+  const [theme, setTheme] = useState<any>(undefined);
   const [subThemeIds, setSubThemeIds] = useState<string[]>([]);
   const [title, setTitle] = useState('');
   const [review, setReview] = useState('');
@@ -260,7 +261,16 @@ export default function YeniPaylasimScreen() {
           {currentStep === 2 && (
             <ThemeSelector
               selectedThemeId={themeId}
-              onSelect={setThemeId}
+              onSelect={(id) => {
+                setThemeId(id);
+                // Fetch full theme data including subThemes
+                PostService.getThemes().then((themes) => {
+                  const selected = themes.find((t: any) => t.id === id);
+                  if (selected) {
+                    setTheme(selected);
+                  }
+                });
+              }}
             />
           )}
 
@@ -301,6 +311,8 @@ export default function YeniPaylasimScreen() {
               token={token}
               selectedLocations={selectedLocations}
               postType={postType}
+              theme={theme}
+              selectedSubThemeIds={subThemeIds}
               onLocationRatingChange={handleLocationRatingChange}
               onLocationDescriptionChange={handleLocationDescriptionChange}
               onLocationMultiCriteriaChange={handleLocationMultiCriteriaChange}
