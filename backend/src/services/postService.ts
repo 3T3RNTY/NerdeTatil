@@ -212,13 +212,34 @@ export class PostService {
           },
         },
         comments: {
-          include: {
+          where: { parentCommentId: null },
+          select: {
+            id: true,
+            postId: true,
+            userId: true,
+            parentCommentId: true,
+            content: true,
+            isEdited: true,
+            createdAt: true,
+            updatedAt: true,
             user: {
               select: {
                 id: true,
                 username: true,
                 profileImageUrl: true,
               },
+            },
+            replies: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    profileImageUrl: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: 'asc' },
             },
           },
           orderBy: { createdAt: 'desc' },
@@ -670,12 +691,18 @@ export class PostService {
   /**
    * Add comment to post
    */
-  static async addComment(data: { postId: string; userId: string; content: string }) {
+  static async addComment(data: {
+    postId: string;
+    userId: string;
+    content: string;
+    parentCommentId?: string | null;
+  }) {
     return prisma.comment.create({
       data: {
         postId: data.postId,
         userId: data.userId,
         content: data.content,
+        parentCommentId: data.parentCommentId || null,
       },
       include: {
         user: {
@@ -685,16 +712,39 @@ export class PostService {
             profileImageUrl: true,
           },
         },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profileImageUrl: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
   }
 
   /**
-   * Get comments for post
+   * Get comments for post with post owner ID
    */
   static async getPostComments(postId: string) {
-    return prisma.comment.findMany({
-      where: { postId },
+    // First get the post to retrieve post owner ID
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { userId: true },
+    });
+
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // Get top-level comments with replies
+    const comments = await prisma.comment.findMany({
+      where: { postId, parentCommentId: null },
       include: {
         user: {
           select: {
@@ -702,15 +752,141 @@ export class PostService {
             username: true,
             profileImageUrl: true,
           },
+        },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profileImageUrl: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return {
+      comments,
+      postOwnerId: post.userId,
+    };
   }
 
   /**
-   * Like a post
+   * Delete comment (post owner can delete any, users can delete own)
    */
+  static async deleteComment(data: {
+    postId: string;
+    commentId: string;
+    userId: string;
+  }) {
+    // Get the comment
+    const comment = await prisma.comment.findUnique({
+      where: { id: data.commentId },
+      include: {
+        post: {
+          select: { userId: true },
+        },
+      },
+    });
+
+    if (!comment) {
+      console.log('[deleteComment] Comment not found:', data.commentId);
+      throw new Error('Comment not found');
+    }
+
+    // Check authorization: comment author or post owner
+    const isCommentAuthor = comment.userId === data.userId;
+    const isPostOwner = comment.post.userId === data.userId;
+
+    console.log('[deleteComment] Permission check', {
+      commentUserId: comment.userId,
+      userId: data.userId,
+      isCommentAuthor,
+      isPostOwner,
+      allowed: isCommentAuthor || isPostOwner,
+    });
+
+    if (!isCommentAuthor && !isPostOwner) {
+      return null; // Indicate unauthorized
+    }
+
+    // Delete comment (cascade will delete replies)
+    await prisma.comment.delete({
+      where: { id: data.commentId },
+    });
+
+    console.log('[deleteComment] Successfully deleted comment:', data.commentId);
+    return true;
+  }
+
+  /**
+   * Edit comment (users can edit own comments only)
+   */
+  static async editComment(data: {
+    postId: string;
+    commentId: string;
+    content: string;
+    userId: string;
+  }) {
+    // Get the comment to verify ownership
+    const comment = await prisma.comment.findUnique({
+      where: { id: data.commentId },
+    });
+
+    if (!comment) {
+      console.log('[editComment] Comment not found:', data.commentId);
+      throw new Error('Comment not found');
+    }
+
+    // Check authorization: only comment author can edit
+    const isCommentAuthor = comment.userId === data.userId;
+    console.log('[editComment] Permission check', {
+      commentUserId: comment.userId,
+      userId: data.userId,
+      isCommentAuthor,
+    });
+
+    if (!isCommentAuthor) {
+      return null; // Indicate unauthorized
+    }
+
+    // Update comment with isEdited flag
+    const updated = await prisma.comment.update({
+      where: { id: data.commentId },
+      data: {
+        content: data.content,
+        isEdited: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profileImageUrl: true,
+          },
+        },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profileImageUrl: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    console.log('[editComment] Successfully edited comment:', data.commentId);
+    return updated;
+  }
   static async likePost(postId: string, userId: string, reactionType: string = 'like') {
     return prisma.like.upsert({
       where: {

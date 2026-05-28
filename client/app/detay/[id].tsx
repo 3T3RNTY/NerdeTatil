@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Linking,
+  Alert,
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
@@ -31,6 +32,9 @@ export default function DetailScreen() {
   const [error, setError] = useState<string | null>(null)
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editingText, setEditingText] = useState('')
   const themeColors = getThemeColorScheme(post?.theme?.name || 'Seyahat')
 
   useEffect(() => {
@@ -39,15 +43,27 @@ export default function DetailScreen() {
     }
   }, [params.id])
 
+  useEffect(() => {
+    console.log('[DetailScreen] Component state update', {
+      hasUser: !!user,
+      userId: user?.id,
+      hasPost: !!post,
+      postUserId: post?.userId,
+      commentsCount: post?.comments?.length || 0,
+    })
+  }, [user, post])
+
   const fetchPost = async () => {
     try {
       setLoading(true)
       setError(null)
       const data = await PostService.getPostById(params.id!)
+      console.log('[fetchPost] Loaded post:', { id: data.id, userId: data.userId, commentsCount: data.comments?.length })
+      console.log('[fetchPost] Current user:', user)
       setPost(data)
     } catch (err: any) {
-      setError(err?.error || 'Paylaşım yüklenemedi')
       console.error('Error fetching post:', err)
+      setError(err?.error || 'Paylaşım yüklenemedi')
     } finally {
       setLoading(false)
     }
@@ -63,8 +79,10 @@ export default function DetailScreen() {
       await PostService.addComment(post.id, {
         userId: user.id,
         content: commentText,
+        parentCommentId: replyingTo || undefined,
       })
       setCommentText('')
+      setReplyingTo(null)
       // Refresh post to show new comment
       await fetchPost()
     } catch (err: any) {
@@ -72,6 +90,94 @@ export default function DetailScreen() {
     } finally {
       setSubmittingComment(false)
     }
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
+    console.log('[handleDeleteComment] Starting delete', { commentId, postId: post?.id, userId: user?.id })
+    
+    if (!post) {
+      console.log('[handleDeleteComment] No post')
+      return
+    }
+    
+    if (!user) {
+      console.log('[handleDeleteComment] No user')
+      Alert.alert('Hata', 'Yorum silmek için giriş yapmanız gerekir')
+      return
+    }
+
+    const comment = post.comments?.find(c => c.id === commentId || c.replies?.some(r => r.id === commentId))
+    console.log('[handleDeleteComment] Found comment:', { commentId, commentUserId: comment?.user?.id, postUserId: post.userId })
+
+    Alert.alert(
+      'Yorumu Sil', 
+      'Bu yorumu silmek istediğinizden emin misiniz?', 
+      [
+        { 
+          text: 'İptal', 
+          onPress: () => {
+            console.log('[handleDeleteComment] Deletion cancelled by user')
+          }, 
+          style: 'cancel' 
+        },
+        {
+          text: 'Sil',
+          onPress: async () => {
+            try {
+              console.log('[handleDeleteComment] Calling API delete', { postId: post.id, commentId })
+              const result = await PostService.deleteComment(post.id, commentId)
+              console.log('[handleDeleteComment] Delete API response:', result)
+              console.log('[handleDeleteComment] Fetching updated post after deletion')
+              await fetchPost()
+              console.log('[handleDeleteComment] Post refreshed successfully')
+            } catch (err: any) {
+              console.error('[handleDeleteComment] Error deleting comment:', err)
+              console.log('[handleDeleteComment] Error details:', { 
+                status: err?.status, 
+                statusText: err?.statusText,
+                errorMessage: err?.error,
+                fullError: err 
+              })
+              Alert.alert('Hata', err?.error || 'Yorum silinemedi')
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: false }
+    )
+  }
+
+  const handleEditComment = async (commentId: string) => {
+    if (!editingText.trim() || !post) return
+    if (!user) {
+      Alert.alert('Hata', 'Yorum düzenlemek için giriş yapmanız gerekir')
+      return
+    }
+
+    try {
+      await PostService.editComment(post.id, commentId, editingText)
+      setEditingCommentId(null)
+      setEditingText('')
+      await fetchPost()
+    } catch (err: any) {
+      console.error('Error editing comment:', err)
+      Alert.alert('Hata', err?.error || 'Yorum güncellenemedi')
+    }
+  }
+
+  const canDeleteComment = (commentUserId: string): boolean => {
+    const isCommentAuthor = user?.id === commentUserId
+    const isPostOwner = post?.userId === user?.id
+    const canDelete = isCommentAuthor || isPostOwner
+    console.log(`[canDeleteComment] userId=${user?.id}, commentUserId=${commentUserId}, postOwnerId=${post?.userId}, isAuthor=${isCommentAuthor}, isOwner=${isPostOwner}, canDelete=${canDelete}`)
+    return canDelete
+  }
+
+  const canEditComment = (commentUserId: string): boolean => {
+    const canEdit = user?.id === commentUserId
+    console.log(`[canEditComment] userId=${user?.id}, commentUserId=${commentUserId}, canEdit=${canEdit}`)
+    return canEdit
   }
 
   const handleLocationPress = (location: any) => {
@@ -100,48 +206,165 @@ export default function DetailScreen() {
     (submittingComment || !commentText.trim()) && styles.sendButtonDisabled,
   ])
 
+  // Render a single comment with nested replies
+  const renderComment = (comment: Comment, postOwnerId: string | undefined, isReply = false) => {
+    const isPostOwner = comment.user.id === postOwnerId
+    const isEditingThisComment = editingCommentId === comment.id
+    
+    // Debug logging
+    if (!comment.user) {
+      console.warn('[renderComment] Comment missing user object:', comment)
+      return null
+    }
+
+    return (
+      <View key={comment.id} style={[styles.commentRow, isReply && styles.commentRowReply]}>
+        {/* Comment Header */}
+        <View style={styles.commentHeader}>
+          <Text style={styles.commentUser}>
+            {comment.user.username}
+            {isPostOwner && <Text style={styles.postOwnerBadge}> İçerik Sahibi</Text>}
+          </Text>
+          <Text style={styles.commentDate}>
+            {new Date(comment.createdAt).toLocaleDateString('tr-TR')}
+            {comment.isEdited && <Text style={styles.editedIndicator}> (düzenlendi)</Text>}
+          </Text>
+        </View>
+
+        {/* Comment Content */}
+        {isEditingThisComment ? (
+          <View style={styles.editModeContainer}>
+            <TextInput
+              style={styles.editInput}
+              value={editingText}
+              onChangeText={setEditingText}
+              multiline
+              editable={!submittingComment}
+            />
+            <View style={styles.editButtonsRow}>
+              <Pressable
+                style={styles.saveButton}
+                onPress={() => handleEditComment(comment.id)}
+                disabled={submittingComment}
+              >
+                <Text style={styles.saveButtonText}>Kaydet</Text>
+              </Pressable>
+              <Pressable
+                style={styles.cancelButton}
+                onPress={() => {
+                  setEditingCommentId(null)
+                  setEditingText('')
+                }}
+              >
+                <Text style={styles.cancelButtonText}>İptal</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.commentText}>{comment.content}</Text>
+        )}
+
+        {/* Comment Actions */}
+        <View style={styles.commentActionsRow}>
+          {user && !isEditingThisComment && (
+            <Pressable
+              onPress={() => setReplyingTo(comment.id)}
+              disabled={replyingTo === comment.id}
+            >
+              <Text style={styles.commentActionText}>Yanıtla</Text>
+            </Pressable>
+          )}
+          {canEditComment(comment.user.id) && !isEditingThisComment && (
+            <Pressable
+              onPress={() => {
+                setEditingCommentId(comment.id)
+                setEditingText(comment.content)
+              }}
+            >
+              <Text style={styles.commentActionText}>Düzenle</Text>
+            </Pressable>
+          )}
+          {(() => {
+            const canDelete = canDeleteComment(comment.user.id)
+            const isEditingThisComment = editingCommentId === comment.id
+            console.log('[renderComment] Delete button check: canDelete=', canDelete, 'isEditing=', isEditingThisComment, 'commentUserId=', comment.user.id, 'userId=', user?.id)
+            if (canDelete && !isEditingThisComment) {
+              console.log('[renderComment] Rendering delete button for comment:', comment.id)
+              return (
+                <Pressable onPress={() => {
+                  console.log('[renderComment] Delete button pressed for comment:', comment.id)
+                  handleDeleteComment(comment.id)
+                }}>
+                  <Text style={[styles.commentActionText, styles.deleteAction]}>Sil</Text>
+                </Pressable>
+              )
+            }
+            console.log('[renderComment] Delete button NOT rendered - canDelete:', canDelete, 'isEditing:', isEditingThisComment)
+            return null
+          })()}
+        </View>
+
+        {/* Nested Replies */}
+        {comment.replies && comment.replies.length > 0 && (
+          <View style={styles.repliesContainer}>
+            {comment.replies.map((reply) => renderComment(reply, postOwnerId, true))}
+          </View>
+        )}
+      </View>
+    )
+  }
+
   // Comments JSX - will be conditionally rendered in main or side column
   const commentsSection = post ? (
     <>
       <View style={styles.block}>
-        <Text style={styles.blockTitle}>Yorumlar ({post.comments.length})</Text>
-        {post.comments.length === 0 ? (
+        <Text style={styles.blockTitle}>Yorumlar ({post.comments?.length || 0})</Text>
+        {!post.comments || post.comments.length === 0 ? (
           <Text style={styles.emptyText}>Henüz yorum yok</Text>
         ) : (
-          post.comments.map((comment) => (
-            <View key={comment.id} style={styles.commentRow}>
-              <Text style={styles.commentUser}>{comment.user.username}</Text>
-              <Text style={styles.commentText}>{comment.content}</Text>
-              <Text style={styles.commentDate}>
-                {new Date(comment.createdAt).toLocaleDateString('tr-TR')}
-              </Text>
-            </View>
-          ))
+          post.comments.map((comment) => renderComment(comment, post.userId))
         )}
       </View>
 
       {user && (
         <View style={styles.commentComposer}>
-          <TextInput
-            style={styles.commentInput}
-            placeholder="Yorumunu yaz..."
-            placeholderTextColor={tokens.colors.textSecondary}
-            value={commentText}
-            onChangeText={setCommentText}
-            editable={!submittingComment}
-            multiline
-          />
-          <Pressable
-            style={sendButtonStyle}
-            onPress={handleAddComment}
-            disabled={submittingComment || !commentText.trim()}
-          >
+          {replyingTo && (
+            <View style={styles.replyingToInfo}>
+              <Text style={styles.replyingToText}>
+                Yanıtlanıyor: {post.comments?.find((c) => c.id === replyingTo)?.user.username || 'Kullanıcı'}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setReplyingTo(null)
+                  setCommentText('')
+                }}
+              >
+                <Text style={styles.cancelReplyText}>× İptal</Text>
+              </Pressable>
+            </View>
+          )}
+          <View style={styles.composerInput}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder={replyingTo ? 'Yanıtını yaz...' : 'Yorumunu yaz...'}
+              placeholderTextColor={tokens.colors.textSecondary}
+              value={commentText}
+              onChangeText={setCommentText}
+              editable={!submittingComment}
+              multiline
+            />
+            <Pressable
+              style={sendButtonStyle}
+              onPress={handleAddComment}
+              disabled={submittingComment || !commentText.trim()}
+            >
               {submittingComment ? (
-              <ActivityIndicator color={tokens.colors.background} size="small" />
-            ) : (
-              <Text style={styles.sendButtonText}>+</Text>
-            )}
-          </Pressable>
+                <ActivityIndicator color={tokens.colors.background} size="small" />
+              ) : (
+                <Text style={styles.sendButtonText}>+</Text>
+              )}
+            </Pressable>
+          </View>
         </View>
       )}
     </>
@@ -763,23 +986,131 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: tokens.colors.borderLight,
     padding: 10,
-    gap: 4,
+    gap: 8,
     marginBottom: 8,
+  },
+  commentRowReply: {
+    marginLeft: 12,
+    marginBottom: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: tokens.colors.primary,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   commentUser: {
     fontSize: 13,
     fontWeight: '700',
     color: tokens.colors.text,
   },
+  postOwnerBadge: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: tokens.colors.primary,
+    backgroundColor: tokens.colors.primaryLighter,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   commentText: {
     color: tokens.colors.textSecondary,
     fontSize: 12,
+    lineHeight: 18,
   },
   commentDate: {
     fontSize: 11,
     color: tokens.colors.textTertiary,
   },
+  editedIndicator: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: tokens.colors.textTertiary,
+    fontStyle: 'italic',
+  },
+  commentActionsRow: {
+    flexDirection: 'row',
+    gap: 16,
+    paddingTop: 4,
+  },
+  commentActionText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: tokens.colors.primary,
+  },
+  deleteAction: {
+    color: tokens.colors.error,
+  },
+  editModeContainer: {
+    gap: 8,
+  },
+  editInput: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: tokens.colors.primary,
+    backgroundColor: tokens.colors.background,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: tokens.colors.text,
+    minHeight: 60,
+    maxHeight: 120,
+  },
+  editButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  saveButton: {
+    flex: 1,
+    borderRadius: 8,
+    backgroundColor: tokens.colors.primary,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: tokens.colors.background,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    flex: 1,
+    borderRadius: 8,
+    backgroundColor: tokens.colors.borderLight,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: tokens.colors.text,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  repliesContainer: {
+    marginTop: 8,
+    gap: 0,
+  },
   commentComposer: {
+    gap: 8,
+  },
+  replyingToInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.primaryLighter,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  replyingToText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: tokens.colors.primary,
+  },
+  cancelReplyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: tokens.colors.primary,
+  },
+  composerInput: {
     flexDirection: 'row',
     gap: 10,
     alignItems: 'flex-end',

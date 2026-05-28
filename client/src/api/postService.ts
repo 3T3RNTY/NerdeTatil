@@ -90,7 +90,10 @@ export interface Comment {
   id: string;
   content: string;
   createdAt: string;
+  updatedAt: string;
+  isEdited: boolean;
   user: PostUser;
+  replies?: Comment[];
 }
 
 export interface PostsResponse {
@@ -214,11 +217,11 @@ export class PostService {
   }
 
   /**
-   * Add comment to post
+   * Add comment to post (or reply to a comment)
    */
   static async addComment(
     postId: string,
-    data: { userId: string; content: string }
+    data: { userId: string; content: string; parentCommentId?: string }
   ): Promise<Comment> {
     try {
       const response = await apiClient.post<Comment>(
@@ -228,6 +231,36 @@ export class PostService {
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { error: 'Failed to add comment' };
+    }
+  }
+
+  /**
+   * Delete comment
+   */
+  static async deleteComment(postId: string, commentId: string): Promise<void> {
+    try {
+      await apiClient.delete(`/posts/${postId}/comments/${commentId}`);
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to delete comment' };
+    }
+  }
+
+  /**
+   * Edit comment
+   */
+  static async editComment(
+    postId: string,
+    commentId: string,
+    content: string
+  ): Promise<Comment> {
+    try {
+      const response = await apiClient.patch<Comment>(
+        `/posts/${postId}/comments/${commentId}`,
+        { content }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to edit comment' };
     }
   }
 

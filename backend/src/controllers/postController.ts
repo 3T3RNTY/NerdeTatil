@@ -230,7 +230,7 @@ export class PostController {
   static async addComment(req: Request, res: Response) {
     try {
       const { id: postId } = req.params;
-      const { userId, content } = req.body;
+      const { userId, content, parentCommentId } = req.body;
 
       if (!userId || !content) {
         return res.status(400).json({
@@ -242,6 +242,7 @@ export class PostController {
         postId,
         userId,
         content,
+        parentCommentId: parentCommentId || null,
       });
 
       res.status(201).json(comment);
@@ -262,11 +263,105 @@ export class PostController {
     try {
       const { id: postId } = req.params;
 
-      const comments = await PostService.getPostComments(postId);
+      const data = await PostService.getPostComments(postId);
 
-      res.json(comments);
+      res.json(data);
     } catch (error) {
       console.error('Error fetching comments:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * DELETE /api/posts/:id/comments/:commentId
+   * Delete comment (post owner can delete any, users can delete own)
+   */
+  static async deleteComment(req: Request, res: Response) {
+    try {
+      const { id: postId, commentId } = req.params;
+      const authUser = (req as any).user;
+
+      console.log('[deleteComment] Attempting to delete', {
+        postId,
+        commentId,
+        userId: authUser?.userId,
+        isAuth: !!authUser,
+      });
+
+      if (!authUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const result = await PostService.deleteComment({
+        postId,
+        commentId,
+        userId: authUser.userId,
+      });
+
+      console.log('[deleteComment] Delete result:', result);
+
+      if (!result) {
+        return res.status(403).json({ 
+          error: 'You can only delete your own comments or comments on your posts' 
+        });
+      }
+
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('Error deleting comment:', error);
+      if (error.code === 'P2025') {
+        return res.status(404).json({ error: 'Comment or post not found' });
+      }
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * PATCH /api/posts/:id/comments/:commentId
+   * Edit comment (users can edit own comments only)
+   */
+  static async editComment(req: Request, res: Response) {
+    try {
+      const { id: postId, commentId } = req.params;
+      const { content } = req.body;
+      const authUser = (req as any).user;
+
+      console.log('[editComment] Attempting to edit', {
+        postId,
+        commentId,
+        userId: authUser?.userId,
+        contentLength: content?.length,
+      });
+
+      if (!authUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'Content cannot be empty' });
+      }
+
+      const comment = await PostService.editComment({
+        postId,
+        commentId,
+        content: content.trim(),
+        userId: authUser.userId,
+      });
+
+      console.log('[editComment] Edit result:', !!comment);
+
+      if (!comment) {
+        return res.status(403).json({ 
+          error: 'You can only edit your own comments' 
+        });
+      }
+
+      res.json(comment);
+    } catch (error: any) {
+      console.error('Error editing comment:', error);
+      if (error.code === 'P2025') {
+        return res.status(404).json({ error: 'Comment or post not found' });
+      }
       res.status(500).json({ error: 'Internal server error' });
     }
   }

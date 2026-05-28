@@ -43,7 +43,29 @@ router.get('/users/:id/profile', UserController.getProfile);
 router.put('/users/:id', authMiddleware, UserController.update);
 
 // ============================================
-// POSTS ROUTES
+// POSTS ROUTES - COMMENTS FIRST (more specific)
+// ============================================
+
+// Comments routes must come before generic /:id routes
+router.post(
+  '/posts/:id/comments',
+  authMiddleware,
+  PostController.addComment
+);
+router.get('/posts/:id/comments', PostController.getComments);
+router.delete(
+  '/posts/:id/comments/:commentId',
+  authMiddleware,
+  PostController.deleteComment
+);
+router.patch(
+  '/posts/:id/comments/:commentId',
+  authMiddleware,
+  PostController.editComment
+);
+
+// ============================================
+// POSTS ROUTES - GENERIC (less specific)
 // ============================================
 
 router.get('/themes', PostController.getThemes);
@@ -58,17 +80,6 @@ router.post(
 );
 router.put('/posts/:id', authMiddleware, PostController.update);
 router.delete('/posts/:id', authMiddleware, PostController.delete);
-
-// ============================================
-// COMMENTS ROUTES
-// ============================================
-
-router.post(
-  '/posts/:id/comments',
-  authMiddleware,
-  PostController.addComment
-);
-router.get('/posts/:id/comments', PostController.getComments);
 
 // ============================================
 // LIKES ROUTES

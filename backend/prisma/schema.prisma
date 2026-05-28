@@ -115,20 +115,25 @@ model Post {
 
 
 model Comment {
-  id        String    @id @default(uuid())
-  postId    String    @map("post_id")
-  userId    String    @map("user_id")
-  content   String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  postId            String    @map("post_id")
+  userId            String    @map("user_id")
+  parentCommentId   String?   @map("parent_comment_id")
+  content           String
+  isEdited          Boolean   @default(false) @map("is_edited")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post              Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentComment     Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies           Comment[] @relation("CommentReplies")
 
   @@map("comments")
   @@index([postId])
   @@index([userId])
+  @@index([parentCommentId])
 }
 
 model Like {
