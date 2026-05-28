@@ -1,5 +1,6 @@
 import { PrismaClient, Prisma, PostType } from '@prisma/client';
 import { ThemeService } from './themeService';
+import geocodingService from './geocodingService';
 
 const prisma = new PrismaClient();
 
@@ -41,6 +42,54 @@ interface UpdatePostInput {
 }
 
 export class PostService {
+  /**
+   * Enrich location data with missing city and country information
+   * Uses reverse geocoding if coordinates are available but city/country is missing
+   */
+  static async enrichLocations(locations: LocationData[]): Promise<LocationData[]> {
+    try {
+      return await Promise.all(
+        locations.map(async (location) => {
+          // If city and country are already present, return as-is
+          if (location.city && location.country) {
+            return location;
+          }
+
+          // If we have coordinates but missing city/country, use reverse geocoding
+          if (location.latitude && location.longitude) {
+            try {
+              const result = await geocodingService.reverseGeocode(
+                location.latitude,
+                location.longitude
+              );
+
+              return {
+                ...location,
+                city: result.city || location.city,
+                country: result.country || location.country,
+                address: result.address || location.address,
+              };
+            } catch (error) {
+              console.warn(
+                `Failed to reverse geocode ${location.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+              );
+              // Return original location if reverse geocoding fails
+              return location;
+            }
+          }
+
+          // Return location as-is if no coordinates available
+          return location;
+        })
+      );
+    } catch (error) {
+      console.error('Error enriching locations:', error);
+      // Return original locations if enrichment fails completely
+      return locations;
+    }
+  }
+
+  /**
   /**
    * Get all public posts with pagination
    */
@@ -319,8 +368,11 @@ export class PostService {
       throw new Error('TRIP type requires at least 2 locations');
     }
 
+    // Enrich locations with city and country data if missing
+    const enrichedLocations = await PostService.enrichLocations(data.locations);
+
     // Validate locations structure
-    for (const loc of data.locations) {
+    for (const loc of enrichedLocations) {
       if (!loc.name || typeof loc.name !== 'string') {
         throw new Error('Each location must have a name');
       }
@@ -422,7 +474,7 @@ export class PostService {
           description: finalDescription,
           rating: data.rating,
           imageUrls: imageUrls,
-          locationsData: data.locations as unknown as Prisma.InputJsonValue,
+          locationsData: enrichedLocations as unknown as Prisma.InputJsonValue,
           multiCriteriaRatings: data.multiCriteriaRatings
             ? (data.multiCriteriaRatings as unknown as Prisma.InputJsonValue)
             : undefined,

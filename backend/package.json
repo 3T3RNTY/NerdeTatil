@@ -9,6 +9,7 @@
     "build": "tsc",
     "seed": "ts-node src/seeds/seed.ts",
     "reset-themes": "ts-node src/seeds/resetThemes.ts",
+    "enhance-locations": "ts-node src/seeds/enhancePostLocations.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

@@ -10,6 +10,7 @@ import {
   View,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
@@ -68,6 +69,24 @@ export default function DetailScreen() {
     } finally {
       setSubmittingComment(false)
     }
+  }
+
+  const handleLocationPress = (location: any) => {
+    if (!location.latitude || !location.longitude) {
+      return
+    }
+
+    const latitude = typeof location.latitude === 'string' ? parseFloat(location.latitude) : location.latitude
+    const longitude = typeof location.longitude === 'string' ? parseFloat(location.longitude) : location.longitude
+    
+    const googleMapsUrl = Platform.OS === 'ios'
+      ? `maps://maps.apple.com/?ll=${latitude},${longitude}&q=${encodeURIComponent(location.name || 'Location')}`
+      : `https://maps.google.com/?q=${latitude},${longitude}`
+
+    Linking.openURL(googleMapsUrl).catch(() => {
+      // Fallback to web version if maps app is not available
+      Linking.openURL(`https://maps.google.com/?q=${latitude},${longitude}`)
+    })
   }
 
   const contentLayoutStyle = StyleSheet.flatten([styles.contentLayout, isWideWeb && styles.contentLayoutWide])
@@ -229,31 +248,47 @@ export default function DetailScreen() {
                 <View style={styles.locationsContainer}>
                   <Text style={styles.locationsTitle}>📍 Konumlar ({post.locations.length})</Text>
                   {post.locations.map((location, index) => (
-                    <View key={index} style={styles.locationCard}>
-                      <View style={styles.locationHeader}>
-                        <Text style={styles.locationNumber}>{index + 1}</Text>
-                        <View style={styles.locationInfo}>
-                          <Text style={styles.locationName}>{location.name}</Text>
-                          <Text style={styles.locationAddress}>
-                            {location.city && `${location.city}, `}
-                            {location.country}
-                          </Text>
-                          {location.visitDate && (
-                            <Text style={styles.visitDate}>
-                              Ziyaret: {new Date(location.visitDate).toLocaleDateString('tr-TR')}
-                            </Text>
+                    <Pressable 
+                      key={index} 
+                      onPress={() => handleLocationPress(location)}
+                      disabled={!location.latitude || !location.longitude}
+                    >
+                      {({ pressed }) => (
+                        <View style={[
+                          styles.locationCard,
+                          pressed && styles.locationCardPressed,
+                          (!location.latitude || !location.longitude) && styles.locationCardDisabled
+                        ]}>
+                          <View style={styles.locationHeader}>
+                            <Text style={styles.locationNumber}>{index + 1}</Text>
+                            <View style={styles.locationInfo}>
+                              <Text style={styles.locationName}>
+                                {location.name}
+                                {location.city && ` , ${location.city}`}
+                                {location.country && ` , ${location.country}`}
+                              </Text>
+                              {location.visitDate && (
+                                <Text style={styles.visitDate}>
+                                  Ziyaret: {new Date(location.visitDate).toLocaleDateString('tr-TR')}
+                                </Text>
+                              )}
+                            </View>
+                          </View>
+                          {location.latitude && location.longitude && (
+                            <View style={styles.locationFooter}>
+                              <Text style={styles.locationCoordinates}>
+                                📍 {location.latitude.toFixed(4)}°, {location.longitude.toFixed(4)}°
+                              </Text>
+                              <Text style={styles.openInMapsText}>Haritada aç →</Text>
+                            </View>
                           )}
                         </View>
-                      </View>
-                      {location.latitude && location.longitude && (
-                        <Text style={styles.locationCoordinates}>
-                          {location.latitude.toFixed(4)}°, {location.longitude.toFixed(4)}°
-                        </Text>
                       )}
-                    </View>
+                    </Pressable>
                   ))}
                 </View>
               )}
+             
 
               <Text style={styles.meta}>ID: {post.id}</Text>
 
@@ -375,6 +410,13 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 14,
   },
+  locationCardPressed: {
+    opacity: 0.7,
+    backgroundColor: tokens.colors.secondary,
+  },
+  locationCardDisabled: {
+    opacity: 0.6,
+  },
   locationHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -393,11 +435,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: tokens.colors.primary,
   },
-  locationAddress: {
-    fontSize: 13,
-    color: tokens.colors.contrast,
-    fontWeight: '500',
-  },
+
   locationCoordinates: {
     fontSize: 11,
     color: tokens.colors.contrast,
@@ -407,6 +445,16 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 4,
     overflow: 'hidden',
+  },
+  locationFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  openInMapsText: {
+    fontSize: 12,
+    color: tokens.colors.primary,
+    fontWeight: '600',
   },
   categoryBadge: {
     alignSelf: 'flex-start',
