@@ -30,6 +30,7 @@ export interface LocationData {
   country?: string;
   latitude?: number;
   longitude?: number;
+  visitDate?: string | null;
 }
 
 export interface Location {
@@ -69,6 +70,11 @@ export interface Post {
   };
   likesCount: number;
   commentsCount: number;
+  // Optional extended fields used in some UI components
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+  metadata?: any;
 }
 
 export interface PostDetail extends Post {

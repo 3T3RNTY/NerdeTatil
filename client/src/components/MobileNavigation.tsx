@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: tokens.typography.fontSize.xs,
     fontWeight: tokens.typography.fontWeight.semibold as any,
-    color: tokens.colors.primaryDark,
+    color: tokens.colors.contrast,
   },
   labelActive: {
     color: tokens.colors.primary,

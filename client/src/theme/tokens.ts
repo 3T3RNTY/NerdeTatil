@@ -26,8 +26,26 @@ export const tokens = {
     warning: '#ea580c', // orange-600
     warningLight: '#fed7aa', // light orange
 
+    // Contrast Accent Colors (Orange/Amber)
+    accent: '#f97316', // orange-500 - primary contrast color
+    accentLight: '#fed7aa', // orange-100 - light accent backgrounds
+    accentDark: '#b45309', // orange-700 - darker accent variant
+    accentSecondary: '#d97706', // orange-600 - mid-tone accent
+
+    // Semantic Colors for Content Types
+    locationPrimary: '#ec4899', // pink-500 - for locations and ratings
+    locationLight: '#fce7f3', // pink-100 - light location backgrounds
+    locationDark: '#9d174d', // pink-700 - dark location text
+    infoPrimary: '#0284c7', // cyan-600 - for theme/info content
+    infoLight: '#f0f9ff', // cyan-50 - light info backgrounds
+    infoDark: '#0369a1', // cyan-700 - dark info text
+    overlay: '#000000', // for dark overlays (alpha applied in components)
+
     // Neutral Colors
     text: '#0f172a', // dark blue-gray
+    // Contrast helpers
+    contrast: '#0f172a', // primary foreground for high contrast on light backgrounds
+    contrastInverse: '#ffffff', // white foreground for dark/colored backgrounds
     textSecondary: '#4b5563', // medium gray
     textTertiary: '#9ca3af', // light gray
     border: '#ccf0e8', // light teal for borders

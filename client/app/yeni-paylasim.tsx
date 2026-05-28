@@ -21,6 +21,7 @@ import { SubThemeSelector } from './components/SubThemeSelector';
 import { ReviewAndRating } from './components/ReviewAndRating';
 import MultiLocationPicker from './components/MultiLocationPicker';
 import { PostService, LocationData, PostType } from '@/src/api/postService';
+import { tokens } from '@/src/theme/tokens';
 
 interface UploadedImage {
   url: string;
@@ -290,10 +291,10 @@ export default function YeniPaylasimScreen() {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.buttonText}>İleri</Text>
-              )}
+                  <ActivityIndicator color={tokens.colors.background} />
+                ) : (
+                  <Text style={styles.buttonText}>İleri</Text>
+                )}
             </Pressable>
           ) : (
             <Pressable
@@ -302,7 +303,7 @@ export default function YeniPaylasimScreen() {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="white" />
+                <ActivityIndicator color={tokens.colors.background} />
               ) : (
                 <Text style={styles.buttonText}>Paylaşımı Yayınla</Text>
               )}
@@ -317,7 +318,7 @@ export default function YeniPaylasimScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: tokens.colors.background,
   },
   content: {
     flex: 1,
@@ -329,13 +330,13 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingHorizontal: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: tokens.colors.borderLight,
     paddingTop: 16,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: tokens.colors.text,
     marginBottom: 12,
   },
   errorContainer: {
@@ -343,13 +344,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#fee2e2',
+    backgroundColor: tokens.colors.errorLight,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   errorText: {
-    color: '#991b1b',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -359,14 +360,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    backgroundColor: '#f9fafb',
+    borderTopColor: tokens.colors.borderLight,
+    backgroundColor: tokens.colors.backgroundSecondary,
   },
   primaryButton: {
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#3b82f6',
+    backgroundColor: tokens.colors.infoPrimary,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: tokens.colors.borderLight,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -386,6 +387,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'white',
+    color: tokens.colors.background,
   },
 });

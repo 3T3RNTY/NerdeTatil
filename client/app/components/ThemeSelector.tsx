@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { tokens } from '@/src/theme/tokens';
 import { PostService } from '@/src/api/postService';
 
 interface Theme {
@@ -48,7 +49,7 @@ export function ThemeSelector({ onSelect, selectedThemeId }: ThemeSelectorProps)
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={tokens.colors.infoPrimary} />
       </View>
     );
   }
@@ -101,22 +102,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 12,
-    color: '#1f2937',
+    color: tokens.colors.text,
   },
   card: {
     flexDirection: 'row',
     padding: 12,
     marginBottom: 10,
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: tokens.colors.border,
     alignItems: 'center',
     gap: 12,
   },
   cardSelected: {
-    backgroundColor: '#dbeafe',
-    borderColor: '#3b82f6',
+    backgroundColor: tokens.colors.infoLight,
+    borderColor: tokens.colors.infoPrimary,
   },
   emoji: {
     fontSize: 28,
@@ -128,14 +129,14 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: tokens.colors.text,
   },
   cardDescription: {
     fontSize: 12,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   error: {
-    color: '#dc2626',
+    color: tokens.colors.error,
     textAlign: 'center',
     marginTop: 20,
     fontSize: 14,
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#3b82f6',
+    backgroundColor: tokens.colors.infoPrimary,
     borderRadius: 8,
     alignSelf: 'center',
   },
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
-    color: '#9ca3af',
+    color: tokens.colors.textTertiary,
     fontSize: 14,
     marginTop: 20,
   },

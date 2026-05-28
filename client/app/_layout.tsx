@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import Toast from 'react-native-toast-message'
 import { AuthProvider, AuthContext } from '../src/context/AuthContext'
+import { tokens } from '@/src/theme/tokens'
 import { MobileNavigation } from '../src/components/MobileNavigation'
 import { useContext } from 'react'
 import { Platform, View, StyleSheet } from 'react-native'
@@ -41,7 +42,7 @@ function RootLayoutNav() {
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: '#f1f5f9' },
+          contentStyle: { backgroundColor: tokens.colors.backgroundTertiary },
         }}
       >
         {/* Auth screens - always defined */}

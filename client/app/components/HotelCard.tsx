@@ -2,6 +2,7 @@ import { Link } from 'expo-router'
 import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image } from 'react-native'
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
+import { tokens } from '@/src/theme/tokens'
 
 interface HotelCardProps {
   post: Post
@@ -129,13 +130,13 @@ export default function HotelCard({ post, isWideWeb = false, isMobile = false }:
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.colors.background,
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#8b5cf6',
-    shadowColor: '#000',
+    borderLeftColor: tokens.colors.infoPrimary,
+    shadowColor: tokens.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: 200,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     position: 'relative',
   },
   cardImageWide: {
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   imageCountText: {
-    color: '#fff',
+    color: tokens.colors.background,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -179,13 +180,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     left: 8,
-    backgroundColor: '#8b5cf6',
+    backgroundColor: tokens.colors.infoPrimary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   categoryBadgeText: {
-    color: '#fff',
+    color: tokens.colors.background,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -195,17 +196,17 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     marginBottom: 6,
   },
   cardDescription: {
     fontSize: 13,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginBottom: 8,
     lineHeight: 18,
   },
   locationContainer: {
-    backgroundColor: '#f3e8ff',
+    backgroundColor: tokens.colors.infoLight,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -214,15 +215,15 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#5b21b6',
+    color: tokens.colors.infoDark,
     marginBottom: 2,
   },
   locationCity: {
     fontSize: 11,
-    color: '#7c3aed',
+    color: tokens.colors.infoDark,
   },
   priceContainer: {
-    backgroundColor: '#fce7f3',
+    backgroundColor: tokens.colors.locationLight,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -231,12 +232,12 @@ const styles = StyleSheet.create({
   priceLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#831843',
+    color: tokens.colors.locationDark,
   },
   priceValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#be185d',
+    color: tokens.colors.locationPrimary,
     marginTop: 2,
   },
   amenitiesContainer: {
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   amenitiesTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#5b21b6',
+    color: tokens.colors.infoDark,
     marginBottom: 6,
   },
   amenitiesList: {
@@ -254,9 +255,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   amenityBadge: {
-    backgroundColor: '#ede9fe',
+    backgroundColor: tokens.colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: '#ddd6fe',
+    borderColor: tokens.colors.border,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -264,13 +265,13 @@ const styles = StyleSheet.create({
   amenityText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6d28d9',
+    color: tokens.colors.infoDark,
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fce7f3',
+    backgroundColor: tokens.colors.locationLight,
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#831843',
+    color: tokens.colors.locationDark,
   },
   stats: {
     flexDirection: 'row',
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   userInfo: {
     flex: 1,
@@ -311,16 +312,16 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   viewButton: {
-    backgroundColor: '#8b5cf6',
+    backgroundColor: tokens.colors.infoPrimary,
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',
   },
   viewButtonText: {
-    color: '#fff',
+    color: tokens.colors.contrastInverse,
     fontSize: 13,
     fontWeight: '700',
   },

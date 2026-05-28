@@ -15,6 +15,7 @@ import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
 import ImageGallery from '@/app/components/ImageGallery'
 import { PostService, PostDetail, Comment } from '@/src/api/postService'
+import { tokens } from '@/src/theme/tokens'
 import { useAuth } from '@/src/hooks/useAuth'
 
 export default function DetailScreen() {
@@ -81,7 +82,7 @@ export default function DetailScreen() {
     const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
       <View style={loadingStyle}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={tokens.colors.infoPrimary} />
       </View>
     )
   }
@@ -151,7 +152,7 @@ export default function DetailScreen() {
                 <View style={styles.featuresContainer}>
                   <Text style={styles.featuresTitle}>⭐ Özellikler</Text>
                   <View style={styles.featureChips}>
-                    {post.metadata.features.map((feature, index) => (
+                    {post.metadata.features.map((feature: any, index: number) => (
                       <View key={index} style={styles.featureChip}>
                         <Text style={styles.featureChipText}>{feature}</Text>
                       </View>
@@ -206,7 +207,7 @@ export default function DetailScreen() {
                 <View style={styles.amenitiesContainer}>
                   <Text style={styles.amenitiesTitle}>🏢 Olanaklar</Text>
                   <View style={styles.amenitiesList}>
-                    {post.metadata.amenities.map((amenity, index) => (
+                    {post.metadata.amenities.map((amenity: any, index: number) => (
                       <View key={index} style={styles.amenityItem}>
                         <Text style={styles.amenityText}>✓ {amenity}</Text>
                       </View>
@@ -302,7 +303,7 @@ export default function DetailScreen() {
                   <TextInput
                     style={styles.commentInput}
                     placeholder="Yorumunu yaz..."
-                    placeholderTextColor="#64748b"
+                    placeholderTextColor={tokens.colors.textSecondary}
                     value={commentText}
                     onChangeText={setCommentText}
                     editable={!submittingComment}
@@ -313,8 +314,8 @@ export default function DetailScreen() {
                     onPress={handleAddComment}
                     disabled={submittingComment || !commentText.trim()}
                   >
-                    {submittingComment ? (
-                      <ActivityIndicator color="#fff" size="small" />
+                      {submittingComment ? (
+                      <ActivityIndicator color={tokens.colors.background} size="small" />
                     ) : (
                       <Text style={styles.sendButtonText}>+</Text>
                     )}
@@ -331,7 +332,7 @@ export default function DetailScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: tokens.colors.backgroundTertiary,
   },
   centerContent: {
     justifyContent: 'center',
@@ -344,32 +345,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backButtonText: {
-    color: '#0d9488',
+    color: tokens.colors.primary,
     fontSize: 14,
     fontWeight: '700',
   },
   errorBox: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#fca5a5',
+    backgroundColor: tokens.colors.errorLight,
+    borderColor: tokens.colors.errorLight,
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
     marginTop: 16,
   },
   errorText: {
-    color: '#991b1b',
+    color: tokens.colors.error,
     fontSize: 12,
     textAlign: 'center',
   },
   meta: {
-    color: '#64748b',
+    color: tokens.colors.textSecondary,
     fontSize: 13,
   },
   locationCard: {
     borderRadius: 16,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.secondaryLighter,
     borderWidth: 2,
-    borderColor: '#0d9488',
+    borderColor: tokens.colors.primary,
     padding: 14,
     gap: 8,
     marginBottom: 14,
@@ -390,18 +391,18 @@ const styles = StyleSheet.create({
   locationName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   locationAddress: {
     fontSize: 13,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '500',
   },
   locationCoordinates: {
     fontSize: 11,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontFamily: 'monospace',
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -409,24 +410,24 @@ const styles = StyleSheet.create({
   },
   categoryBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#dbeafe',
+    backgroundColor: tokens.colors.backgroundSecondary,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#7dd3fc',
+    borderColor: tokens.colors.infoLight,
   },
   categoryBadgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0369a1',
+    color: tokens.colors.infoDark,
   },
   dateRangeCard: {
     borderRadius: 16,
-    backgroundColor: '#f0e8ff',
+    backgroundColor: tokens.colors.backgroundSecondary,
     borderWidth: 2,
-    borderColor: '#8b5cf6',
+    borderColor: tokens.colors.infoPrimary,
     padding: 14,
     gap: 8,
     marginBottom: 14,
@@ -434,11 +435,11 @@ const styles = StyleSheet.create({
   dateRangeTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6d28d9',
+    color: tokens.colors.infoDark,
   },
   dateRangeText: {
     fontSize: 13,
-    color: '#6d28d9',
+    color: tokens.colors.infoDark,
     fontWeight: '600',
   },
   locationsContainer: {
@@ -448,20 +449,20 @@ const styles = StyleSheet.create({
   locationsTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0d9488',
+    color: tokens.colors.primary,
     marginBottom: 4,
   },
   locationNumber: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0d9488',
+    color: tokens.colors.primary,
     width: 28,
     textAlign: 'center',
     marginTop: 2,
   },
   visitDate: {
     fontSize: 11,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontStyle: 'italic',
     marginTop: 2,
   },
@@ -490,65 +491,65 @@ const styles = StyleSheet.create({
   },
   block: {
     borderRadius: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: tokens.colors.background,
     borderWidth: 1,
-    borderColor: '#dbe4ef',
+    borderColor: tokens.colors.borderLight,
     padding: 14,
     gap: 8,
   },
   blockTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0f172a',
+    color: tokens.colors.text,
   },
   blockText: {
-    color: '#334155',
+    color: tokens.colors.textSecondary,
     lineHeight: 20,
   },
   authorInfo: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#dbe4ef',
+    borderTopColor: tokens.colors.borderLight,
     gap: 4,
   },
   authorText: {
     fontSize: 12,
-    color: '#666',
+    color: tokens.colors.textSecondary,
     fontWeight: '500',
   },
   dateText: {
     fontSize: 11,
-    color: '#999',
+    color: tokens.colors.textTertiary,
   },
   emptyText: {
     fontSize: 13,
-    color: '#999',
+    color: tokens.colors.textTertiary,
     fontStyle: 'italic',
   },
   scoreBox: {
     borderRadius: 16,
-    backgroundColor: '#fffbeb',
+    backgroundColor: tokens.colors.accentLight,
     borderWidth: 1,
-    borderColor: '#fde68a',
+    borderColor: tokens.colors.accentLight,
     padding: 14,
     alignItems: 'center',
   },
   score: {
-    color: '#92400e',
+    color: tokens.colors.accentDark,
     fontSize: 30,
     fontWeight: '800',
   },
   scoreSub: {
-    color: '#78350f',
+    color: tokens.colors.accentDark,
     marginTop: 4,
     fontSize: 12,
   },
   commentRow: {
     borderRadius: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: tokens.colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: tokens.colors.borderLight,
     padding: 10,
     gap: 4,
     marginBottom: 8,
@@ -556,15 +557,15 @@ const styles = StyleSheet.create({
   commentUser: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0f172a',
+    color: tokens.colors.text,
   },
   commentText: {
-    color: '#334155',
+    color: tokens.colors.textSecondary,
     fontSize: 12,
   },
   commentDate: {
     fontSize: 11,
-    color: '#999',
+    color: tokens.colors.textTertiary,
   },
   commentComposer: {
     flexDirection: 'row',
@@ -577,17 +578,17 @@ const styles = StyleSheet.create({
     maxHeight: 120,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
+    borderColor: tokens.colors.border,
+    backgroundColor: tokens.colors.background,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    color: '#0f172a',
+    color: tokens.colors.text,
   },
   sendButton: {
     height: 44,
     width: 44,
     borderRadius: 12,
-    backgroundColor: '#0d9488',
+    backgroundColor: tokens.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -595,7 +596,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   sendButtonText: {
-    color: '#ffffff',
+    color: tokens.colors.background,
     fontSize: 24,
     lineHeight: 26,
     fontWeight: '600',
@@ -607,7 +608,7 @@ const styles = StyleSheet.create({
   featuresTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0d9488',
+    color: tokens.colors.primary,
     marginBottom: 4,
   },
   featureChips: {
@@ -616,8 +617,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   featureChip: {
-    backgroundColor: '#d1fae5',
-    borderColor: '#10b981',
+    backgroundColor: tokens.colors.secondaryLight,
+    borderColor: tokens.colors.secondary,
     borderWidth: 1,
     borderRadius: 16,
     paddingHorizontal: 12,
@@ -626,13 +627,13 @@ const styles = StyleSheet.create({
   featureChipText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#065f46',
+    color: tokens.colors.secondary,
   },
   ratingsContainer: {
     borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: tokens.colors.border,
     padding: 14,
     gap: 12,
     marginBottom: 14,
@@ -640,7 +641,7 @@ const styles = StyleSheet.create({
   ratingsTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1f2937',
+    color: tokens.colors.text,
     marginBottom: 4,
   },
   ratingRow: {
@@ -651,19 +652,19 @@ const styles = StyleSheet.create({
   ratingLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#374151',
+    color: tokens.colors.textSecondary,
   },
   ratingValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#f59e0b',
+    color: tokens.colors.accentSecondary,
     letterSpacing: 2,
   },
   infoCard: {
     borderRadius: 16,
-    backgroundColor: '#e0e7ff',
+    backgroundColor: tokens.colors.infoLight,
     borderWidth: 1,
-    borderColor: '#818cf8',
+    borderColor: tokens.colors.infoPrimary,
     padding: 14,
     gap: 6,
     marginBottom: 14,
@@ -671,11 +672,11 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#3730a3',
+    color: tokens.colors.infoDark,
   },
   infoValue: {
     fontSize: 13,
-    color: '#4f46e5',
+    color: tokens.colors.infoPrimary,
     fontWeight: '500',
   },
   amenitiesContainer: {
@@ -685,7 +686,7 @@ const styles = StyleSheet.create({
   amenitiesTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0d9488',
+    color: tokens.colors.primary,
     marginBottom: 4,
   },
   amenitiesList: {
@@ -693,15 +694,15 @@ const styles = StyleSheet.create({
   },
   amenityItem: {
     borderRadius: 8,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderLeftWidth: 3,
-    borderLeftColor: '#10b981',
+    borderLeftColor: tokens.colors.secondary,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
   amenityText: {
     fontSize: 13,
-    color: '#065f46',
+    color: tokens.colors.secondary,
     fontWeight: '500',
   },
 })

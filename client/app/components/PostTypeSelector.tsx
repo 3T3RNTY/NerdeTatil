@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { tokens } from '@/src/theme/tokens'
 
 interface PostTypeSelectorProps {
   onSelect: (postType: 'TRIP' | 'LOCATION') => void;
@@ -47,20 +48,20 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 12,
-    color: '#1f2937',
+    color: tokens.colors.text,
   },
   card: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: tokens.colors.borderLight,
     alignItems: 'center',
     gap: 8,
   },
   cardSelected: {
-    backgroundColor: '#dbeafe',
-    borderColor: '#3b82f6',
+    backgroundColor: tokens.colors.infoLight,
+    borderColor: tokens.colors.infoPrimary,
   },
   emoji: {
     fontSize: 36,
@@ -68,11 +69,11 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: tokens.colors.text,
   },
   cardDescription: {
     fontSize: 12,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     textAlign: 'center',
   },
 });

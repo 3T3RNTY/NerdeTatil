@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { Link, useRouter } from 'expo-router'
 import { useAuth } from '../src/hooks/useAuth'
+import { tokens } from '@/src/theme/tokens'
 
 export default function RegisterScreen() {
   const router = useRouter()
@@ -94,10 +95,10 @@ export default function RegisterScreen() {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
           <View style={emailInputStyle}>
-            <TextInput
+              <TextInput
               style={styles.input}
               placeholder="example@email.com"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={tokens.colors.textTertiary}
               value={email}
               onChangeText={setEmail}
               editable={!isLoading}
@@ -115,7 +116,7 @@ export default function RegisterScreen() {
             <TextInput
               style={styles.input}
               placeholder="username"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={tokens.colors.textTertiary}
               value={username}
               onChangeText={setUsername}
               editable={!isLoading}
@@ -132,7 +133,7 @@ export default function RegisterScreen() {
             <TextInput
               style={styles.input}
               placeholder="Adınız Soyadınız"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={tokens.colors.textTertiary}
               value={fullName}
               onChangeText={setFullName}
               editable={!isLoading}
@@ -148,7 +149,7 @@ export default function RegisterScreen() {
             <TextInput
               style={styles.input}
               placeholder="••••••••"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={tokens.colors.textTertiary}
               value={password}
               onChangeText={setPassword}
               editable={!isLoading}
@@ -168,7 +169,7 @@ export default function RegisterScreen() {
             <TextInput
               style={styles.input}
               placeholder="••••••••"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={tokens.colors.textTertiary}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               editable={!isLoading}
@@ -186,7 +187,7 @@ export default function RegisterScreen() {
           activeOpacity={0.85}
         >
           {isLoading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={tokens.colors.background} />
           ) : (
             <Text style={styles.buttonText}>Kaydol</Text>
           )}
@@ -208,7 +209,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.secondaryLighter,
   },
   backgroundGradient: {
     position: 'absolute',
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '100%',
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.secondaryLighter,
   },
   contentContainer: {
     flexGrow: 1,
@@ -232,35 +233,35 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '800',
     marginBottom: 8,
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   subtitle: {
     fontSize: 14,
-    color: '#059669',
+    color: tokens.colors.secondary,
     textAlign: 'center',
     fontWeight: '500',
   },
   formContainer: {
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderRadius: 24,
     padding: 28,
-    shadowColor: '#0d9488',
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 8, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 5,
     borderWidth: 1,
-    borderColor: '#d1f3ed',
+    borderColor: tokens.colors.secondaryLight,
   },
   heading: {
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 24,
     textAlign: 'center',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   errorBox: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: tokens.colors.successLight,
     borderRadius: 12,
     padding: 14,
     marginBottom: 20,
@@ -268,13 +269,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   errorEmoji: {
     fontSize: 18,
   },
   errorText: {
-    color: '#7c2d12',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
@@ -285,25 +286,25 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0d9488',
+    color: tokens.colors.primary,
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   inputWrapper: {
     borderRadius: 12,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.secondaryLighter,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    shadowColor: '#000',
+    borderColor: tokens.colors.border,
+    shadowColor: tokens.colors.shadow,
     shadowOffset: { width: -3, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 2,
   },
   inputWrapperFocused: {
-    borderColor: '#0d9488',
-    shadowColor: '#0d9488',
+    borderColor: tokens.colors.primary,
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -312,22 +313,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#0f172a',
+    color: tokens.colors.text,
     fontWeight: '500',
   },
   helperText: {
     fontSize: 12,
-    color: '#059669',
+    color: tokens.colors.secondary,
     marginTop: 6,
     fontWeight: '500',
   },
   button: {
-    backgroundColor: '#0d9488',
+    backgroundColor: tokens.colors.primary,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 28,
-    shadowColor: '#0d9488',
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: tokens.colors.background,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -348,15 +349,15 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: '#ccf0e8',
+    borderTopColor: tokens.colors.border,
   },
   linkText: {
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     fontSize: 13,
     fontWeight: '500',
   },
   linkButton: {
-    color: '#0d9488',
+    color: tokens.colors.primary,
     fontSize: 13,
     fontWeight: '700',
   },

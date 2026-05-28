@@ -1,7 +1,7 @@
 .rdp {
   --rdp-cell-size: 40px;
-  --rdp-accent-color: #0d9488;
-  --rdp-background-color: #e8f5f1;
+  --rdp-accent-color: var(--color-primary);
+  --rdp-background-color: var(--color-secondaryLighter);
   margin: 0;
   padding: 8px;
 }
@@ -24,12 +24,12 @@
 
 .rdp-caption_label {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--color-text);
   font-size: 14px;
 }
 
 .rdp-head_cell {
-  color: #0f766e;
+  color: var(--color-primaryDark);
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
@@ -42,22 +42,22 @@
 .rdp-day {
   border-radius: 8px;
   font-size: 13px;
-  color: #0f172a;
+    color: var(--color-text);
 }
 
 .rdp-day_selected:not([disabled]) {
-  background-color: #0d9488;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-background);
   font-weight: 600;
 }
 
 .rdp-day_today:not([disabled]) {
   font-weight: 700;
-  color: #0d9488;
+  color: var(--color-primary);
 }
 
 .rdp-day:hover:not([disabled]):not(.rdp-day_selected) {
-  background-color: #d1fae5;
+  background-color: var(--color-secondaryLight);
 }
 
 .rdp-button {
@@ -66,7 +66,7 @@
 }
 
 .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
-  background-color: #d1fae5;
+  background-color: var(--color-secondaryLight);
 }
 
 .rdp-button_reset {
@@ -77,12 +77,12 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  border: 1px solid #d1d5db;
-  color: #0d9488;
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
   font-weight: 600;
   cursor: pointer;
 }
 
 .rdp-nav_button:hover {
-  background-color: #f0fdf9;
+  background-color: var(--color-primaryLighter);
 }

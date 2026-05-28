@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import ImageUploader from './ImageUploader';
 import MultiCriteriaRatingSliders from './MultiCriteriaRatingSliders';
+import { tokens } from '@/src/theme/tokens'
 
 interface UploadedImage {
   url: string;
@@ -36,7 +37,7 @@ interface ReviewAndRatingProps {
     accessibility: number;
     priceValue: number;
   };
-  token?: string;
+  token?: string | null;
 }
 
 export function ReviewAndRating({
@@ -85,7 +86,7 @@ export function ReviewAndRating({
       <TextInput
         style={styles.titleInput}
         placeholder="Paylaşımınız için başlık girin"
-        placeholderTextColor="#9ca3af"
+          placeholderTextColor={tokens.colors.textTertiary}
         value={title}
         onChangeText={handleTitleChange}
         maxLength={100}
@@ -100,7 +101,7 @@ export function ReviewAndRating({
       <TextInput
         style={styles.reviewInput}
         placeholder="En az 10 karakter ile deneyiminizi anlatın..."
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={tokens.colors.textTertiary}
         value={review}
         onChangeText={handleReviewChange}
         multiline
@@ -159,36 +160,36 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: tokens.colors.text,
     marginBottom: 8,
   },
   helperText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginBottom: 12,
   },
   titleInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: tokens.colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    color: '#1f2937',
-    backgroundColor: '#f9fafb',
+    color: tokens.colors.text,
+    backgroundColor: tokens.colors.backgroundSecondary,
   },
   reviewInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: tokens.colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    color: '#1f2937',
-    backgroundColor: '#f9fafb',
+    color: tokens.colors.text,
+    backgroundColor: tokens.colors.backgroundSecondary,
     minHeight: 120,
   },
   charCount: {
     fontSize: 12,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginTop: 4,
     textAlign: 'right',
   },
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
   imageCountText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#374151',
+    color: tokens.colors.text,
     marginBottom: 8,
   },
   imageGallery: {
@@ -219,13 +220,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#fee2e2',
+    backgroundColor: tokens.colors.errorLight,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   errorText: {
-    color: '#991b1b',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '500',
   },

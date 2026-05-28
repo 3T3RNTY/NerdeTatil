@@ -1,5 +1,6 @@
 import { Link } from 'expo-router'
 import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image } from 'react-native'
+import { tokens } from '@/src/theme/tokens'
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 
@@ -36,10 +37,11 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
   }
 
   // Render stars based on rating
-  const renderStars = (rating: number | string | null) => {
-    if (!rating) return '★☆☆☆☆'
+  const renderStars = (rating: number | string | null | undefined) => {
+    if (rating == null) return '★☆☆☆☆'
     const num = typeof rating === 'string' ? parseFloat(rating) : rating
-    const filled = Math.round(num)
+    if (typeof num !== 'number' || isNaN(num)) return '★☆☆☆☆'
+    const filled = Math.max(0, Math.min(5, Math.round(num)))
     return '★'.repeat(filled) + '☆'.repeat(5 - filled)
   }
 
@@ -159,13 +161,13 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.colors.background,
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#ec4899',
-    shadowColor: '#000',
+    borderLeftColor: tokens.colors.locationPrimary,
+    shadowColor: tokens.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: 200,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     position: 'relative',
   },
   cardImageWide: {
@@ -201,7 +203,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   imageCountText: {
-    color: '#fff',
+    color: tokens.colors.background,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -209,13 +211,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     left: 8,
-    backgroundColor: '#ec4899',
+    backgroundColor: tokens.colors.locationPrimary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   categoryBadgeText: {
-    color: '#fff',
+    color: tokens.colors.background,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -225,17 +227,17 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     marginBottom: 6,
   },
   cardDescription: {
     fontSize: 13,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginBottom: 8,
     lineHeight: 18,
   },
   locationContainer: {
-    backgroundColor: '#fce7f3',
+    backgroundColor: tokens.colors.locationLight,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -244,17 +246,17 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#831843',
+    color: tokens.colors.locationDark,
     marginBottom: 2,
   },
   locationCity: {
     fontSize: 11,
-    color: '#be185d',
+    color: tokens.colors.locationPrimary,
   },
   themeContainer: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: tokens.colors.infoLight,
     borderLeftWidth: 3,
-    borderLeftColor: '#0284c7',
+    borderLeftColor: tokens.colors.infoPrimary,
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginBottom: 8,
@@ -263,18 +265,18 @@ const styles = StyleSheet.create({
   themeLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#0369a1',
+    color: tokens.colors.infoDark,
     marginBottom: 2,
   },
   themeName: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0284c7',
+    color: tokens.colors.infoPrimary,
   },
   multiRatingContainer: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: tokens.colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: tokens.colors.border,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -292,16 +294,16 @@ const styles = StyleSheet.create({
   ratingLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginBottom: 2,
   },
   ratingStars: {
     fontSize: 12,
-    color: '#fbbf24',
+    color: tokens.colors.accentSecondary,
     letterSpacing: 1,
   },
   hoursContainer: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: tokens.colors.accentLight,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -310,19 +312,19 @@ const styles = StyleSheet.create({
   hoursLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#92400e',
+    color: tokens.colors.accentDark,
     marginBottom: 2,
   },
   hoursValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#b45309',
+    color: tokens.colors.accentDark,
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fce7f3',
+    backgroundColor: tokens.colors.locationLight,
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -335,7 +337,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#831843',
+    color: tokens.colors.locationDark,
   },
   stats: {
     flexDirection: 'row',
@@ -354,7 +356,7 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   userInfo: {
     flex: 1,
@@ -363,16 +365,16 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   viewButton: {
-    backgroundColor: '#ec4899',
+    backgroundColor: tokens.colors.locationPrimary,
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',
   },
   viewButtonText: {
-    color: '#fff',
+    color: tokens.colors.contrastInverse,
     fontSize: 13,
     fontWeight: '700',
   },

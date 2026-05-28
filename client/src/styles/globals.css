@@ -26,6 +26,8 @@
 
   /* Colors - Neutral */
   --color-text: #0f172a;
+  --color-contrast: #0f172a;
+  --color-contrastInverse: #ffffff;
   --color-textSecondary: #4b5563;
   --color-textTertiary: #9ca3af;
   --color-border: #ccf0e8;

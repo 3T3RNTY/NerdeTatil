@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { tokens } from '@/src/theme/tokens'
 
 // Legacy PostCategory for backward compatibility
 type PostCategory = 'TRIP' | 'FOOD_PLACE' | 'HOTEL' | 'ATTRACTION'
@@ -81,16 +82,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderWidth: 2,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   categoryButtonActive: {
-    backgroundColor: '#d1fae5',
-    borderColor: '#10b981',
+    backgroundColor: tokens.colors.secondaryLight,
+    borderColor: tokens.colors.secondary,
   },
   categoryEmoji: {
     fontSize: 24,
@@ -98,15 +99,15 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     flex: 1,
   },
   categoryLabelActive: {
-    color: '#047857',
+    color: tokens.colors.secondary,
   },
   categoryDesc: {
     fontSize: 12,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginRight: 8,
   },
 })

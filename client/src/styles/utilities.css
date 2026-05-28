@@ -671,12 +671,12 @@
 }
 
 .button-secondary:hover {
-  background-color: #047857;
+  background-color: var(--color-secondary);
   box-shadow: var(--shadow-md);
 }
 
 .button-secondary:active {
-  background-color: #047857;
+  background-color: var(--color-secondary);
   transform: scale(0.98);
 }
 

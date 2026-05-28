@@ -15,6 +15,7 @@ import { AppHeader } from '@/src/components/AppHeader'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 import { PageShell } from '@/src/components/PageShell'
 import { PostService, Post } from '@/src/api/postService'
+import { tokens } from '@/src/theme/tokens'
 import TripCard from './components/TripCard'
 import FoodPlaceCard from './components/FoodPlaceCard'
 import HotelCard from './components/HotelCard'
@@ -82,7 +83,7 @@ export default function HomeScreen() {
     const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
       <View style={loadingStyle}>
-        <ActivityIndicator size="large" color="#0d9488" />
+        <ActivityIndicator size="large" color={tokens.colors.primary} />
       </View>
     )
   }
@@ -120,7 +121,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.secondaryLighter,
   },
   centerContent: {
     justifyContent: 'center',
@@ -133,15 +134,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   subtitle: {
     fontSize: 15,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '500',
   },
   errorBox: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: tokens.colors.successLight,
     borderRadius: 12,
     padding: 14,
     marginBottom: 20,
@@ -149,20 +150,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   errorEmoji: {
     fontSize: 18,
   },
   errorText: {
-    color: '#7c2d12',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     fontSize: 14,
     paddingVertical: 40,
     fontWeight: '500',

@@ -278,29 +278,31 @@ const CSS = `
 ## Color System
 
 ### Primary Colors
-- **Primary**: `#0d9488` (teal-600) - Main brand color
-- **Primary Light**: `#e0f7f5` - Light backgrounds
-- **Primary Lighter**: `#f0fdf9` - Very light backgrounds
-- **Primary Dark**: `#0a7368` - Darker variant
+**Primary**: `--color-primary` (`#0d9488`) - Main brand color
+**Primary Light**: `--color-primaryLight` (`#e0f7f5`) - Light backgrounds
+**Primary Lighter**: `--color-primaryLighter` (`#f0fdf9`) - Very light backgrounds
+**Primary Dark**: `--color-primaryDark` (`#0a7368`) - Darker variant
 
 ### Secondary Colors
-- **Secondary**: `#059669` (green-600) - Alternative action color
-- **Secondary Light**: `#d1f3ed` - Light backgrounds
-- **Secondary Lighter**: `#e8f5f1` - Very light backgrounds
+**Secondary**: `--color-secondary` (`#059669`) - Alternative action color
+**Secondary Light**: `--color-secondaryLight` (`#d1f3ed`) - Light backgrounds
+**Secondary Lighter**: `--color-secondaryLighter` (`#e8f5f1`) - Very light backgrounds
 
 ### Status Colors
-- **Error**: `#dc2626` - Red for errors
-- **Success**: `#16a34a` - Green for success
-- **Warning**: `#ea580c` - Orange for warnings
+**Error**: `--color-error` (`#dc2626`) - Red for errors
+**Success**: `--color-success` (`#16a34a`) - Green for success
+**Warning**: `--color-warning` (`#ea580c`) - Orange for warnings
 
 ### Neutral Colors
-- **Text**: `#0f172a` - Primary text
-- **Text Secondary**: `#4b5563` - Secondary text
-- **Text Tertiary**: `#9ca3af` - Tertiary/disabled text
-- **Border**: `#ccf0e8` - Light teal borders
-- **Background**: `#ffffff` - White backgrounds
-- **Background Secondary**: `#f9fafb` - Off-white
-- **Background Tertiary**: `#f3f4f6` - Light gray
+**Text**: `--color-text` (`#0f172a`) - Primary text
+**Contrast**: `--color-contrast` (`#0f172a`) - High-contrast foreground for light backgrounds
+**Contrast Inverse**: `--color-contrastInverse` (`#ffffff`) - Foreground for dark/colored backgrounds
+**Text Secondary**: `--color-textSecondary` (`#4b5563`) - Secondary text
+**Text Tertiary**: `--color-textTertiary` (`#9ca3af`) - Tertiary/disabled text
+**Border**: `--color-border` (`#ccf0e8`) - Light teal borders
+**Background**: `--color-background` (`#ffffff`) - White backgrounds
+**Background Secondary**: `--color-backgroundSecondary` (`#f9fafb`) - Off-white
+**Background Tertiary**: `--color-backgroundTertiary` (`#f3f4f6`) - Light gray
 
 ## Breakpoints
 

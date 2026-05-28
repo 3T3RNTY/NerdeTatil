@@ -13,6 +13,7 @@ import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
 import { PostService, Post } from '@/src/api/postService'
 import { useAuth } from '@/src/hooks/useAuth'
+import { tokens } from '@/src/theme/tokens'
 import TripCard from './components/TripCard'
 import FoodPlaceCard from './components/FoodPlaceCard'
 import HotelCard from './components/HotelCard'
@@ -121,7 +122,7 @@ export default function UserPostsScreen() {
     const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
       <View style={loadingStyle}>
-        <ActivityIndicator size="large" color="#0d9488" />
+        <ActivityIndicator size="large" color={tokens.colors.primary} />
       </View>
     )
   }
@@ -198,7 +199,7 @@ export default function UserPostsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.secondaryLighter,
   },
   centerContent: {
     justifyContent: 'center',
@@ -213,27 +214,27 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
   },
   backButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   subtitle: {
     fontSize: 15,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '500',
   },
   errorBox: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: tokens.colors.errorLight,
     borderRadius: 12,
     padding: 14,
     marginTop: 16,
@@ -242,13 +243,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   errorEmoji: {
     fontSize: 18,
   },
   errorText: {
-    color: '#7c2d12',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
@@ -279,23 +280,23 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '600',
   },
   createButton: {
     marginTop: 12,
     borderRadius: 12,
-    backgroundColor: '#0d9488',
+    backgroundColor: tokens.colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    shadowColor: '#0d9488',
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
   },
   createButtonText: {
-    color: '#ffffff',
+    color: tokens.colors.background,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -305,7 +306,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderBottomLeftRadius: 18,
     borderBottomRightRadius: 18,
     marginBottom: 16,
@@ -313,7 +314,7 @@ const styles = StyleSheet.create({
   editButton: {
     flex: 1,
     borderRadius: 8,
-    backgroundColor: '#dbeafe',
+    backgroundColor: tokens.colors.backgroundSecondary,
     paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -321,12 +322,12 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0369a1',
+    color: tokens.colors.infoDark,
   },
   deleteButton: {
     flex: 1,
     borderRadius: 8,
-    backgroundColor: '#fee2e2',
+    backgroundColor: tokens.colors.errorLight,
     paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#dc2626',
+    color: tokens.colors.error,
   },
   confirmationOverlay: {
     position: 'absolute',
@@ -348,12 +349,12 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   confirmationModal: {
-    backgroundColor: '#ffffff',
+    backgroundColor: tokens.colors.background,
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 16,
     minWidth: 280,
-    shadowColor: '#000',
+    shadowColor: tokens.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -362,12 +363,12 @@ const styles = StyleSheet.create({
   confirmationTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#dc2626',
+    color: tokens.colors.error,
     marginBottom: 12,
   },
   confirmationText: {
     fontSize: 14,
-    color: '#0f172a',
+    color: tokens.colors.text,
     fontWeight: '500',
     marginBottom: 20,
     lineHeight: 20,
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -387,12 +388,12 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   confirmDeleteButton: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: '#dc2626',
+    backgroundColor: tokens.colors.error,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -400,6 +401,6 @@ const styles = StyleSheet.create({
   confirmDeleteButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: tokens.colors.background,
   },
 })

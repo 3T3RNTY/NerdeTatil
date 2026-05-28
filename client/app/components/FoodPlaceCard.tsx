@@ -2,6 +2,7 @@ import { Link } from 'expo-router'
 import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image } from 'react-native'
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
+import { tokens } from '@/src/theme/tokens'
 
 interface FoodPlaceCardProps {
   post: Post
@@ -121,13 +122,13 @@ export default function FoodPlaceCard({ post, isWideWeb = false, isMobile = fals
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.colors.background,
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-    shadowColor: '#000',
+    borderLeftColor: tokens.colors.accentSecondary,
+    shadowColor: tokens.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: 200,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     position: 'relative',
   },
   cardImageWide: {
@@ -157,13 +158,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: tokens.colors.shadow + 'B3',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
   },
   imageCountText: {
-    color: '#fff',
+    color: tokens.colors.background,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -171,13 +172,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     left: 8,
-    backgroundColor: '#f59e0b',
+    backgroundColor: tokens.colors.accentSecondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   categoryBadgeText: {
-    color: '#fff',
+    color: tokens.colors.background,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -187,17 +188,17 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     marginBottom: 6,
   },
   cardDescription: {
     fontSize: 13,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginBottom: 8,
     lineHeight: 18,
   },
   locationContainer: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: tokens.colors.accentLight,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -206,12 +207,12 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#92400e',
+    color: tokens.colors.accentDark,
     marginBottom: 2,
   },
   locationCity: {
     fontSize: 11,
-    color: '#b45309',
+    color: tokens.colors.accentDark,
   },
   infoRow: {
     flexDirection: 'row',
@@ -220,39 +221,39 @@ const styles = StyleSheet.create({
   },
   infoBadge: {
     flex: 1,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',
   },
   priceBadge: {
-    backgroundColor: '#fce7f3',
-    borderColor: '#fbcfe8',
+    backgroundColor: tokens.colors.locationLight,
+    borderColor: tokens.colors.locationLight,
   },
   infoBadgeLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   infoBadgeValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     marginTop: 2,
   },
   priceValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#be185d',
+    color: tokens.colors.locationPrimary,
     marginTop: 2,
   },
   ratingContainerProminant: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: tokens.colors.accentLight,
     borderWidth: 2,
-    borderColor: '#f59e0b',
+    borderColor: tokens.colors.accentSecondary,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -267,17 +268,17 @@ const styles = StyleSheet.create({
   ratingValueLarge: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#f59e0b',
+    color: tokens.colors.accentSecondary,
   },
   ratingMax: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#92400e',
+    color: tokens.colors.accentDark,
   },
   noRating: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#92400e',
+    color: tokens.colors.accentDark,
   },
   stats: {
     flexDirection: 'row',
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   userInfo: {
     flex: 1,
@@ -305,16 +306,16 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   viewButton: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: tokens.colors.accentSecondary,
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: 'center',
   },
   viewButtonText: {
-    color: '#fff',
+    color: tokens.colors.contrastInverse,
     fontSize: 13,
     fontWeight: '700',
   },

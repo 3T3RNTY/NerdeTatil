@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { tokens } from '@/src/theme/tokens';
 import { PostService } from '@/src/api/postService';
 
 interface SubTheme {
@@ -58,7 +59,7 @@ export function SubThemeSelector({
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={tokens.colors.infoPrimary} />
       </View>
     );
   }
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 12,
-    color: '#1f2937',
+    color: tokens.colors.text,
   },
   chipsContainer: {
     flexDirection: 'row',
@@ -136,33 +137,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: tokens.colors.backgroundTertiary,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: tokens.colors.border,
   },
   chipSelected: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: tokens.colors.infoPrimary,
+    borderColor: tokens.colors.infoPrimary,
   },
   chipText: {
     fontSize: 13,
-    color: '#374151',
+    color: tokens.colors.text,
     fontWeight: '500',
   },
   chipTextSelected: {
-    color: 'white',
+    color: tokens.colors.background,
   },
   reviewSection: {
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: tokens.colors.borderLight,
     gap: 12,
   },
   reviewTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: tokens.colors.text,
   },
   selectedChips: {
     flexDirection: 'row',
@@ -174,23 +175,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#dbeafe',
+    backgroundColor: tokens.colors.infoLight,
     borderRadius: 20,
     gap: 6,
   },
   reviewChipText: {
     fontSize: 12,
-    color: '#1e40af',
+    color: tokens.colors.infoPrimary,
     fontWeight: '500',
   },
   removeIcon: {
     fontSize: 18,
-    color: '#1e40af',
+    color: tokens.colors.infoPrimary,
     fontWeight: 'bold',
   },
   emptyText: {
     textAlign: 'center',
-    color: '#9ca3af',
+    color: tokens.colors.textTertiary,
     fontSize: 14,
     marginTop: 20,
   },
