@@ -54,6 +54,7 @@ function RootLayoutNav() {
         <Stack.Screen name="profil" options={{ headerShown: false }} />
         <Stack.Screen name="user-posts" options={{ headerShown: false }} />
         <Stack.Screen name="yeni-paylasim" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="detay/[id]" options={{ headerShown: false }} />
       </Stack>
       {Platform.OS !== 'web' && <MobileNavigation />}

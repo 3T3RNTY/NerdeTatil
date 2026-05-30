@@ -71,6 +71,7 @@ router.patch(
 router.get('/themes', PostController.getThemes);
 router.get('/posts', optionalAuthMiddleware, PostController.list);
 router.get('/posts/user/:userId', PostController.getByUserId);
+router.get('/posts/search', PostController.search);
 router.get('/posts/:id', optionalAuthMiddleware, PostController.getById);
 router.post(
   '/posts',

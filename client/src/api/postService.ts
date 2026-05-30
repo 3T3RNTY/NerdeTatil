@@ -165,6 +165,35 @@ export class PostService {
   }
 
   /**
+   * Search posts by query, city, country, and theme
+   */
+  static async searchPosts(
+    query: string = '',
+    filters?: {
+      city?: string;
+      country?: string;
+      themeId?: string;
+    },
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PostsResponse> {
+    try {
+      const params: any = { page, limit };
+      if (query) params.q = query;
+      if (filters?.city) params.city = filters.city;
+      if (filters?.country) params.country = filters.country;
+      if (filters?.themeId) params.themeId = filters.themeId;
+
+      const response = await apiClient.get<PostsResponse>('/posts/search', {
+        params,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to search posts' };
+    }
+  }
+
+  /**
    * Create a new post with theme system
    */
   static async createPost(data: {

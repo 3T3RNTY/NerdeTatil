@@ -50,34 +50,48 @@ export class PostService {
    * Enrich location data with missing city and country information
    * Uses reverse geocoding if coordinates are available but city/country is missing
    * Preserves location-specific ratings and descriptions during enrichment
+   * Ensures BOTH city and country are populated for search to work properly
    */
   static async enrichLocations(locations: LocationData[]): Promise<LocationData[]> {
     try {
       return await Promise.all(
         locations.map(async (location) => {
-          // If city and country are already present, return as-is
-          if (location.city && location.country) {
+          // Check if we need enrichment - missing city OR country needs reverse geocoding
+          const hasBothCityAndCountry = location.city?.trim() && location.country?.trim();
+          
+          if (hasBothCityAndCountry) {
             return location;
           }
 
-          // If we have coordinates but missing city/country, use reverse geocoding
+          // If we have coordinates, use reverse geocoding to fill in missing city/country
           if (location.latitude && location.longitude) {
             try {
+              console.log(
+                `Enriching location "${location.name}" at [${location.latitude}, ${location.longitude}]`
+              );
+
               const result = await geocodingService.reverseGeocode(
                 location.latitude,
                 location.longitude
               );
 
-              return {
+              const enrichedLocation = {
                 ...location,
-                city: result.city || location.city,
-                country: result.country || location.country,
-                address: result.address || location.address,
+                // Only update city/country if they're missing; use reverse geocoding result
+                city: location.city?.trim() ? location.city : result.city,
+                country: location.country?.trim() ? location.country : result.country,
+                address: location.address || result.address,
                 // Preserve location-specific ratings and description
                 rating: location.rating,
                 description: location.description,
                 multiCriteriaRatings: location.multiCriteriaRatings,
               };
+
+              console.log(
+                `Enriched location: city=${enrichedLocation.city}, country=${enrichedLocation.country}`
+              );
+
+              return enrichedLocation;
             } catch (error) {
               console.warn(
                 `Failed to reverse geocode ${location.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -87,7 +101,39 @@ export class PostService {
             }
           }
 
-          // Return location as-is if no coordinates available
+          // If no coordinates available, try forward geocoding the name to get coordinates
+          if (!location.latitude || !location.longitude) {
+            try {
+              console.log(`Attempting forward geocoding for "${location.name}"`);
+              
+              const result = await geocodingService.geocodeAddress(location.name);
+              
+              const enrichedLocation = {
+                ...location,
+                latitude: location.latitude || result.latitude,
+                longitude: location.longitude || result.longitude,
+                address: location.address || result.address,
+                city: location.city?.trim() ? location.city : result.city,
+                country: location.country?.trim() ? location.country : result.country,
+                rating: location.rating,
+                description: location.description,
+                multiCriteriaRatings: location.multiCriteriaRatings,
+              };
+
+              console.log(
+                `Forward geocoded: city=${enrichedLocation.city}, country=${enrichedLocation.country}`
+              );
+
+              return enrichedLocation;
+            } catch (error) {
+              console.warn(
+                `Failed to forward geocode ${location.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+              );
+              return location;
+            }
+          }
+
+          // Return location as-is if no enrichment possible
           return location;
         })
       );
@@ -314,6 +360,119 @@ export class PostService {
       }),
       prisma.post.count({ where: { userId } }),
     ]);
+
+    return {
+      posts: posts.map((post) => ({
+        ...post,
+        locations: post.locationsData as unknown as LocationData[],
+        likesCount: post._count.likes,
+        commentsCount: post._count.comments,
+        _count: undefined,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Search posts by query, city, country, theme
+   * Supports filtering by title, description, location, and theme
+   */
+  static async searchPosts(
+    query: string = '',
+    filters?: {
+      city?: string;
+      country?: string;
+      themeId?: string;
+    },
+    page: number = 1,
+    limit: number = 10
+  ) {
+    const offset = (page - 1) * limit;
+    const searchTerm = query.trim().toLowerCase();
+
+    // Build the where clause
+    const where: Prisma.PostWhereInput = {
+      isPublic: true,
+    };
+
+    // Add search conditions if query is provided
+    if (searchTerm) {
+      where.OR = [
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { description: { contains: searchTerm, mode: 'insensitive' } },
+      ];
+    }
+
+    // Add filter for theme if provided
+    if (filters?.themeId) {
+      where.themeId = filters.themeId;
+    }
+
+    // Get posts first, then filter by location in memory (since locationsData is JSON)
+    const [allPostsForThisPage, total] = await Promise.all([
+      prisma.post.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          postType: true,
+          themeId: true,
+          subThemeIds: true,
+          rating: true,
+          imageUrls: true,
+          locationsData: true,
+          multiCriteriaRatings: true,
+          isPublic: true,
+          allowComments: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              profileImageUrl: true,
+            },
+          },
+          theme: {
+            select: {
+              id: true,
+              name: true,
+              emoji: true,
+            },
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.post.count({ where }),
+    ]);
+
+    // Filter by city and country in memory if specified
+    let posts = allPostsForThisPage;
+    if (filters?.city || filters?.country) {
+      posts = posts.filter((post) => {
+        const locations = (post.locationsData as unknown as LocationData[]) || [];
+        return locations.some((loc) => {
+          const cityMatch = !filters.city || loc.city?.toLowerCase() === filters.city.toLowerCase();
+          const countryMatch = !filters.country || loc.country?.toLowerCase() === filters.country.toLowerCase();
+          return cityMatch && countryMatch;
+        });
+      });
+    }
 
     return {
       posts: posts.map((post) => ({

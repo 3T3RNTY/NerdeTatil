@@ -1,15 +1,28 @@
-import { Link, usePathname } from 'expo-router'
+import { useState } from 'react'
+import { Link, usePathname, useRouter } from 'expo-router'
 import { Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native'
 import { env } from '@/src/config/env'
 import { tokens } from '@/src/theme/tokens'
 
 export function AppHeader() {
+  const router = useRouter()
   const { width } = useWindowDimensions()
   const isWide = width >= 900
   const isMobile = Platform.OS !== 'web'
   const pathname = usePathname()
   const isProfilePage = pathname === '/profil'
   const searchStyle = StyleSheet.flatten([styles.search, isWide && styles.searchWide])
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push({
+        pathname: '/search',
+        params: { q: searchQuery },
+      })
+      setSearchQuery('')
+    }
+  }
 
   return (
     <View style={styles.header}>
@@ -33,6 +46,10 @@ export function AppHeader() {
           style={searchStyle}
           placeholder="Mekan, şehir veya tatil ara..."
           placeholderTextColor={tokens.colors.textTertiary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
         />
         {!isMobile && (
           <Link href={isProfilePage ? '/' : '/profil'} asChild>

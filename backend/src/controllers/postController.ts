@@ -36,6 +36,37 @@ export class PostController {
   }
 
   /**
+   * GET /api/posts/search
+   * Search posts by query, city, country, and theme
+   */
+  static async search(req: Request, res: Response) {
+    try {
+      const query = (req.query.q as string) || '';
+      const city = (req.query.city as string) || undefined;
+      const country = (req.query.country as string) || undefined;
+      const themeId = (req.query.themeId as string) || undefined;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const result = await PostService.searchPosts(
+        query,
+        {
+          city,
+          country,
+          themeId,
+        },
+        page,
+        limit
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error searching posts:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
    * GET /api/posts/:id
    * Get post by ID with comments
    */

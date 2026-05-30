@@ -88,6 +88,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
       return;
     }
 
+    // Allow selection - backend will enrich missing city/country via reverse geocoding
     const newLocation: LocationData = {
       name: location.address.split(',')[0] || location.address,
       address: location.address,
