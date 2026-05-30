@@ -14,10 +14,10 @@ import { PageShell } from '@/src/components/PageShell'
 import { PostService, Post } from '@/src/api/postService'
 import { useAuth } from '@/src/hooks/useAuth'
 import { tokens } from '@/src/theme/tokens'
-import TripCard from './components/TripCard'
-import FoodPlaceCard from './components/FoodPlaceCard'
-import HotelCard from './components/HotelCard'
-import AttractionCard from './components/AttractionCard'
+import TripCard from './_components/TripCard'
+import FoodPlaceCard from './_components/FoodPlaceCard'
+import HotelCard from './_components/HotelCard'
+import AttractionCard from './_components/AttractionCard'
 
 // Helper function to render the correct card component based on category
 const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean, onEdit: (id: string) => void, onDelete: (id: string) => void) => {
@@ -199,7 +199,7 @@ export default function UserPostsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
   },
   centerContent: {
     justifyContent: 'center',
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: tokens.colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 9999,

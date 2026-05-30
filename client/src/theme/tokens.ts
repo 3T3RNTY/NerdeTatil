@@ -1,70 +1,82 @@
 /**
  * Design Tokens
  * Centralized theme tokens for both web (CSS) and mobile (React Native StyleSheet)
- * All colors, typography, spacing, shadows, and breakpoints are defined here
  */
 
 export const tokens = {
-  // Color Palette
   colors: {
-    // Primary Brand Colors
-    primary: '#0d9488', // teal-600
-    primaryLight: '#e0f7f5', // light teal background
-    primaryLighter: '#f0fdf9', // very light teal
-    primaryDark: '#0a7368', // darker teal
+    // Brand — teal
+    primary: '#0d9488',
+    primaryLight: '#9fd4c8',
+    primaryLighter: '#e4f0ec',
+    primaryDark: '#085e55',
 
-    // Secondary Colors
-    secondary: '#059669', // green-600
-    secondaryLight: '#d1f3ed', // light green
-    secondaryLighter: '#e8f5f1', // very light green
+    // Navigation bar (turquoise/teal band)
+    navBar: '#0d9488',
+    navBarDark: '#085e55',
+    navBarForeground: '#ffffff',
+    navBarMuted: 'rgba(255, 255, 255, 0.88)',
 
-    // Accent/Status Colors
-    error: '#dc2626', // red-600
-    errorLight: '#fee2e2', // light red
-    success: '#16a34a', // green-600
-    successLight: '#dcfce7', // light green
-    warning: '#ea580c', // orange-600
-    warningLight: '#fed7aa', // light orange
+    // Supporting green-teal
+    secondary: '#0f766e',
+    secondaryLight: '#7ec9bc',
+    secondaryLighter: '#d4e8e3',
 
-    // Contrast Accent Colors (Orange/Amber)
-    accent: '#f97316', // orange-500 - primary contrast color
-    accentLight: '#fed7aa', // orange-100 - light accent backgrounds
-    accentDark: '#b45309', // orange-700 - darker accent variant
-    accentSecondary: '#d97706', // orange-600 - mid-tone accent
+    // Surfaces & page (wider steps = more contrast, less "washed out")
+    pageBackground: '#c5dbd4',
+    /** Darker strip behind elevated cards (foreground/background separation) */
+    panel: '#aec9c1',
+    surface: '#ffffff',
+    surfaceMuted: '#dce9e5',
+    /** Inset well inside white cards (description blocks) */
+    surfaceInset: '#f0f7f5',
 
-    // Semantic Colors for Content Types
-    locationPrimary: '#ec4899', // pink-500 - for locations and ratings
-    locationLight: '#fce7f3', // pink-100 - light location backgrounds
-    locationDark: '#9d174d', // pink-700 - dark location text
-    infoPrimary: '#0284c7', // cyan-600 - for theme/info content
-    infoLight: '#f0f9ff', // cyan-50 - light info backgrounds
-    infoDark: '#0369a1', // cyan-700 - dark info text
-    overlay: '#000000', // for dark overlays (alpha applied in components)
+    // Status
+    error: '#dc2626',
+    errorLight: '#fee2e2',
+    success: '#16a34a',
+    successLight: '#dcfce7',
+    warning: '#ea580c',
+    warningLight: '#fed7aa',
 
-    // Neutral Colors
-    text: '#0f172a', // dark blue-gray
-    // Contrast helpers
-    contrast: '#0f172a', // primary foreground for high contrast on light backgrounds
-    contrastInverse: '#ffffff', // white foreground for dark/colored backgrounds
-    textSecondary: '#4b5563', // medium gray
-    textTertiary: '#9ca3af', // light gray
-    border: '#ccf0e8', // light teal for borders
-    borderLight: '#dbeafe', // very light blue
-    background: '#ffffff', // white
-    backgroundSecondary: '#f9fafb', // off-white
-    backgroundTertiary: '#f3f4f6', // light gray
-    shadow: '#000000', // for shadow color (alpha applied separately)
+    // Accent — ratings & highlights (warm amber, not competing blues/pinks)
+    accent: '#d97706',
+    accentLight: '#fef3e2',
+    accentDark: '#b45309',
+    accentSecondary: '#e8952a',
+    star: '#e8952a',
+
+    // Semantic aliases (teal-based; kept for existing component references)
+    locationPrimary: '#0f766e',
+    locationLight: '#dce9e5',
+    locationDark: '#085e55',
+    infoPrimary: '#0d9488',
+    infoLight: '#dce9e5',
+    infoDark: '#085e55',
+
+    overlay: '#0f172a',
+    overlayScrim: 'rgba(15, 23, 42, 0.62)',
+
+    // Neutrals
+    text: '#0c1222',
+    contrast: '#0c1222',
+    contrastInverse: '#ffffff',
+    textSecondary: '#334155',
+    textTertiary: '#64748b',
+    border: '#8fbdb3',
+    borderLight: '#a8cfc6',
+    borderStrong: '#6a9e92',
+    background: '#ffffff',
+    backgroundSecondary: '#dce9e5',
+    backgroundTertiary: '#c5dbd4',
+    shadow: '#0f172a',
   },
 
-  // Typography
   typography: {
-    // Font families
     fontFamily: {
       base: 'system-ui, -apple-system, sans-serif',
       mono: '"Courier New", monospace',
     },
-
-    // Font sizes (in pixels)
     fontSize: {
       xs: 12,
       sm: 14,
@@ -75,8 +87,6 @@ export const tokens = {
       '3xl': 30,
       '4xl': 36,
     },
-
-    // Font weights
     fontWeight: {
       light: 300,
       normal: 400,
@@ -84,16 +94,12 @@ export const tokens = {
       semibold: 600,
       bold: 700,
     },
-
-    // Line heights
     lineHeight: {
       tight: 1.2,
       normal: 1.5,
       relaxed: 1.75,
       loose: 2,
     },
-
-    // Letter spacing
     letterSpacing: {
       tight: -0.5,
       normal: 0,
@@ -101,7 +107,6 @@ export const tokens = {
     },
   },
 
-  // Spacing (for padding, margin, gaps)
   spacing: {
     0: 0,
     1: 4,
@@ -119,7 +124,6 @@ export const tokens = {
     16: 64,
   },
 
-  // Border Radius
   borderRadius: {
     none: 0,
     sm: 4,
@@ -131,32 +135,27 @@ export const tokens = {
     full: 9999,
   },
 
-  // Shadows (for web CSS and React Native)
   shadows: {
     none: 'none',
-    // Web CSS shadows
-    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-    base: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-    '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-
-    // React Native shadows (platform-specific)
+    sm: '0 1px 2px 0 rgba(15, 23, 42, 0.08)',
+    base: '0 1px 3px 0 rgba(15, 23, 42, 0.12), 0 1px 2px 0 rgba(15, 23, 42, 0.06)',
+    md: '0 4px 14px -2px rgba(15, 23, 42, 0.14), 0 2px 6px -2px rgba(15, 23, 42, 0.08)',
+    lg: '0 10px 28px -4px rgba(15, 23, 42, 0.16), 0 4px 12px -4px rgba(15, 23, 42, 0.1)',
+    xl: '0 20px 36px -8px rgba(15, 23, 42, 0.2), 0 8px 16px -6px rgba(15, 23, 42, 0.12)',
+    '2xl': '0 25px 50px -12px rgba(15, 23, 42, 0.28)',
+    card: '0 4px 16px -2px rgba(15, 23, 42, 0.14), 0 2px 8px -2px rgba(15, 23, 42, 0.1)',
     android: {
       elevation: 4,
     },
     ios: {
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
+      shadowColor: '#0f172a',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.16,
+      shadowRadius: 10,
     },
   },
 
-  // Responsive Breakpoints
   breakpoints: {
-    // Mobile-first approach
     mobile: 320,
     mobileSm: 375,
     mobileLg: 480,
@@ -166,7 +165,6 @@ export const tokens = {
     desktopLg: 1400,
   },
 
-  // Z-index scale
   zIndex: {
     hide: -1,
     auto: 'auto',
@@ -180,7 +178,6 @@ export const tokens = {
     tooltip: 1070,
   },
 
-  // Transitions/Animations
   transition: {
     duration: {
       fast: 150,

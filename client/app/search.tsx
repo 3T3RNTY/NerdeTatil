@@ -16,11 +16,11 @@ import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
 import { PostService, Post, SearchSummaryResponse } from '@/src/api/postService'
 import { tokens } from '@/src/theme/tokens'
-import { SearchSummary } from './components/SearchSummary'
-import TripCard from './components/TripCard'
-import FoodPlaceCard from './components/FoodPlaceCard'
-import HotelCard from './components/HotelCard'
-import AttractionCard from './components/AttractionCard'
+import { SearchSummary } from './_components/SearchSummary'
+import TripCard from './_components/TripCard'
+import FoodPlaceCard from './_components/FoodPlaceCard'
+import HotelCard from './_components/HotelCard'
+import AttractionCard from './_components/AttractionCard'
 
 type SearchType = 'title' | 'city' | 'country'
 
@@ -362,7 +362,7 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
   },
   centerContent: {
     justifyContent: 'center',
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
     color: tokens.colors.text,
   },
   searchTypeButton: {
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: tokens.colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 12,
     fontSize: 14,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
     color: tokens.colors.text,
   },
   buttonRow: {
@@ -578,6 +578,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   errorLight: {
-    backgroundColor: '#fecaca',
+    backgroundColor: tokens.colors.errorLight,
   },
 })

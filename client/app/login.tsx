@@ -132,7 +132,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
   },
   backgroundGradient: {
     position: 'absolute',
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '100%',
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
   },
   contentContainer: {
     flexGrow: 1,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   formContainer: {
-    backgroundColor: tokens.colors.primaryLighter,
+    backgroundColor: tokens.colors.surface,
     borderRadius: 24,
     padding: 28,
     shadowColor: tokens.colors.primary,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 5,
     borderWidth: 1,
-    borderColor: tokens.colors.secondaryLight,
+    borderColor: tokens.colors.borderStrong,
   },
   heading: {
     fontSize: 22,

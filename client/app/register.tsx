@@ -209,7 +209,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
   },
   backgroundGradient: {
     position: 'absolute',
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '100%',
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
   },
   contentContainer: {
     flexGrow: 1,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     borderRadius: 12,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
     borderWidth: 1,
     borderColor: tokens.colors.border,
     shadowColor: tokens.colors.shadow,

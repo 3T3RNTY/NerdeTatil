@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: tokens.spacing[4],
     paddingVertical: tokens.spacing[4],
-    backgroundColor: tokens.colors.background,
+    backgroundColor: tokens.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     borderColor: tokens.colors.primary,
   },
   stepCircleInactive: {
-    backgroundColor: tokens.colors.background,
+    backgroundColor: tokens.colors.surface,
     borderColor: tokens.colors.border,
   },
   stepNumber: {

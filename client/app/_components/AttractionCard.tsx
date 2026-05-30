@@ -1,58 +1,32 @@
 import { Link } from 'expo-router'
-import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image, Platform } from 'react-native'
+import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image } from 'react-native'
+import { tokens } from '@/src/theme/tokens'
+import { postCardStyles } from '@/src/theme/postCard'
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
-import { tokens } from '@/src/theme/tokens'
-import { getThemeColorScheme } from '@/src/utils/themeColors'
 
-interface TripCardProps {
+interface AttractionCardProps {
   post: Post
   isWideWeb?: boolean
   isMobile?: boolean
 }
 
-export default function TripCard({ post, isWideWeb = false, isMobile = false }: TripCardProps) {
+export default function AttractionCard({ post, isWideWeb = false, isMobile = false }: AttractionCardProps) {
   const { width } = useWindowDimensions()
-  const themeColors = getThemeColorScheme(post.theme?.name || 'Seyahat')
   
-  const cardStyle = StyleSheet.flatten([
-    styles.card,
-    isWideWeb && styles.cardWide,
-    {
-      borderLeftColor: themeColors.borderColor,
-      borderTopColor: themeColors.borderColor,
-      shadowColor: themeColors.borderColor,
-    }
-  ])
+  const cardStyle = StyleSheet.flatten([postCardStyles.card, isWideWeb && postCardStyles.cardWide])
   const cardImageStyle = StyleSheet.flatten([
-    styles.cardImage,
-    isWideWeb && styles.cardImageWide,
-    isMobile && styles.cardImageMobile,
-  ])
-  const themeBadgeStyle = StyleSheet.flatten([
-    styles.categoryBadge,
-    {
-      backgroundColor: themeColors.backgroundColor,
-      borderColor: themeColors.borderColor,
-    }
-  ])
-  const themeBadgeTextStyle = StyleSheet.flatten([
-    styles.categoryBadgeText,
-    {
-      color: themeColors.textColor,
-    }
+    postCardStyles.cardImage,
+    isWideWeb && postCardStyles.cardImageWide,
+    isMobile && postCardStyles.cardImageMobile,
   ])
 
-  // Format date range
-  const formatDateRange = () => {
-    if (!post.startDate && !post.endDate) return 'Tarihleri belirtilmedi'
-    if (post.startDate && post.endDate) {
-      const start = new Date(post.startDate).toLocaleDateString('tr-TR')
-      const end = new Date(post.endDate).toLocaleDateString('tr-TR')
-      return `${start} - ${end}`
+  // Get theme badge text - use new format if available
+  const getThemeBadge = () => {
+    if (post.theme?.emoji) {
+      return `${post.theme.emoji} ${post.theme.name}`
     }
-    if (post.startDate) return `${new Date(post.startDate).toLocaleDateString('tr-TR')} başlangıç`
-    return `${new Date(post.endDate!).toLocaleDateString('tr-TR')} bitiş`
+    return '🏛️ Sehenlik'
   }
 
   // Calculate average rating from multi-criteria ratings
@@ -72,14 +46,6 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
     return '★'.repeat(filled) + '☆'.repeat(5 - filled)
   }
 
-  // Get theme badge text - use new format if available
-  const getThemeBadge = () => {
-    if (post.theme?.emoji) {
-      return `${post.theme.emoji} ${post.theme.name}`
-    }
-    return '✈️ Seyahat'
-  }
-
   return (
     <View style={cardStyle}>
       {/* Image */}
@@ -92,12 +58,12 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
               resizeMode="cover"
             />
             {post.imageUrls.length > 1 && (
-              <View style={styles.imageCountBadge}>
-                <Text style={styles.imageCountText}>+{post.imageUrls.length - 1}</Text>
+              <View style={postCardStyles.imageCountBadge}>
+                <Text style={postCardStyles.imageCountText}>+{post.imageUrls.length - 1}</Text>
               </View>
             )}
-            <View style={themeBadgeStyle}>
-              <Text style={themeBadgeTextStyle}>{getThemeBadge()}</Text>
+            <View style={postCardStyles.categoryBadge}>
+              <Text style={postCardStyles.categoryBadgeText}>{getThemeBadge()}</Text>
             </View>
           </>
         ) : (
@@ -106,26 +72,30 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
       </View>
 
       {/* Content */}
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={2}>
+      <View style={postCardStyles.cardBody}>
+        <Text style={postCardStyles.cardTitle} numberOfLines={2}>
           {post.title || post.description.substring(0, 40)}
         </Text>
-        <Text style={styles.cardDescription} numberOfLines={2}>
+        <Text style={postCardStyles.cardDescription} numberOfLines={3}>
           {post.description}
         </Text>
 
-        {/* Locations */}
+        {/* Theme Info (New Format) */}
+        {post.theme?.name && (
+          <View style={postCardStyles.highlightBox}>
+            <Text style={styles.themeLabel}>📂 Tema</Text>
+            <Text style={styles.themeName}>{post.theme.name}</Text>
+          </View>
+        )}
+
+        {/* Location */}
         {post.locations && post.locations.length > 0 && (
-          <View style={styles.locationsContainer}>
-            <Text style={styles.locationsTitle}>📍 Konumlar ({post.locations.length}):</Text>
-            {post.locations.slice(0, 3).map((loc, idx) => (
-              <Text key={idx} style={styles.locationItem}>
-                • {loc.name || loc.address}
-                {loc.visitDate && ` - ${new Date(loc.visitDate).toLocaleDateString('tr-TR')}`}
-              </Text>
-            ))}
-            {post.locations.length > 3 && (
-              <Text style={styles.moreLocations}>+{post.locations.length - 3} daha...</Text>
+          <View style={postCardStyles.highlightBox}>
+            <Text style={styles.locationText}>
+              📍 {post.locations[0].name || post.locations[0].address}
+            </Text>
+            {post.locations[0].city && (
+              <Text style={styles.locationCity}>{post.locations[0].city}</Text>
             )}
           </View>
         )}
@@ -156,17 +126,10 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
           </View>
         )}
 
-        {/* Old-Format Date Range */}
-        {post.startDate && (
-          <View style={styles.dateRangeContainer}>
-            <Text style={styles.dateRangeLabel}>📅 {formatDateRange()}</Text>
-          </View>
-        )}
-
         {/* Old-Format Rating */}
         {!post.multiCriteriaRatings && post.rating && (
           <View style={styles.ratingBadge}>
-            <Text style={styles.ratingEmoji}>★</Text>
+            <Text style={styles.ratingEmoji}>⭐</Text>
             <Text style={styles.ratingText}>{post.rating}/5</Text>
           </View>
         )}
@@ -188,8 +151,8 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
 
         {/* View Button */}
         <Link href={`/detay/${post.id}`} asChild>
-          <Pressable style={StyleSheet.flatten([styles.viewButton, { backgroundColor: themeColors.borderColor }])}>
-            <Text style={styles.viewButtonText}>İncele →</Text>
+          <Pressable style={postCardStyles.viewButton}>
+            <Text style={postCardStyles.viewButtonText}>İncele →</Text>
           </Pressable>
         </Link>
       </View>
@@ -198,110 +161,35 @@ export default function TripCard({ post, isWideWeb = false, isMobile = false }: 
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: 'rgba(2, 132, 199, 0.08)',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderTopWidth: 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardWide: {
-    flex: 1,
-    minWidth: '45%',
-  },
-  cardImage: {
-    width: '100%',
-    height: 200,
-    backgroundColor: tokens.colors.backgroundTertiary,
-    position: 'relative',
-  },
-  cardImageWide: {
-    height: 180,
-  },
-  cardImageMobile: {
-    height: 160,
-  },
   image: {
     width: '100%',
     height: '100%',
   },
-  imageCountBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  imageCountText: {
-    color: tokens.colors.background,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  categoryBadge: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 2,
-  },
-  categoryBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  cardBody: {
-    padding: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: tokens.colors.contrast,
-    marginBottom: 6,
-  },
-  cardDescription: {
+  locationText: {
     fontSize: 13,
-    color: tokens.colors.textSecondary,
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  locationsContainer: {
-    backgroundColor: tokens.colors.primaryLighter,
-    borderLeftWidth: 3,
-    borderLeftColor: tokens.colors.infoPrimary,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 8,
-    borderRadius: 4,
-  },
-  locationsTitle: {
-    fontSize: 12,
     fontWeight: '700',
-    color: tokens.colors.contrast,
-    marginBottom: 4,
-  },
-  locationItem: {
-    fontSize: 11,
     color: tokens.colors.text,
     marginBottom: 2,
   },
-  moreLocations: {
+  locationCity: {
     fontSize: 11,
-    color: tokens.colors.infoPrimary,
+    color: tokens.colors.primary,
+  },
+  themeLabel: {
+    fontSize: 11,
     fontWeight: '600',
-    marginTop: 2,
+    color: tokens.colors.textSecondary,
+    marginBottom: 2,
+  },
+  themeName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: tokens.colors.primary,
   },
   multiRatingContainer: {
-    backgroundColor: tokens.colors.backgroundSecondary,
+    backgroundColor: tokens.colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: tokens.colors.borderLight,
+    borderColor: tokens.colors.border,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -323,21 +211,25 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   ratingStars: {
-    fontSize: 12,
-    color: tokens.colors.accent,
-    letterSpacing: 1,
+    ...postCardStyles.ratingStars,
   },
-  dateRangeContainer: {
-    backgroundColor: tokens.colors.backgroundSecondary,
+  hoursContainer: {
+    backgroundColor: tokens.colors.accentLight,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 6,
     marginBottom: 8,
+    borderRadius: 6,
   },
-  dateRangeLabel: {
+  hoursLabel: {
     fontSize: 12,
+    fontWeight: '700',
+    color: tokens.colors.accentDark,
+    marginBottom: 2,
+  },
+  hoursValue: {
+    fontSize: 13,
     fontWeight: '600',
-    color: tokens.colors.infoDark,
+    color: tokens.colors.accentDark,
   },
   ratingBadge: {
     flexDirection: 'row',
@@ -385,15 +277,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: tokens.colors.textSecondary,
-  },
-  viewButton: {
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    color: tokens.colors.contrastInverse,
-    fontSize: 13,
-    fontWeight: '700',
   },
 })

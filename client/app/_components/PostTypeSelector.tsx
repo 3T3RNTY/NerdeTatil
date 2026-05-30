@@ -53,15 +53,15 @@ const styles = StyleSheet.create({
   card: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: tokens.colors.backgroundTertiary,
+    backgroundColor: tokens.colors.surfaceMuted,
     borderWidth: 2,
-    borderColor: tokens.colors.borderLight,
+    borderColor: tokens.colors.border,
     alignItems: 'center',
     gap: 8,
   },
   cardSelected: {
-    backgroundColor: tokens.colors.infoLight,
-    borderColor: tokens.colors.infoPrimary,
+    backgroundColor: tokens.colors.surface,
+    borderColor: tokens.colors.primary,
   },
   emoji: {
     fontSize: 36,

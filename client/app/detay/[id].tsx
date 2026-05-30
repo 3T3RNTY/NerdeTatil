@@ -15,7 +15,7 @@ import {
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
-import ImageGallery from '@/app/components/ImageGallery'
+import ImageGallery from '@/app/_components/ImageGallery'
 import { PostService, PostDetail, Comment } from '@/src/api/postService'
 import { tokens } from '@/src/theme/tokens'
 import { useAuth } from '@/src/hooks/useAuth'
@@ -417,71 +417,84 @@ export default function DetailScreen() {
                 />
               )}
 
-              {/* Theme Badge with SubThemes */}
-              {post.theme && themeColors && (
-                <View style={styles.themeAndSubThemesContainer}>
-                  <View style={StyleSheet.flatten([
-                    styles.themeBadge,
-                    {
-                      backgroundColor: themeColors.backgroundColor,
-                      borderColor: themeColors.borderColor,
-                    }
-                  ])}>
-                    <Text style={StyleSheet.flatten([styles.themeBadgeText, { color: themeColors.textColor }])}>
-                      {post.theme.emoji} {post.theme.name}
-                    </Text>
+              {/* Post title, description & meta */}
+              <View style={styles.postDetailSection}>
+                <View style={styles.postDetailCard}>
+                  <View style={styles.postDetailHeaderBand}>
+                    <View style={styles.postDetailTop}>
+                      {themeColors && (
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.themeBadge,
+                            {
+                              backgroundColor: themeColors.borderColor,
+                              borderColor: themeColors.borderColor,
+                            },
+                          ])}
+                        >
+                          <Text style={styles.themeBadgeText}>
+                            {post.theme?.emoji ? `${post.theme.emoji} ` : '✈️ '}
+                            {post.theme?.name || 'Seyahat'}
+                          </Text>
+                        </View>
+                      )}
+                      {post.user && (
+                        <Text style={styles.postDetailDate}>
+                          {new Date(post.createdAt).toLocaleDateString('tr-TR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </Text>
+                      )}
+                    </View>
+
+                    {post.theme?.subThemes &&
+                      post.subThemeIds &&
+                      post.subThemeIds.length > 0 && (
+                        <View style={styles.subThemesChips}>
+                          {post.theme.subThemes
+                            .filter((st) => post.subThemeIds!.includes(st.id))
+                            .map((subTheme) => (
+                              <View key={subTheme.id} style={styles.subThemeChip}>
+                                <Text style={styles.subThemeChipText}>{subTheme.name}</Text>
+                              </View>
+                            ))}
+                        </View>
+                      )}
                   </View>
 
-                  {/* SubThemes Display */}
-                  {post.theme.subThemes && post.theme.subThemes.length > 0 && post.subThemeIds && post.subThemeIds.length > 0 && (
-                    <View style={styles.subThemesChips}>
-                      {post.theme.subThemes
-                        .filter(st => post.subThemeIds.includes(st.id))
-                        .map((subTheme) => (
-                          <View key={subTheme.id} style={styles.subThemeChip}>
-                            <Text style={styles.subThemeChipText}>{subTheme.name}</Text>
-                          </View>
-                        ))}
+                  <View style={styles.postDetailBody}>
+                    <Text style={styles.postDetailTitle}>{post.title || 'Paylaşım'}</Text>
+                    {post.description ? (
+                      <View style={styles.postDetailDescriptionBox}>
+                        <Text style={styles.postDetailDescriptionLabel}>Açıklama</Text>
+                        <Text style={styles.postDetailDescription}>{post.description}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  {post.user && (
+                    <View style={styles.postMetaRow}>
+                      <View style={styles.postMetaAvatar}>
+                        <Text style={styles.postMetaAvatarText}>
+                          {(post.user.username || '?').charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.postMetaContent}>
+                        <Text style={styles.postMetaLabel}>Paylaşan</Text>
+                        <Text style={styles.postMetaValue}>@{post.user.username}</Text>
+                      </View>
                     </View>
                   )}
                 </View>
-              )}
-
-              {/* Default Theme Badge for Old Posts */}
-              {!post.theme && themeColors && (
-                <View style={StyleSheet.flatten([
-                  styles.themeBadge,
-                  {
-                    backgroundColor: themeColors.backgroundColor,
-                    borderColor: themeColors.borderColor,
-                  }
-                ])}>
-                  <Text style={StyleSheet.flatten([styles.themeBadgeText, { color: themeColors.textColor }])}>
-                    ✈️ Seyahat
-                  </Text>
-                </View>
-              )}
-
-              {/* Title and Description Block */}
-              <View style={styles.block}>
-                <Text style={styles.blockTitle}>{post.title || 'Paylaşım'}</Text>
-                <Text style={styles.blockText}>{post.description}</Text>
-                {post.user && (
-                  <View style={styles.authorInfo}>
-                    <Text style={styles.authorText}>
-                      Paylaşan: {post.user.username}
-                    </Text>
-                    <Text style={styles.dateText}>
-                      {new Date(post.createdAt).toLocaleDateString('tr-TR')}
-                    </Text>
-                  </View>
-                )}
               </View>
 
               {/* Locations Display */}
               {post.locations && post.locations.length > 0 && (
-                <View style={styles.locationsContainer}>
+                <View style={styles.locationsSection}>
                   <Text style={styles.locationsTitle}>📍 Konumlar ({post.locations.length})</Text>
+                  <View style={styles.locationsList}>
                   {post.locations.map((location, index) => (
                     <Pressable 
                       key={index} 
@@ -580,6 +593,7 @@ export default function DetailScreen() {
                       )}
                     </Pressable>
                   ))}
+                  </View>
                 </View>
               )}
 
@@ -720,7 +734,7 @@ export default function DetailScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: tokens.colors.backgroundTertiary,
+    backgroundColor: tokens.colors.pageBackground,
   },
   centerContent: {
     justifyContent: 'center',
@@ -755,17 +769,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   locationCard: {
-    borderRadius: 16,
-    backgroundColor: tokens.colors.secondaryLighter,
-    borderWidth: 2,
-    borderColor: tokens.colors.primary,
+    borderRadius: tokens.borderRadius.md,
+    backgroundColor: tokens.colors.surface,
+    borderWidth: 1,
+    borderColor: tokens.colors.borderStrong,
     padding: 14,
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 10,
+    shadowColor: tokens.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   locationCardPressed: {
-    opacity: 0.7,
-    backgroundColor: tokens.colors.secondary,
+    opacity: 0.92,
+    backgroundColor: tokens.colors.surfaceMuted,
+    borderColor: tokens.colors.primary,
   },
   locationCardDisabled: {
     opacity: 0.6,
@@ -786,7 +806,7 @@ const styles = StyleSheet.create({
   locationName: {
     fontSize: 16,
     fontWeight: '700',
-    color: tokens.colors.primary,
+    color: tokens.colors.text,
   },
 
   locationCoordinates: {
@@ -824,21 +844,127 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: tokens.colors.infoDark,
   },
-  themeBadge: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 2,
+  postDetailSection: {
+    borderRadius: tokens.borderRadius.xl,
+    backgroundColor: tokens.colors.panel,
+    padding: tokens.spacing[2],
+    borderWidth: 1,
+    borderColor: tokens.colors.borderStrong,
   },
-  themeBadgeText: {
-    fontSize: 15,
+  postDetailCard: {
+    borderRadius: tokens.borderRadius.lg,
+    backgroundColor: tokens.colors.surface,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    shadowColor: tokens.colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  postDetailHeaderBand: {
+    backgroundColor: tokens.colors.surfaceMuted,
+    paddingHorizontal: tokens.spacing[5],
+    paddingVertical: tokens.spacing[4],
+    gap: tokens.spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.border,
+  },
+  postDetailBody: {
+    paddingHorizontal: tokens.spacing[5],
+    paddingTop: tokens.spacing[5],
+    paddingBottom: tokens.spacing[4],
+    gap: tokens.spacing[3],
+  },
+  postDetailDescriptionBox: {
+    backgroundColor: tokens.colors.surfaceInset,
+    borderRadius: tokens.borderRadius.md,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    padding: tokens.spacing[4],
+    gap: tokens.spacing[2],
+  },
+  postDetailDescriptionLabel: {
+    fontSize: tokens.typography.fontSize.xs,
+    fontWeight: '700',
+    color: tokens.colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  postDetailTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: tokens.spacing[2],
+  },
+  postDetailDate: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.textTertiary,
+    fontWeight: '500',
+  },
+  postDetailTitle: {
+    fontSize: tokens.typography.fontSize['2xl'],
+    fontWeight: '800',
+    color: tokens.colors.text,
+    lineHeight: 30,
+  },
+  postDetailDescription: {
+    fontSize: tokens.typography.fontSize.base,
+    color: tokens.colors.textSecondary,
+    lineHeight: 24,
+  },
+  postMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.spacing[3],
+    paddingHorizontal: tokens.spacing[5],
+    paddingVertical: tokens.spacing[4],
+    backgroundColor: tokens.colors.surfaceMuted,
+    borderTopWidth: 1,
+    borderTopColor: tokens.colors.border,
+  },
+  postMetaAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: tokens.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  postMetaAvatarText: {
+    color: tokens.colors.navBarForeground,
+    fontSize: tokens.typography.fontSize.lg,
     fontWeight: '700',
   },
-  themeAndSubThemesContainer: {
-    gap: 10,
-    marginBottom: 12,
+  postMetaContent: {
+    flex: 1,
+    gap: 2,
+  },
+  postMetaLabel: {
+    fontSize: tokens.typography.fontSize.xs,
+    fontWeight: '600',
+    color: tokens.colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  postMetaValue: {
+    fontSize: tokens.typography.fontSize.base,
+    fontWeight: '700',
+    color: tokens.colors.text,
+  },
+  themeBadge: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: tokens.borderRadius.full,
+    borderWidth: 0,
+  },
+  themeBadgeText: {
+    fontSize: tokens.typography.fontSize.sm,
+    fontWeight: '700',
+    color: tokens.colors.navBarForeground,
   },
   subThemesChips: {
     flexDirection: 'row',
@@ -846,17 +972,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   subThemeChip: {
-    backgroundColor: tokens.colors.primaryLighter,
+    backgroundColor: tokens.colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.primary,
-    borderRadius: 16,
+    borderColor: tokens.colors.borderStrong,
+    borderRadius: tokens.borderRadius.full,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   subThemeChipText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: tokens.colors.primary,
+    color: tokens.colors.primaryDark,
   },
   dateRangeCard: {
     borderRadius: 16,
@@ -877,15 +1003,23 @@ const styles = StyleSheet.create({
     color: tokens.colors.infoDark,
     fontWeight: '600',
   },
-  locationsContainer: {
-    gap: 12,
-    marginBottom: 14,
+  locationsSection: {
+    gap: tokens.spacing[3],
+    marginBottom: tokens.spacing[4],
+  },
+  locationsList: {
+    gap: tokens.spacing[2],
+    backgroundColor: tokens.colors.panel,
+    borderRadius: tokens.borderRadius.xl,
+    padding: tokens.spacing[2],
+    borderWidth: 1,
+    borderColor: tokens.colors.borderStrong,
   },
   locationsTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: tokens.colors.primary,
-    marginBottom: 4,
+    fontSize: tokens.typography.fontSize.lg,
+    fontWeight: '800',
+    color: tokens.colors.text,
+    paddingHorizontal: tokens.spacing[1],
   },
   locationNumber: {
     fontSize: 18,
@@ -925,37 +1059,26 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
   block: {
-    borderRadius: 16,
-    backgroundColor: tokens.colors.background,
+    borderRadius: tokens.borderRadius.lg,
+    backgroundColor: tokens.colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.borderLight,
-    padding: 14,
-    gap: 8,
+    borderColor: tokens.colors.borderStrong,
+    padding: tokens.spacing[4],
+    gap: tokens.spacing[2],
+    shadowColor: tokens.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   blockTitle: {
-    fontSize: 17,
+    fontSize: tokens.typography.fontSize.lg,
     fontWeight: '700',
     color: tokens.colors.text,
   },
   blockText: {
     color: tokens.colors.textSecondary,
-    lineHeight: 20,
-  },
-  authorInfo: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.borderLight,
-    gap: 4,
-  },
-  authorText: {
-    fontSize: 12,
-    color: tokens.colors.textSecondary,
-    fontWeight: '500',
-  },
-  dateText: {
-    fontSize: 11,
-    color: tokens.colors.textTertiary,
+    lineHeight: 22,
   },
   emptyText: {
     fontSize: 13,

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image } from 'r
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 import { tokens } from '@/src/theme/tokens'
+import { postCardStyles } from '@/src/theme/postCard'
 
 interface FoodPlaceCardProps {
   post: Post
@@ -13,11 +14,11 @@ interface FoodPlaceCardProps {
 export default function FoodPlaceCard({ post, isWideWeb = false, isMobile = false }: FoodPlaceCardProps) {
   const { width } = useWindowDimensions()
   
-  const cardStyle = StyleSheet.flatten([styles.card, isWideWeb && styles.cardWide])
+  const cardStyle = StyleSheet.flatten([postCardStyles.card, isWideWeb && postCardStyles.cardWide])
   const cardImageStyle = StyleSheet.flatten([
-    styles.cardImage,
-    isWideWeb && styles.cardImageWide,
-    isMobile && styles.cardImageMobile,
+    postCardStyles.cardImage,
+    isWideWeb && postCardStyles.cardImageWide,
+    isMobile && postCardStyles.cardImageMobile,
   ])
 
   const mealType = post.theme?.name || 'Yemek'
@@ -35,12 +36,12 @@ export default function FoodPlaceCard({ post, isWideWeb = false, isMobile = fals
               resizeMode="cover"
             />
             {post.imageUrls.length > 1 && (
-              <View style={styles.imageCountBadge}>
-                <Text style={styles.imageCountText}>+{post.imageUrls.length - 1}</Text>
+              <View style={postCardStyles.imageCountBadge}>
+                <Text style={postCardStyles.imageCountText}>+{post.imageUrls.length - 1}</Text>
               </View>
             )}
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>🍽️ Yemek Yeri</Text>
+            <View style={postCardStyles.categoryBadge}>
+              <Text style={postCardStyles.categoryBadgeText}>🍽️ Yemek Yeri</Text>
             </View>
           </>
         ) : (
@@ -49,17 +50,17 @@ export default function FoodPlaceCard({ post, isWideWeb = false, isMobile = fals
       </View>
 
       {/* Content */}
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={2}>
+      <View style={postCardStyles.cardBody}>
+        <Text style={postCardStyles.cardTitle} numberOfLines={2}>
           {post.title || post.description.substring(0, 40)}
         </Text>
-        <Text style={styles.cardDescription} numberOfLines={2}>
+        <Text style={postCardStyles.cardDescription} numberOfLines={2}>
           {post.description}
         </Text>
 
         {/* Location */}
         {post.locations && post.locations.length > 0 && (
-          <View style={styles.locationContainer}>
+          <View style={postCardStyles.highlightBox}>
             <Text style={styles.locationText}>
               📍 {post.locations[0].name || post.locations[0].address}
             </Text>
@@ -111,8 +112,8 @@ export default function FoodPlaceCard({ post, isWideWeb = false, isMobile = fals
 
         {/* View Button */}
         <Link href={`/detay/${post.id}`} asChild>
-          <Pressable style={styles.viewButton}>
-            <Text style={styles.viewButtonText}>İncele →</Text>
+          <Pressable style={postCardStyles.viewButton}>
+            <Text style={postCardStyles.viewButtonText}>İncele →</Text>
           </Pressable>
         </Link>
       </View>
@@ -121,98 +122,19 @@ export default function FoodPlaceCard({ post, isWideWeb = false, isMobile = fals
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: tokens.colors.background,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: tokens.colors.accentSecondary,
-    shadowColor: tokens.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardWide: {
-    flex: 1,
-    minWidth: '45%',
-  },
-  cardImage: {
-    width: '100%',
-    height: 200,
-    backgroundColor: tokens.colors.backgroundTertiary,
-    position: 'relative',
-  },
-  cardImageWide: {
-    height: 180,
-  },
-  cardImageMobile: {
-    height: 160,
-  },
   image: {
     width: '100%',
     height: '100%',
   },
-  imageCountBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: tokens.colors.shadow + 'B3',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  imageCountText: {
-    color: tokens.colors.background,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  categoryBadge: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    backgroundColor: tokens.colors.accentSecondary,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  categoryBadgeText: {
-    color: tokens.colors.background,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  cardBody: {
-    padding: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: tokens.colors.contrast,
-    marginBottom: 6,
-  },
-  cardDescription: {
-    fontSize: 13,
-    color: tokens.colors.textSecondary,
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  locationContainer: {
-    backgroundColor: tokens.colors.accentLight,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 8,
-    borderRadius: 6,
-  },
   locationText: {
     fontSize: 13,
     fontWeight: '700',
-    color: tokens.colors.accentDark,
+    color: tokens.colors.text,
     marginBottom: 2,
   },
   locationCity: {
     fontSize: 11,
-    color: tokens.colors.accentDark,
+    color: tokens.colors.primary,
   },
   infoRow: {
     flexDirection: 'row',
@@ -230,8 +152,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   priceBadge: {
-    backgroundColor: tokens.colors.locationLight,
-    borderColor: tokens.colors.locationLight,
+    backgroundColor: tokens.colors.surfaceMuted,
+    borderColor: tokens.colors.border,
   },
   infoBadgeLabel: {
     fontSize: 11,
@@ -247,13 +169,13 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: tokens.colors.locationPrimary,
+    color: tokens.colors.primary,
     marginTop: 2,
   },
   ratingContainerProminant: {
     backgroundColor: tokens.colors.accentLight,
-    borderWidth: 2,
-    borderColor: tokens.colors.accentSecondary,
+    borderWidth: 1,
+    borderColor: tokens.colors.accent,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -268,7 +190,7 @@ const styles = StyleSheet.create({
   ratingValueLarge: {
     fontSize: 20,
     fontWeight: '800',
-    color: tokens.colors.accentSecondary,
+    color: tokens.colors.star,
   },
   ratingMax: {
     fontSize: 14,
@@ -307,16 +229,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: tokens.colors.textSecondary,
-  },
-  viewButton: {
-    backgroundColor: tokens.colors.accentSecondary,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    color: tokens.colors.contrastInverse,
-    fontSize: 13,
-    fontWeight: '700',
   },
 })

@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   summaryText: {
     fontSize: 14,
     lineHeight: 20,
-    color: tokens.colors.textPrimary,
+    color: tokens.colors.text,
     marginBottom: 12,
   },
   refreshButton: {

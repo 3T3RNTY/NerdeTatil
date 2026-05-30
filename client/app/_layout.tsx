@@ -42,7 +42,7 @@ function RootLayoutNav() {
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: tokens.colors.backgroundTertiary },
+          contentStyle: { backgroundColor: tokens.colors.pageBackground },
         }}
       >
         {/* Auth screens - always defined */}

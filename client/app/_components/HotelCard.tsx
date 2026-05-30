@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image } from 'r
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 import { tokens } from '@/src/theme/tokens'
+import { postCardStyles } from '@/src/theme/postCard'
 
 interface HotelCardProps {
   post: Post
@@ -13,11 +14,11 @@ interface HotelCardProps {
 export default function HotelCard({ post, isWideWeb = false, isMobile = false }: HotelCardProps) {
   const { width } = useWindowDimensions()
   
-  const cardStyle = StyleSheet.flatten([styles.card, isWideWeb && styles.cardWide])
+  const cardStyle = StyleSheet.flatten([postCardStyles.card, isWideWeb && postCardStyles.cardWide])
   const cardImageStyle = StyleSheet.flatten([
-    styles.cardImage,
-    isWideWeb && styles.cardImageWide,
-    isMobile && styles.cardImageMobile,
+    postCardStyles.cardImage,
+    isWideWeb && postCardStyles.cardImageWide,
+    isMobile && postCardStyles.cardImageMobile,
   ])
 
   const priceRange = post.theme?.name || 'Bilgisiz'
@@ -35,12 +36,12 @@ export default function HotelCard({ post, isWideWeb = false, isMobile = false }:
               resizeMode="cover"
             />
             {post.imageUrls.length > 1 && (
-              <View style={styles.imageCountBadge}>
-                <Text style={styles.imageCountText}>+{post.imageUrls.length - 1}</Text>
+              <View style={postCardStyles.imageCountBadge}>
+                <Text style={postCardStyles.imageCountText}>+{post.imageUrls.length - 1}</Text>
               </View>
             )}
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>🏨 Otel</Text>
+            <View style={postCardStyles.categoryBadge}>
+              <Text style={postCardStyles.categoryBadgeText}>🏨 Otel</Text>
             </View>
           </>
         ) : (
@@ -49,8 +50,8 @@ export default function HotelCard({ post, isWideWeb = false, isMobile = false }:
       </View>
 
       {/* Content */}
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={2}>
+      <View style={postCardStyles.cardBody}>
+        <Text style={postCardStyles.cardTitle} numberOfLines={2}>
           {post.title || post.description.substring(0, 40)}
         </Text>
         <Text style={styles.cardDescription} numberOfLines={2}>
@@ -119,8 +120,8 @@ export default function HotelCard({ post, isWideWeb = false, isMobile = false }:
 
         {/* View Button */}
         <Link href={`/detay/${post.id}`} asChild>
-          <Pressable style={styles.viewButton}>
-            <Text style={styles.viewButtonText}>İncele →</Text>
+          <Pressable style={postCardStyles.viewButton}>
+            <Text style={postCardStyles.viewButtonText}>İncele →</Text>
           </Pressable>
         </Link>
       </View>
@@ -129,75 +130,9 @@ export default function HotelCard({ post, isWideWeb = false, isMobile = false }:
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: tokens.colors.background,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: tokens.colors.infoPrimary,
-    shadowColor: tokens.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardWide: {
-    flex: 1,
-    minWidth: '45%',
-  },
-  cardImage: {
-    width: '100%',
-    height: 200,
-    backgroundColor: tokens.colors.backgroundTertiary,
-    position: 'relative',
-  },
-  cardImageWide: {
-    height: 180,
-  },
-  cardImageMobile: {
-    height: 160,
-  },
   image: {
     width: '100%',
     height: '100%',
-  },
-  imageCountBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  imageCountText: {
-    color: tokens.colors.background,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  categoryBadge: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    backgroundColor: tokens.colors.infoPrimary,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  categoryBadgeText: {
-    color: tokens.colors.background,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  cardBody: {
-    padding: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: tokens.colors.contrast,
-    marginBottom: 6,
   },
   cardDescription: {
     fontSize: 13,
@@ -206,7 +141,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   locationContainer: {
-    backgroundColor: tokens.colors.infoLight,
+    backgroundColor: tokens.colors.primaryLighter,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -313,16 +248,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: tokens.colors.textSecondary,
-  },
-  viewButton: {
-    backgroundColor: tokens.colors.infoPrimary,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    color: tokens.colors.contrastInverse,
-    fontSize: 13,
-    fontWeight: '700',
   },
 })

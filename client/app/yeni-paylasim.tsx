@@ -14,12 +14,12 @@ import Toast from 'react-native-toast-message';
 import { AppHeader } from '@/src/components/AppHeader';
 import { PageShell } from '@/src/components/PageShell';
 import { useAuth } from '@/src/hooks/useAuth';
-import ProgressStepper from './components/ProgressStepper';
-import { PostTypeSelector } from './components/PostTypeSelector';
-import { ThemeSelector } from './components/ThemeSelector';
-import { SubThemeSelector } from './components/SubThemeSelector';
-import { ReviewAndRating } from './components/ReviewAndRating';
-import MultiLocationPicker from './components/MultiLocationPicker';
+import ProgressStepper from './_components/ProgressStepper';
+import { PostTypeSelector } from './_components/PostTypeSelector';
+import { ThemeSelector } from './_components/ThemeSelector';
+import { SubThemeSelector } from './_components/SubThemeSelector';
+import { ReviewAndRating } from './_components/ReviewAndRating';
+import MultiLocationPicker from './_components/MultiLocationPicker';
 import { PostService, LocationData, PostType } from '@/src/api/postService';
 import { tokens } from '@/src/theme/tokens';
 
@@ -373,7 +373,7 @@ export default function YeniPaylasimScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.background,
+    backgroundColor: tokens.colors.pageBackground,
   },
   content: {
     flex: 1,
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: tokens.colors.infoPrimary,
+    backgroundColor: tokens.colors.primary,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: tokens.colors.borderLight,
+    backgroundColor: tokens.colors.primaryLight,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',

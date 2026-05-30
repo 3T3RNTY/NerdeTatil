@@ -1,31 +1,50 @@
 import { Link } from 'expo-router'
-import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image } from 'react-native'
-import { tokens } from '@/src/theme/tokens'
+import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image, Platform } from 'react-native'
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
+import { tokens } from '@/src/theme/tokens'
+import { postCardStyles } from '@/src/theme/postCard'
+import { getThemeColorScheme } from '@/src/utils/themeColors'
 
-interface AttractionCardProps {
+interface TripCardProps {
   post: Post
   isWideWeb?: boolean
   isMobile?: boolean
 }
 
-export default function AttractionCard({ post, isWideWeb = false, isMobile = false }: AttractionCardProps) {
+export default function TripCard({ post, isWideWeb = false, isMobile = false }: TripCardProps) {
   const { width } = useWindowDimensions()
+  const themeColors = getThemeColorScheme(post.theme?.name || 'Seyahat')
   
-  const cardStyle = StyleSheet.flatten([styles.card, isWideWeb && styles.cardWide])
-  const cardImageStyle = StyleSheet.flatten([
-    styles.cardImage,
-    isWideWeb && styles.cardImageWide,
-    isMobile && styles.cardImageMobile,
+  const cardStyle = StyleSheet.flatten([
+    postCardStyles.card,
+    isWideWeb && postCardStyles.cardWide,
+    { borderLeftWidth: 3, borderLeftColor: themeColors.borderColor },
   ])
+  const cardImageStyle = StyleSheet.flatten([
+    postCardStyles.cardImage,
+    isWideWeb && postCardStyles.cardImageWide,
+    isMobile && postCardStyles.cardImageMobile,
+  ])
+  const themeBadgeStyle = StyleSheet.flatten([
+    postCardStyles.categoryBadge,
+    {
+      backgroundColor: themeColors.borderColor,
+      borderColor: themeColors.borderColor,
+    },
+  ])
+  const themeBadgeTextStyle = StyleSheet.flatten([postCardStyles.categoryBadgeText])
 
-  // Get theme badge text - use new format if available
-  const getThemeBadge = () => {
-    if (post.theme?.emoji) {
-      return `${post.theme.emoji} ${post.theme.name}`
+  // Format date range
+  const formatDateRange = () => {
+    if (!post.startDate && !post.endDate) return 'Tarihleri belirtilmedi'
+    if (post.startDate && post.endDate) {
+      const start = new Date(post.startDate).toLocaleDateString('tr-TR')
+      const end = new Date(post.endDate).toLocaleDateString('tr-TR')
+      return `${start} - ${end}`
     }
-    return '🏛️ Sehenlik'
+    if (post.startDate) return `${new Date(post.startDate).toLocaleDateString('tr-TR')} başlangıç`
+    return `${new Date(post.endDate!).toLocaleDateString('tr-TR')} bitiş`
   }
 
   // Calculate average rating from multi-criteria ratings
@@ -45,6 +64,14 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
     return '★'.repeat(filled) + '☆'.repeat(5 - filled)
   }
 
+  // Get theme badge text - use new format if available
+  const getThemeBadge = () => {
+    if (post.theme?.emoji) {
+      return `${post.theme.emoji} ${post.theme.name}`
+    }
+    return '✈️ Seyahat'
+  }
+
   return (
     <View style={cardStyle}>
       {/* Image */}
@@ -57,12 +84,12 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
               resizeMode="cover"
             />
             {post.imageUrls.length > 1 && (
-              <View style={styles.imageCountBadge}>
-                <Text style={styles.imageCountText}>+{post.imageUrls.length - 1}</Text>
+              <View style={postCardStyles.imageCountBadge}>
+                <Text style={postCardStyles.imageCountText}>+{post.imageUrls.length - 1}</Text>
               </View>
             )}
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>{getThemeBadge()}</Text>
+            <View style={themeBadgeStyle}>
+              <Text style={themeBadgeTextStyle}>{getThemeBadge()}</Text>
             </View>
           </>
         ) : (
@@ -71,30 +98,26 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
       </View>
 
       {/* Content */}
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={2}>
+      <View style={postCardStyles.cardBody}>
+        <Text style={postCardStyles.cardTitle} numberOfLines={2}>
           {post.title || post.description.substring(0, 40)}
         </Text>
-        <Text style={styles.cardDescription} numberOfLines={3}>
+        <Text style={postCardStyles.cardDescription} numberOfLines={2}>
           {post.description}
         </Text>
 
-        {/* Theme Info (New Format) */}
-        {post.theme?.name && (
-          <View style={styles.themeContainer}>
-            <Text style={styles.themeLabel}>📂 Tema</Text>
-            <Text style={styles.themeName}>{post.theme.name}</Text>
-          </View>
-        )}
-
-        {/* Location */}
+        {/* Locations */}
         {post.locations && post.locations.length > 0 && (
-          <View style={styles.locationContainer}>
-            <Text style={styles.locationText}>
-              📍 {post.locations[0].name || post.locations[0].address}
-            </Text>
-            {post.locations[0].city && (
-              <Text style={styles.locationCity}>{post.locations[0].city}</Text>
+          <View style={postCardStyles.highlightBox}>
+            <Text style={styles.locationsTitle}>📍 Konumlar ({post.locations.length}):</Text>
+            {post.locations.slice(0, 3).map((loc, idx) => (
+              <Text key={idx} style={styles.locationItem}>
+                • {loc.name || loc.address}
+                {loc.visitDate && ` - ${new Date(loc.visitDate).toLocaleDateString('tr-TR')}`}
+              </Text>
+            ))}
+            {post.locations.length > 3 && (
+              <Text style={styles.moreLocations}>+{post.locations.length - 3} daha...</Text>
             )}
           </View>
         )}
@@ -125,10 +148,17 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
           </View>
         )}
 
+        {/* Old-Format Date Range */}
+        {post.startDate && (
+          <View style={styles.dateRangeContainer}>
+            <Text style={styles.dateRangeLabel}>📅 {formatDateRange()}</Text>
+          </View>
+        )}
+
         {/* Old-Format Rating */}
         {!post.multiCriteriaRatings && post.rating && (
           <View style={styles.ratingBadge}>
-            <Text style={styles.ratingEmoji}>⭐</Text>
+            <Text style={styles.ratingEmoji}>★</Text>
             <Text style={styles.ratingText}>{post.rating}/5</Text>
           </View>
         )}
@@ -150,8 +180,8 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
 
         {/* View Button */}
         <Link href={`/detay/${post.id}`} asChild>
-          <Pressable style={styles.viewButton}>
-            <Text style={styles.viewButtonText}>İncele →</Text>
+          <Pressable style={postCardStyles.viewButton}>
+            <Text style={postCardStyles.viewButtonText}>İncele →</Text>
           </Pressable>
         </Link>
       </View>
@@ -160,125 +190,29 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: 'rgba(22, 163, 74, 0.08)',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#16a34a',
-    borderTopWidth: 2,
-    borderTopColor: '#16a34a',
-    shadowColor: '#16a34a',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardWide: {
-    flex: 1,
-    minWidth: '45%',
-  },
-  cardImage: {
-    width: '100%',
-    height: 200,
-    backgroundColor: tokens.colors.backgroundTertiary,
-    position: 'relative',
-  },
-  cardImageWide: {
-    height: 180,
-  },
-  cardImageMobile: {
-    height: 160,
-  },
   image: {
     width: '100%',
     height: '100%',
   },
-  imageCountBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  imageCountText: {
-    color: tokens.colors.background,
+  locationsTitle: {
     fontSize: 12,
-    fontWeight: '700',
-  },
-  categoryBadge: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: tokens.colors.background,
-  },
-  categoryBadgeText: {
-    color: tokens.colors.background,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  cardBody: {
-    padding: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
     fontWeight: '700',
     color: tokens.colors.contrast,
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  cardDescription: {
-    fontSize: 13,
-    color: tokens.colors.textSecondary,
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  locationContainer: {
-    backgroundColor: tokens.colors.locationLight,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 8,
-    borderRadius: 6,
-  },
-  locationText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: tokens.colors.locationDark,
+  locationItem: {
+    fontSize: 11,
+    color: tokens.colors.text,
     marginBottom: 2,
   },
-  locationCity: {
+  moreLocations: {
     fontSize: 11,
-    color: tokens.colors.locationPrimary,
-  },
-  themeContainer: {
-    backgroundColor: tokens.colors.infoLight,
-    borderLeftWidth: 3,
-    borderLeftColor: tokens.colors.infoPrimary,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginBottom: 8,
-    borderRadius: 4,
-  },
-  themeLabel: {
-    fontSize: 11,
+    color: tokens.colors.primary,
     fontWeight: '600',
-    color: tokens.colors.infoDark,
-    marginBottom: 2,
-  },
-  themeName: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: tokens.colors.infoPrimary,
+    marginTop: 2,
   },
   multiRatingContainer: {
-    backgroundColor: tokens.colors.backgroundSecondary,
+    backgroundColor: tokens.colors.surfaceMuted,
     borderWidth: 1,
     borderColor: tokens.colors.border,
     paddingHorizontal: 10,
@@ -302,33 +236,25 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   ratingStars: {
-    fontSize: 12,
-    color: tokens.colors.accentSecondary,
-    letterSpacing: 1,
+    ...postCardStyles.ratingStars,
   },
-  hoursContainer: {
-    backgroundColor: tokens.colors.accentLight,
+  dateRangeContainer: {
+    backgroundColor: tokens.colors.surfaceMuted,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    marginBottom: 8,
     borderRadius: 6,
+    marginBottom: 8,
   },
-  hoursLabel: {
+  dateRangeLabel: {
     fontSize: 12,
-    fontWeight: '700',
-    color: tokens.colors.accentDark,
-    marginBottom: 2,
-  },
-  hoursValue: {
-    fontSize: 13,
     fontWeight: '600',
-    color: tokens.colors.accentDark,
+    color: tokens.colors.primaryDark,
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: tokens.colors.locationLight,
+    backgroundColor: tokens.colors.accentLight,
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -341,7 +267,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     fontWeight: '700',
-    color: tokens.colors.locationDark,
+    color: tokens.colors.accentDark,
   },
   stats: {
     flexDirection: 'row',
@@ -370,16 +296,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: tokens.colors.textSecondary,
-  },
-  viewButton: {
-    backgroundColor: '#16a34a',
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    color: tokens.colors.contrastInverse,
-    fontSize: 13,
-    fontWeight: '700',
   },
 })

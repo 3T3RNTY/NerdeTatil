@@ -16,10 +16,10 @@ import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 import { PageShell } from '@/src/components/PageShell'
 import { PostService, Post } from '@/src/api/postService'
 import { tokens } from '@/src/theme/tokens'
-import TripCard from './components/TripCard'
-import FoodPlaceCard from './components/FoodPlaceCard'
-import HotelCard from './components/HotelCard'
-import AttractionCard from './components/AttractionCard'
+import TripCard from './_components/TripCard'
+import FoodPlaceCard from './_components/FoodPlaceCard'
+import HotelCard from './_components/HotelCard'
+import AttractionCard from './_components/AttractionCard'
 
 // Helper function to render the correct card component based on category or postType
 const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean) => {
@@ -121,7 +121,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: tokens.colors.secondaryLighter,
+    backgroundColor: tokens.colors.pageBackground,
   },
   centerContent: {
     justifyContent: 'center',
