@@ -135,7 +135,7 @@ class AISummaryService {
     country?: string,
     topPostDescriptions: string[] = []
   ): string {
-    const location = city && country ? `${city}, ${country}` : city || country || 'this location';
+    const location = city && country ? `${city}, ${country}` : city || country || 'bu konum';
     
     const typesList = Object.entries(metrics!.postTypes)
       .map(([type, count]) => `${type} (${count})`)
@@ -145,22 +145,22 @@ class AISummaryService {
       .map((t) => t.name)
       .join(', ');
 
-    const statisticsSentence = `${metrics!.visitCount} ${metrics!.visitCount === 1 ? 'post' : 'posts'} about ${location}: ${metrics!.happinessPercentage}% rated positively (3+/5), featuring ${typesList}, popular themes include ${themesList}.`;
+    const statisticsSentence = `${location} hakkında ${metrics!.visitCount} ${metrics!.visitCount === 1 ? 'paylaşım' : 'paylaşım'}: %${metrics!.happinessPercentage} olumlu değerlendirildi (3+/5), ${typesList} içeriyor, popüler temalar ${themesList}.`;
 
     const descriptionsSentence =
       topPostDescriptions.length > 0
-        ? `Highlights: ${topPostDescriptions.slice(0, 2).join(' | ')}.`
+        ? `Öne Çıkanlar: ${topPostDescriptions.slice(0, 2).join(' | ')}.`
         : '';
 
     const fullPrompt = descriptionsSentence 
       ? `${statisticsSentence} ${descriptionsSentence}`
       : statisticsSentence;
 
-    return `Create a 1-2 sentence casual summary for travelers based on these search results:
+    return `Aşağıdaki arama sonuçlarına dayanarak gezginler için 1-2 cümlelik rahat bir özet oluştur:
 
 ${fullPrompt}
 
-Keep it conversational, engaging, and factual. Example: "5 users visited Istanbul, 80% loved it! Popular: Hotels, Attractions. Highlights: Topkapi Palace | Blue Mosque."`;
+Konuşma tarzında, ilgi çekici ve gerçekçi tut. Örnek: "5 kullanıcı İstanbul'u ziyaret etti, %80'i sevdi! Popüler: Oteller, Anıtlar. Öne Çıkanlar: Topkapı Sarayı | Mavi Cami."`;
   }
 
   /**
@@ -296,11 +296,11 @@ Keep it conversational, engaging, and factual. Example: "5 users visited Istanbu
     city?: string,
     country?: string
   ): string {
-    const location = city && country ? `${city}, ${country}` : city || country || 'this location';
+    const location = city && country ? `${city}, ${country}` : city || country || 'bu konum';
     const topTheme =
-      metrics!.topThemes.length > 0 ? metrics!.topThemes[0].name : 'attractions';
+      metrics!.topThemes.length > 0 ? metrics!.topThemes[0].name : 'anıtlar';
 
-    return `${metrics!.visitCount} ${metrics!.visitCount === 1 ? 'post' : 'posts'} about ${location}. ${metrics!.happinessPercentage}% rated highly. Popular: ${topTheme}.`;
+    return `${location} hakkında ${metrics!.visitCount} ${metrics!.visitCount === 1 ? 'paylaşım' : 'paylaşım'}. %${metrics!.happinessPercentage} yüksek puan verdi. Popüler: ${topTheme}.`;
   }
 
   /**
