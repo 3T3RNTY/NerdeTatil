@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   TextInput,
   ScrollView,
+  Modal,
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
@@ -20,6 +21,14 @@ import TripCard from './components/TripCard'
 import FoodPlaceCard from './components/FoodPlaceCard'
 import HotelCard from './components/HotelCard'
 import AttractionCard from './components/AttractionCard'
+
+type SearchType = 'title' | 'city' | 'country'
+
+const SEARCH_TYPES: { value: SearchType; label: string; emoji: string }[] = [
+  { value: 'title', label: 'Başlık', emoji: '📝' },
+  { value: 'city', label: 'Şehir', emoji: '🏙️' },
+  { value: 'country', label: 'Ülke', emoji: '🌍' },
+]
 
 // Helper function to render the correct card component based on postType
 const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean) => {
@@ -55,9 +64,24 @@ export default function SearchScreen() {
   const isMobile = Platform.OS !== 'web'
   const params = useLocalSearchParams()
 
-  const [searchQuery, setSearchQuery] = useState<string>((params.q as string) || '')
-  const [city, setCity] = useState<string>((params.city as string) || '')
-  const [country, setCountry] = useState<string>((params.country as string) || '')
+  // Determine search type based on which parameter is present
+  let initialSearchType: SearchType = 'title'
+  let initialSearchQuery = ''
+
+  if (params.city) {
+    initialSearchType = 'city'
+    initialSearchQuery = params.city as string
+  } else if (params.country) {
+    initialSearchType = 'country'
+    initialSearchQuery = params.country as string
+  } else if (params.q) {
+    initialSearchType = 'title'
+    initialSearchQuery = params.q as string
+  }
+
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery)
+  const [searchType, setSearchType] = useState<SearchType>(initialSearchType)
+  const [showSearchTypeModal, setShowSearchTypeModal] = useState(false)
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -71,7 +95,7 @@ export default function SearchScreen() {
 
   useEffect(() => {
     // If we have initial search params, perform search
-    if (searchQuery || city || country) {
+    if (searchQuery) {
       performSearch(1)
     } else {
       setLoading(false)
@@ -85,12 +109,20 @@ export default function SearchScreen() {
       setHasSearched(true)
       setSummary(null) // Reset summary when new search starts
 
+      const filters: any = {}
+      
+      // Build filters based on search type
+      if (searchType === 'title') {
+        // Search by title - use query parameter
+      } else if (searchType === 'city') {
+        filters.city = searchQuery
+      } else if (searchType === 'country') {
+        filters.country = searchQuery
+      }
+
       const result = await PostService.searchPosts(
-        searchQuery,
-        {
-          city: city || undefined,
-          country: country || undefined,
-        },
+        searchType === 'title' ? searchQuery : '',
+        filters,
         pageNum,
         10
       )
@@ -98,7 +130,7 @@ export default function SearchScreen() {
       if (pageNum === 1) {
         setPosts(result.posts)
         // Fetch AI summary on first page
-        fetchSummary(searchQuery, city, country)
+        fetchSummary()
       } else {
         setPosts([...posts, ...result.posts])
       }
@@ -112,13 +144,23 @@ export default function SearchScreen() {
     }
   }
 
-  const fetchSummary = async (q: string = '', c?: string, co?: string) => {
+  const fetchSummary = async () => {
     try {
       setLoadingSummary(true)
-      const summaryResult = await PostService.searchSummary(q, {
-        city: c || undefined,
-        country: co || undefined,
-      })
+      const filters: any = {}
+      
+      if (searchType === 'title') {
+        // Summary for title search
+      } else if (searchType === 'city') {
+        filters.city = searchQuery
+      } else if (searchType === 'country') {
+        filters.country = searchQuery
+      }
+
+      const summaryResult = await PostService.searchSummary(
+        searchType === 'title' ? searchQuery : '',
+        filters
+      )
       setSummary(summaryResult)
     } catch (err: any) {
       console.error('Error fetching summary:', err)
@@ -141,15 +183,18 @@ export default function SearchScreen() {
 
   const handleClearFilters = () => {
     setSearchQuery('')
-    setCity('')
-    setCountry('')
     setPosts([])
     setHasSearched(false)
     setSummary(null)
   }
 
   const handleRefreshSummary = async () => {
-    await fetchSummary(searchQuery, city, country)
+    await fetchSummary()
+  }
+
+  const getSearchTypeLabel = () => {
+    const found = SEARCH_TYPES.find(t => t.value === searchType)
+    return found ? `${found.emoji} ${found.label}` : searchType
   }
 
   return (
@@ -166,27 +211,60 @@ export default function SearchScreen() {
 
         {/* Search Filters */}
         <View style={styles.filterContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Başlık veya açıklama ara..."
-            placeholderTextColor={tokens.colors.textTertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Şehir..."
-            placeholderTextColor={tokens.colors.textTertiary}
-            value={city}
-            onChangeText={setCity}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Ülke..."
-            placeholderTextColor={tokens.colors.textTertiary}
-            value={country}
-            onChangeText={setCountry}
-          />
+          {/* Search Input with Type Selector */}
+          <View style={styles.searchRow}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder={`${SEARCH_TYPES.find(t => t.value === searchType)?.emoji || ''} ${getSearchTypeLabel()} ara...`}
+              placeholderTextColor={tokens.colors.textTertiary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            <Pressable 
+              style={styles.searchTypeButton}
+              onPress={() => setShowSearchTypeModal(true)}
+            >
+              <Text style={styles.searchTypeButtonText}>{getSearchTypeLabel()}</Text>
+            </Pressable>
+          </View>
+
+          {/* Search Type Modal */}
+          <Modal
+            visible={showSearchTypeModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowSearchTypeModal(false)}
+          >
+            <Pressable 
+              style={styles.modalOverlay}
+              onPress={() => setShowSearchTypeModal(false)}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Arama Türünü Seçin</Text>
+                {SEARCH_TYPES.map((type) => (
+                  <Pressable
+                    key={type.value}
+                    style={[
+                      styles.modalOption,
+                      searchType === type.value && styles.modalOptionSelected
+                    ]}
+                    onPress={() => {
+                      setSearchType(type.value)
+                      setSearchQuery('')
+                      setShowSearchTypeModal(false)
+                    }}
+                  >
+                    <Text style={[
+                      styles.modalOptionText,
+                      searchType === type.value && styles.modalOptionTextSelected
+                    ]}>
+                      {type.emoji} {type.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Pressable>
+          </Modal>
 
           <View style={styles.buttonRow}>
             <Pressable
@@ -227,7 +305,7 @@ export default function SearchScreen() {
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyEmoji}>😕</Text>
                 <Text style={styles.emptyText}>
-                  {searchQuery || city || country ? 'Sonuç bulunamadı' : 'Arama kriterleri girin'}
+                  {searchQuery ? 'Sonuç bulunamadı' : 'Arama kriterleri girin'}
                 </Text>
               </View>
             ) : (
@@ -316,6 +394,86 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderWidth: 1,
     borderColor: tokens.colors.border,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    backgroundColor: tokens.colors.secondaryLighter,
+    color: tokens.colors.text,
+  },
+  searchTypeButton: {
+    backgroundColor: tokens.colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 100,
+  },
+  searchTypeButtonText: {
+    color: tokens.colors.background,
+    fontWeight: '600',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: tokens.colors.background,
+    borderRadius: 16,
+    padding: 20,
+    minWidth: 250,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: tokens.colors.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: tokens.colors.secondaryLighter,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  modalOptionSelected: {
+    backgroundColor: tokens.colors.primary,
+    borderColor: tokens.colors.primary,
+  },
+  modalOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: tokens.colors.text,
+    textAlign: 'center',
+  },
+  modalOptionTextSelected: {
+    color: tokens.colors.background,
+    fontWeight: '600',
   },
   input: {
     borderWidth: 1,
