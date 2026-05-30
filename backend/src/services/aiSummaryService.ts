@@ -47,7 +47,7 @@ class AISummaryService {
 
   /**
    * Calculate average happiness percentage from posts
-   * Happiness = average of multiCriteriaRatings >= 4
+   * Happiness = average of multiCriteriaRatings >= 3
    */
   private calculateHappinessPercentage(posts: Post[]): number {
     if (posts.length === 0) return 0;
@@ -58,7 +58,7 @@ class AISummaryService {
       const ratings = post.multiCriteriaRatings;
       if (!ratings) {
         // If no multi-criteria ratings, check overall rating
-        if (post.rating && post.rating >= 4) {
+        if (post.rating && post.rating >= 3) {
           happyCount++;
         }
         continue;
@@ -73,7 +73,7 @@ class AISummaryService {
 
       if (values.length > 0) {
         const avg = values.reduce((a, b) => a + b, 0) / values.length;
-        if (avg >= 4) {
+        if (avg >= 3) {
           happyCount++;
         }
       }
@@ -145,18 +145,22 @@ class AISummaryService {
       .map((t) => t.name)
       .join(', ');
 
-    const descriptionsSummary =
+    const statisticsSentence = `${metrics!.visitCount} ${metrics!.visitCount === 1 ? 'post' : 'posts'} about ${location}: ${metrics!.happinessPercentage}% rated positively (3+/5), featuring ${typesList}, popular themes include ${themesList}.`;
+
+    const descriptionsSentence =
       topPostDescriptions.length > 0
-        ? `\nTop posts mention: ${topPostDescriptions.slice(0, 2).join('; ')}`
+        ? `Highlights: ${topPostDescriptions.slice(0, 2).join(' | ')}.`
         : '';
 
-    return `Summarize these travel search results for ${location} in a single sentence:
-- ${metrics!.visitCount} posts/experiences shared
-- ${metrics!.happinessPercentage}% rated it highly (rating 4+/5)
-- Post types: ${typesList}
-- Popular themes: ${themesList}${descriptionsSummary}
+    const fullPrompt = descriptionsSentence 
+      ? `${statisticsSentence} ${descriptionsSentence}`
+      : statisticsSentence;
 
-Keep it under 20 words, conversational, and factual. Example: "5 users visited Istanbul, 80% loved it! Popular spots: Hotels, Attractions."`;
+    return `Create a 1-2 sentence casual summary for travelers based on these search results:
+
+${fullPrompt}
+
+Keep it conversational, engaging, and factual. Example: "5 users visited Istanbul, 80% loved it! Popular: Hotels, Attractions. Highlights: Topkapi Palace | Blue Mosque."`;
   }
 
   /**
