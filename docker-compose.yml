@@ -34,14 +34,30 @@ services:
     environment:
       DB_HOST: postgres
       DATABASE_URL: postgresql://nerdetatil_user:nerdetatil_password@postgres:5432/nerdetatil_db
+      OLLAMA_HOST: http://ollama:11434
     ports:
       - "5000:5000"
     networks:
       - nerdetatil_network
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nerdetatil_ollama
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - nerdetatil_network
+    restart: unless-stopped
+    pull_policy: always
+
 volumes:
   postgres_data:
+  ollama_data:
 
 networks:
   nerdetatil_network:

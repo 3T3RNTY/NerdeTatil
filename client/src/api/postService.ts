@@ -106,6 +106,19 @@ export interface PostsResponse {
   };
 }
 
+export interface SearchSummaryResponse {
+  summary: string;
+  cached: boolean;
+  generatedAt: string;
+  metrics?: {
+    visitCount: number;
+    happinessPercentage: number;
+    postTypes: Record<string, number>;
+    topThemes: Array<{ name: string; count: number }>;
+    avgEngagement: number;
+  };
+}
+
 export class PostService {
   /**
    * Get all themes with sub-themes
@@ -190,6 +203,33 @@ export class PostService {
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { error: 'Failed to search posts' };
+    }
+  }
+
+  /**
+   * Get AI summary for search results
+   */
+  static async searchSummary(
+    query: string = '',
+    filters?: {
+      city?: string;
+      country?: string;
+      themeId?: string;
+    }
+  ): Promise<SearchSummaryResponse> {
+    try {
+      const params: any = {};
+      if (query) params.q = query;
+      if (filters?.city) params.city = filters.city;
+      if (filters?.country) params.country = filters.country;
+      if (filters?.themeId) params.themeId = filters.themeId;
+
+      const response = await apiClient.get<SearchSummaryResponse>('/posts/search/summary', {
+        params,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch summary' };
     }
   }
 

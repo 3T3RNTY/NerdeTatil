@@ -13,8 +13,9 @@ import {
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
-import { PostService, Post } from '@/src/api/postService'
+import { PostService, Post, SearchSummaryResponse } from '@/src/api/postService'
 import { tokens } from '@/src/theme/tokens'
+import { SearchSummary } from './components/SearchSummary'
 import TripCard from './components/TripCard'
 import FoodPlaceCard from './components/FoodPlaceCard'
 import HotelCard from './components/HotelCard'
@@ -63,6 +64,8 @@ export default function SearchScreen() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [hasSearched, setHasSearched] = useState(false)
+  const [summary, setSummary] = useState<SearchSummaryResponse | null>(null)
+  const [loadingSummary, setLoadingSummary] = useState(false)
 
   const listStyle = StyleSheet.flatten([styles.list, isWideWeb && styles.listWide])
 
@@ -80,6 +83,7 @@ export default function SearchScreen() {
       setLoading(true)
       setError(null)
       setHasSearched(true)
+      setSummary(null) // Reset summary when new search starts
 
       const result = await PostService.searchPosts(
         searchQuery,
@@ -93,6 +97,8 @@ export default function SearchScreen() {
 
       if (pageNum === 1) {
         setPosts(result.posts)
+        // Fetch AI summary on first page
+        fetchSummary(searchQuery, city, country)
       } else {
         setPosts([...posts, ...result.posts])
       }
@@ -103,6 +109,22 @@ export default function SearchScreen() {
       console.error('Error searching posts:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchSummary = async (q: string = '', c?: string, co?: string) => {
+    try {
+      setLoadingSummary(true)
+      const summaryResult = await PostService.searchSummary(q, {
+        city: c || undefined,
+        country: co || undefined,
+      })
+      setSummary(summaryResult)
+    } catch (err: any) {
+      console.error('Error fetching summary:', err)
+      // Don't show error for summary, just silently fail
+    } finally {
+      setLoadingSummary(false)
     }
   }
 
@@ -123,6 +145,11 @@ export default function SearchScreen() {
     setCountry('')
     setPosts([])
     setHasSearched(false)
+    setSummary(null)
+  }
+
+  const handleRefreshSummary = async () => {
+    await fetchSummary(searchQuery, city, country)
   }
 
   return (
@@ -205,6 +232,16 @@ export default function SearchScreen() {
               </View>
             ) : (
               <View>
+                {/* AI Summary */}
+                {summary && (
+                  <SearchSummary
+                    summary={summary.summary}
+                    loading={loadingSummary}
+                    cached={summary.cached}
+                    onRefresh={handleRefreshSummary}
+                  />
+                )}
+
                 <Text style={styles.resultsInfo}>
                   {posts.length} sonuç bulundu
                 </Text>

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PostService } from '../services/postService';
 import { ThemeService } from '../services/themeService';
+import aiSummaryService from '../services/aiSummaryService';
 
 export class PostController {
   /**
@@ -63,6 +64,44 @@ export class PostController {
     } catch (error) {
       console.error('Error searching posts:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/posts/search/summary
+   * Generate AI summary for search results
+   */
+  static async searchSummary(req: Request, res: Response) {
+    try {
+      const query = (req.query.q as string) || '';
+      const city = (req.query.city as string) || undefined;
+      const country = (req.query.country as string) || undefined;
+      const themeId = (req.query.themeId as string) || undefined;
+
+      // Get search results (first 20 for better context)
+      const result = await PostService.searchPosts(
+        query,
+        {
+          city,
+          country,
+          themeId,
+        },
+        1,
+        20
+      );
+
+      // Generate AI summary
+      const summary = await aiSummaryService.generateSummary(
+        result.posts,
+        city,
+        country,
+        query
+      );
+
+      res.json(summary);
+    } catch (error) {
+      console.error('Error generating search summary:', error);
+      res.status(500).json({ error: 'Failed to generate summary' });
     }
   }
 
