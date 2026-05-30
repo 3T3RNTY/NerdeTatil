@@ -505,4 +505,27 @@ export class PostController {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  /**
+   * GET /api/posts/user/:userId/commented
+   * Posts the user has commented on
+   */
+  static async getCommentedByUser(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const result = await PostService.getPostsCommentedByUser(
+        userId,
+        page,
+        limit
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching commented posts:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
 }

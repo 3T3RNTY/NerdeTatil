@@ -380,6 +380,103 @@ export class PostService {
   }
 
   /**
+   * Posts the user has commented on (distinct, newest comment first)
+   */
+  static async getPostsCommentedByUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ) {
+    const comments = await prisma.comment.findMany({
+      where: { userId },
+      select: { postId: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const seen = new Set<string>();
+    const orderedPostIds: string[] = [];
+    for (const comment of comments) {
+      if (!seen.has(comment.postId)) {
+        seen.add(comment.postId);
+        orderedPostIds.push(comment.postId);
+      }
+    }
+
+    const total = orderedPostIds.length;
+    const offset = (page - 1) * limit;
+    const pageIds = orderedPostIds.slice(offset, offset + limit);
+
+    if (pageIds.length === 0) {
+      return {
+        posts: [],
+        pagination: { page, limit, total, pages: 0 },
+      };
+    }
+
+    const posts = await prisma.post.findMany({
+      where: { id: { in: pageIds }, isPublic: true },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        postType: true,
+        themeId: true,
+        subThemeIds: true,
+        rating: true,
+        imageUrls: true,
+        locationsData: true,
+        multiCriteriaRatings: true,
+        isPublic: true,
+        allowComments: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profileImageUrl: true,
+          },
+        },
+        theme: {
+          select: {
+            id: true,
+            name: true,
+            emoji: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+    });
+
+    const postMap = new Map(posts.map((p) => [p.id, p]));
+    const orderedPosts = pageIds
+      .map((id) => postMap.get(id))
+      .filter((p): p is NonNullable<typeof p> => !!p);
+
+    return {
+      posts: orderedPosts.map((post) => ({
+        ...post,
+        locations: post.locationsData as unknown as LocationData[],
+        likesCount: post._count.likes,
+        commentsCount: post._count.comments,
+        _count: undefined,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
    * Search posts by query, city, country, theme
    * Supports filtering by title, description, location, and theme
    */

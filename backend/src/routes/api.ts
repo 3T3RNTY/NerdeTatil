@@ -38,8 +38,12 @@ router.post('/auth/verify', authMiddleware, AuthController.verify);
 // ============================================
 
 router.post('/users', validateUserRegistration, UserController.create);
+router.get('/users/:id/followers', optionalAuthMiddleware, UserController.getFollowers);
+router.get('/users/:id/following', optionalAuthMiddleware, UserController.getFollowing);
 router.get('/users/:id', UserController.getById);
-router.get('/users/:id/profile', UserController.getProfile);
+router.get('/users/:id/profile', optionalAuthMiddleware, UserController.getProfile);
+router.post('/users/:id/follow', authMiddleware, UserController.follow);
+router.delete('/users/:id/follow', authMiddleware, UserController.unfollow);
 router.put('/users/:id', authMiddleware, UserController.update);
 
 // ============================================
@@ -70,6 +74,7 @@ router.patch(
 
 router.get('/themes', PostController.getThemes);
 router.get('/posts', optionalAuthMiddleware, PostController.list);
+router.get('/posts/user/:userId/commented', PostController.getCommentedByUser);
 router.get('/posts/user/:userId', PostController.getByUserId);
 router.get('/posts/search/summary', PostController.searchSummary);
 router.get('/posts/search', PostController.search);

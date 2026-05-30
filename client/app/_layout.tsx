@@ -53,6 +53,10 @@ function RootLayoutNav() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="profil" options={{ headerShown: false }} />
         <Stack.Screen name="user-posts" options={{ headerShown: false }} />
+        <Stack.Screen name="user-commented-posts" options={{ headerShown: false }} />
+        <Stack.Screen name="user-followers" options={{ headerShown: false }} />
+        <Stack.Screen name="user-following" options={{ headerShown: false }} />
+        <Stack.Screen name="kullanici/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="yeni-paylasim" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="detay/[id]" options={{ headerShown: false }} />

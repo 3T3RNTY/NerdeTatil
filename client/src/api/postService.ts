@@ -178,6 +178,25 @@ export class PostService {
   }
 
   /**
+   * Posts the user has commented on
+   */
+  static async getPostsCommentedByUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PostsResponse> {
+    try {
+      const response = await apiClient.get<PostsResponse>(
+        `/posts/user/${userId}/commented`,
+        { params: { page, limit } }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch commented posts' };
+    }
+  }
+
+  /**
    * Search posts by query, city, country, and theme
    */
   static async searchPosts(

@@ -132,6 +132,18 @@ export default function ProfileScreen() {
     router.push('/user-posts')
   }
 
+  const handleViewCommentedPosts = () => {
+    router.push('/user-commented-posts')
+  }
+
+  const handleViewFollowers = () => {
+    router.push('/user-followers')
+  }
+
+  const handleViewFollowing = () => {
+    router.push('/user-following')
+  }
+
   const heroStyle = StyleSheet.flatten([styles.hero, isWideWeb && styles.heroWide])
   const sectionsStyle = StyleSheet.flatten([styles.sections, isWideWeb && styles.sectionsWide])
 
@@ -185,18 +197,18 @@ export default function ProfileScreen() {
               <Text style={styles.statNumber}>{profile.postsCount}</Text>
               <Text style={styles.statName}>Paylaşım</Text>
             </Pressable>
-            <View style={styles.statCard}>
+            <Pressable style={styles.statCard} onPress={handleViewCommentedPosts}>
               <Text style={styles.statNumber}>{profile.commentsCount}</Text>
               <Text style={styles.statName}>Yorum</Text>
-            </View>
-            <View style={styles.statCard}>
+            </Pressable>
+            <Pressable style={styles.statCard} onPress={handleViewFollowers}>
               <Text style={styles.statNumber}>{profile.followersCount}</Text>
               <Text style={styles.statName}>Takipçi</Text>
-            </View>
-            <View style={styles.statCard}>
+            </Pressable>
+            <Pressable style={styles.statCard} onPress={handleViewFollowing}>
               <Text style={styles.statNumber}>{profile.followingCount}</Text>
               <Text style={styles.statName}>Takip</Text>
-            </View>
+            </Pressable>
           </View>
 
           <View style={sectionsStyle}>

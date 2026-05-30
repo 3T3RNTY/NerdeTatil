@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useRouter } from 'expo-router'
+import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import {
   Platform,
   Pressable,
@@ -18,9 +18,16 @@ import TripCard from './_components/TripCard'
 import FoodPlaceCard from './_components/FoodPlaceCard'
 import HotelCard from './_components/HotelCard'
 import AttractionCard from './_components/AttractionCard'
+import { renderPostCard } from './_components/renderPostCard'
 
 // Helper function to render the correct card component based on category
-const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean, onEdit: (id: string) => void, onDelete: (id: string) => void) => {
+const renderPostCardWithActions = (
+  post: Post,
+  isWideWeb: boolean,
+  isMobile: boolean,
+  onEdit: (id: string) => void,
+  onDelete: (id: string) => void
+) => {
   const cardComponent = (() => {
     switch (post.category) {
       case 'TRIP':
@@ -64,10 +71,13 @@ const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean, onEdi
 
 export default function UserPostsScreen() {
   const router = useRouter()
+  const params = useLocalSearchParams<{ userId?: string }>()
   const { width } = useWindowDimensions()
   const isWideWeb = Platform.OS === 'web' && width >= 920
   const isMobile = Platform.OS !== 'web'
   const { user } = useAuth()
+  const targetUserId = params.userId || user?.id
+  const isOwnPosts = !params.userId || params.userId === user?.id
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -75,17 +85,17 @@ export default function UserPostsScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
-    if (user) {
+    if (targetUserId) {
       fetchUserPosts()
     }
-  }, [user])
+  }, [targetUserId])
 
   const fetchUserPosts = async () => {
     try {
       setLoading(true)
       setError(null)
-      if (user) {
-        const result = await PostService.getPostsByUserId(user.id, 1, 50)
+      if (targetUserId) {
+        const result = await PostService.getPostsByUserId(targetUserId, 1, 50)
         setPosts(result.posts)
       }
     } catch (err: any) {
@@ -135,9 +145,15 @@ export default function UserPostsScreen() {
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backButtonText}>← Geri</Text>
           </Pressable>
-          <Text style={styles.title}>📝 Paylaşımlarım</Text>
+          <Text style={styles.title}>
+            {isOwnPosts ? '📝 Paylaşımlarım' : '📝 Paylaşımlar'}
+          </Text>
           <Text style={styles.subtitle}>
-            {posts.length === 0 ? 'Henüz paylaşım yapmadınız' : `${posts.length} paylaşımınız var`}
+            {posts.length === 0
+              ? isOwnPosts
+                ? 'Henüz paylaşım yapmadınız'
+                : 'Henüz paylaşım yok'
+              : `${posts.length} paylaşım`}
           </Text>
         </View>
 
@@ -160,7 +176,17 @@ export default function UserPostsScreen() {
               </Link>
             </View>
           ) : (
-            posts.map((post) => renderPostCard(post, isWideWeb, isMobile, handleEditPost, confirmDelete))
+            posts.map((post) =>
+              isOwnPosts
+                ? renderPostCardWithActions(
+                    post,
+                    isWideWeb,
+                    isMobile,
+                    handleEditPost,
+                    confirmDelete
+                  )
+                : renderPostCard(post, isWideWeb, isMobile)
+            )
           )}
         </View>
       </PageShell>

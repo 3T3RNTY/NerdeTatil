@@ -21,6 +21,8 @@ import { tokens } from '@/src/theme/tokens'
 import { useAuth } from '@/src/hooks/useAuth'
 import { getTagColorSchemeByHash } from '@/src/utils/tagColors'
 import { getThemeColorScheme } from '@/src/utils/themeColors'
+import { UserService } from '@/src/api/userService'
+import { FollowButton } from '../_components/FollowButton'
 
 export default function DetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>()
@@ -35,7 +37,10 @@ export default function DetailScreen() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState('')
+  const [authorIsFollowing, setAuthorIsFollowing] = useState(false)
   const themeColors = getThemeColorScheme(post?.theme?.name || 'Seyahat')
+  const showFollowAuthor =
+    !!post?.user?.id && !!user?.id && post.user.id !== user.id
 
   useEffect(() => {
     if (params.id) {
@@ -61,6 +66,16 @@ export default function DetailScreen() {
       console.log('[fetchPost] Loaded post:', { id: data.id, userId: data.userId, commentsCount: data.comments?.length })
       console.log('[fetchPost] Current user:', user)
       setPost(data)
+      if (data.user?.id && user?.id && data.user.id !== user.id) {
+        try {
+          const authorProfile = await UserService.getUserProfile(data.user.id)
+          setAuthorIsFollowing(!!authorProfile.isFollowing)
+        } catch {
+          setAuthorIsFollowing(false)
+        }
+      } else {
+        setAuthorIsFollowing(false)
+      }
     } catch (err: any) {
       console.error('Error fetching post:', err)
       setError(err?.error || 'Paylaşım yüklenemedi')
@@ -476,15 +491,27 @@ export default function DetailScreen() {
 
                   {post.user && (
                     <View style={styles.postMetaRow}>
-                      <View style={styles.postMetaAvatar}>
-                        <Text style={styles.postMetaAvatarText}>
-                          {(post.user.username || '?').charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                      <View style={styles.postMetaContent}>
-                        <Text style={styles.postMetaLabel}>Paylaşan</Text>
-                        <Text style={styles.postMetaValue}>@{post.user.username}</Text>
-                      </View>
+                      <Link href={`/kullanici/${post.user.id}`} asChild>
+                        <Pressable style={StyleSheet.flatten(styles.postMetaProfileTap)}>
+                          <View style={styles.postMetaAvatar}>
+                            <Text style={styles.postMetaAvatarText}>
+                              {(post.user.username || '?').charAt(0).toUpperCase()}
+                            </Text>
+                          </View>
+                          <View style={styles.postMetaContent}>
+                            <Text style={styles.postMetaLabel}>Paylaşan</Text>
+                            <Text style={styles.postMetaValue}>@{post.user.username}</Text>
+                          </View>
+                        </Pressable>
+                      </Link>
+                      {showFollowAuthor ? (
+                        <FollowButton
+                          userId={post.user.id}
+                          initialFollowing={authorIsFollowing}
+                          compact
+                          onChange={setAuthorIsFollowing}
+                        />
+                      ) : null}
                     </View>
                   )}
                 </View>
@@ -924,6 +951,13 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colors.surfaceMuted,
     borderTopWidth: 1,
     borderTopColor: tokens.colors.border,
+  },
+  postMetaProfileTap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.spacing[3],
+    minWidth: 0,
   },
   postMetaAvatar: {
     width: 40,
