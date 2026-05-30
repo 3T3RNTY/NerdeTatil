@@ -1,6 +1,7 @@
 import { PrismaClient, Prisma, PostType } from '@prisma/client';
 import { ThemeService } from './themeService';
 import geocodingService from './geocodingService';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 
 const prisma = new PrismaClient();
 
@@ -461,17 +462,38 @@ export class PostService {
       prisma.post.count({ where }),
     ]);
 
-    // Filter by city and country in memory if specified
+    // Filter by city and country in memory if specified (with fuzzy matching)
     let posts = allPostsForThisPage;
     if (filters?.city || filters?.country) {
-      posts = posts.filter((post) => {
-        const locations = (post.locationsData as unknown as LocationData[]) || [];
-        return locations.some((loc) => {
-          const cityMatch = !filters.city || loc.city?.toLowerCase() === filters.city.toLowerCase();
-          const countryMatch = !filters.country || loc.country?.toLowerCase() === filters.country.toLowerCase();
-          return cityMatch && countryMatch;
-        });
-      });
+      const filteredPosts = await Promise.all(
+        posts.map(async (post) => {
+          const locations = (post.locationsData as unknown as LocationData[]) || [];
+          const hasValidLocation = await Promise.all(
+            locations.map(async (loc) => {
+              let cityMatch = true;
+              let countryMatch = true;
+
+              // Fuzzy match city
+              if (filters.city && loc.city) {
+                const matched = await fuzzyMatch([loc.city], filters.city, 0.35);
+                cityMatch = matched.length > 0;
+              }
+
+              // Fuzzy match country
+              if (filters.country && loc.country) {
+                const matched = await fuzzyMatch([loc.country], filters.country, 0.35);
+                countryMatch = matched.length > 0;
+              }
+
+              return cityMatch && countryMatch;
+            })
+          );
+
+          return hasValidLocation.some(v => v) ? post : null;
+        })
+      );
+      
+      posts = filteredPosts.filter((p) => p !== null) as typeof posts;
     }
 
     return {

@@ -1,10 +1,11 @@
 import { PrismaClient, Prisma } from '@prisma/client';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 
 const prisma = new PrismaClient();
 
 export class LocationService {
   /**
-   * Get all locations
+   * Get all locations with fuzzy matching support
    */
   static async getLocations(filters?: {
     city?: string;
@@ -13,26 +14,38 @@ export class LocationService {
   }) {
     const where: Prisma.LocationWhereInput = {};
 
+    // Apply exact filters for city/country
     if (filters?.city) {
-      where.city = filters.city;
+      where.city = {
+        equals: filters.city,
+        mode: 'insensitive',
+      };
     }
 
     if (filters?.country) {
-      where.country = filters.country;
+      where.country = {
+        equals: filters.country,
+        mode: 'insensitive',
+      };
     }
 
-    if (filters?.search) {
-      where.OR = [
-        { name: { contains: filters.search, mode: 'insensitive' } },
-        { city: { contains: filters.search, mode: 'insensitive' } },
-        { country: { contains: filters.search, mode: 'insensitive' } },
-      ];
-    }
-
-    return prisma.location.findMany({
+    // Get all locations matching the city/country filters
+    let allLocations = await prisma.location.findMany({
       where,
       orderBy: { name: 'asc' },
     });
+
+    // Apply fuzzy matching for search term
+    if (filters?.search && filters.search.trim().length > 0) {
+      const searchNames = allLocations.map(l => l.name);
+      const matchedNames = await fuzzyMatch(searchNames, filters.search, 0.35);
+      
+      allLocations = allLocations.filter(location => 
+        matchedNames.includes(location.name)
+      );
+    }
+
+    return allLocations;
   }
 
   /**
