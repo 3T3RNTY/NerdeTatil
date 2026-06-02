@@ -47,6 +47,22 @@ interface UpdatePostInput {
 }
 
 export class PostService {
+  private static async getLikedPostIdsForViewer(postIds: string[], viewerId?: string) {
+    if (!viewerId || postIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const likes = await prisma.like.findMany({
+      where: {
+        userId: viewerId,
+        postId: { in: postIds },
+      },
+      select: { postId: true },
+    });
+
+    return new Set(likes.map((like) => like.postId));
+  }
+
   /**
    * Enrich location data with missing city and country information
    * Uses reverse geocoding if coordinates are available but city/country is missing
@@ -149,7 +165,7 @@ export class PostService {
   /**
    * Get all public posts with pagination
    */
-  static async getPosts(page: number = 1, limit: number = 10) {
+  static async getPosts(page: number = 1, limit: number = 10, viewerId?: string) {
     const offset = (page - 1) * limit;
 
     const [posts, total] = await Promise.all([
@@ -199,12 +215,18 @@ export class PostService {
       prisma.post.count({ where: { isPublic: true } }),
     ]);
 
+    const likedPostIds = await PostService.getLikedPostIdsForViewer(
+      posts.map((post) => post.id),
+      viewerId
+    );
+
     return {
       posts: posts.map((post) => ({
         ...post,
         locations: post.locationsData as unknown as LocationData[],
         likesCount: post._count.likes,
         commentsCount: post._count.comments,
+        isLikedByCurrentUser: likedPostIds.has(post.id),
         _count: undefined,
       })),
       pagination: {
@@ -219,7 +241,7 @@ export class PostService {
   /**
    * Get post by ID with comments
    */
-  static async getPostById(postId: string) {
+  static async getPostById(postId: string, viewerId?: string) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: {
@@ -301,10 +323,15 @@ export class PostService {
 
     if (!post) return null;
 
+    const isLikedByCurrentUser = viewerId
+      ? await PostService.hasUserLikedPost(postId, viewerId)
+      : false;
+
     return {
       ...post,
       locations: post.locationsData as unknown as LocationData[],
       likesCount: post._count.likes,
+      isLikedByCurrentUser,
       _count: undefined,
     };
   }
@@ -312,7 +339,12 @@ export class PostService {
   /**
    * Get posts by user ID
    */
-  static async getPostsByUserId(userId: string, page: number = 1, limit: number = 10) {
+  static async getPostsByUserId(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+    viewerId?: string
+  ) {
     const offset = (page - 1) * limit;
 
     const [posts, total] = await Promise.all([
@@ -362,12 +394,18 @@ export class PostService {
       prisma.post.count({ where: { userId } }),
     ]);
 
+    const likedPostIds = await PostService.getLikedPostIdsForViewer(
+      posts.map((post) => post.id),
+      viewerId
+    );
+
     return {
       posts: posts.map((post) => ({
         ...post,
         locations: post.locationsData as unknown as LocationData[],
         likesCount: post._count.likes,
         commentsCount: post._count.comments,
+        isLikedByCurrentUser: likedPostIds.has(post.id),
         _count: undefined,
       })),
       pagination: {
@@ -385,7 +423,8 @@ export class PostService {
   static async getPostsCommentedByUser(
     userId: string,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    viewerId?: string
   ) {
     const comments = await prisma.comment.findMany({
       where: { userId },
@@ -459,12 +498,18 @@ export class PostService {
       .map((id) => postMap.get(id))
       .filter((p): p is NonNullable<typeof p> => !!p);
 
+    const likedPostIds = await PostService.getLikedPostIdsForViewer(
+      orderedPosts.map((post) => post.id),
+      viewerId
+    );
+
     return {
       posts: orderedPosts.map((post) => ({
         ...post,
         locations: post.locationsData as unknown as LocationData[],
         likesCount: post._count.likes,
         commentsCount: post._count.comments,
+        isLikedByCurrentUser: likedPostIds.has(post.id),
         _count: undefined,
       })),
       pagination: {
@@ -488,7 +533,8 @@ export class PostService {
       themeId?: string;
     },
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    viewerId?: string
   ) {
     const offset = (page - 1) * limit;
     const searchTerm = query.trim().toLowerCase();
@@ -593,12 +639,18 @@ export class PostService {
       posts = filteredPosts.filter((p) => p !== null) as typeof posts;
     }
 
+    const likedPostIds = await PostService.getLikedPostIdsForViewer(
+      posts.map((post) => post.id),
+      viewerId
+    );
+
     return {
       posts: posts.map((post) => ({
         ...post,
         locations: post.locationsData as unknown as LocationData[],
         likesCount: post._count.likes,
         commentsCount: post._count.comments,
+        isLikedByCurrentUser: likedPostIds.has(post.id),
         _count: undefined,
       })),
       pagination: {
@@ -1218,5 +1270,99 @@ export class PostService {
       },
     });
     return !!like;
+  }
+
+  /**
+   * Posts the user has liked (newest like first)
+   */
+  static async getPostsLikedByUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ) {
+    const offset = (page - 1) * limit;
+
+    const [likes, total] = await Promise.all([
+      prisma.like.findMany({
+        where: { userId },
+        select: { postId: true },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.like.count({ where: { userId } }),
+    ]);
+
+    const pageIds = likes.map((like) => like.postId);
+
+    if (pageIds.length === 0) {
+      return {
+        posts: [],
+        pagination: { page, limit, total, pages: Math.ceil(total / limit) || 0 },
+      };
+    }
+
+    const posts = await prisma.post.findMany({
+      where: { id: { in: pageIds }, isPublic: true },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        postType: true,
+        themeId: true,
+        subThemeIds: true,
+        rating: true,
+        imageUrls: true,
+        locationsData: true,
+        multiCriteriaRatings: true,
+        isPublic: true,
+        allowComments: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profileImageUrl: true,
+          },
+        },
+        theme: {
+          select: {
+            id: true,
+            name: true,
+            emoji: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+    });
+
+    const postMap = new Map(posts.map((post) => [post.id, post]));
+    const orderedPosts = pageIds
+      .map((id) => postMap.get(id))
+      .filter((post): post is NonNullable<typeof post> => !!post);
+
+    return {
+      posts: orderedPosts.map((post) => ({
+        ...post,
+        locations: post.locationsData as unknown as LocationData[],
+        likesCount: post._count.likes,
+        commentsCount: post._count.comments,
+        isLikedByCurrentUser: true,
+        _count: undefined,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
   }
 }

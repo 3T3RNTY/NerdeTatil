@@ -12,8 +12,9 @@ export class PostController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const viewerId = req.user?.userId;
 
-      const result = await PostService.getPosts(page, limit);
+      const result = await PostService.getPosts(page, limit, viewerId);
 
       res.json(result);
     } catch (error) {
@@ -48,6 +49,7 @@ export class PostController {
       const themeId = (req.query.themeId as string) || undefined;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const viewerId = req.user?.userId;
 
       const result = await PostService.searchPosts(
         query,
@@ -57,7 +59,8 @@ export class PostController {
           themeId,
         },
         page,
-        limit
+        limit,
+        viewerId
       );
 
       res.json(result);
@@ -77,6 +80,7 @@ export class PostController {
       const city = (req.query.city as string) || undefined;
       const country = (req.query.country as string) || undefined;
       const themeId = (req.query.themeId as string) || undefined;
+      const viewerId = req.user?.userId;
 
       // Get search results (first 20 for better context)
       const result = await PostService.searchPosts(
@@ -87,7 +91,8 @@ export class PostController {
           themeId,
         },
         1,
-        20
+        20,
+        viewerId
       );
 
       // Generate AI summary
@@ -112,8 +117,9 @@ export class PostController {
   static async getById(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const viewerId = req.user?.userId;
 
-      const post = await PostService.getPostById(id);
+      const post = await PostService.getPostById(id, viewerId);
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
@@ -443,15 +449,13 @@ export class PostController {
   static async like(req: Request, res: Response) {
     try {
       const { id: postId } = req.params;
-      const { userId, reactionType } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ error: 'userId required' });
-      }
+      const authUser = req.user;
+      const { reactionType } = req.body;
+      if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
 
       const like = await PostService.likePost(
         postId,
-        userId,
+        authUser.userId,
         reactionType || 'like'
       );
 
@@ -472,13 +476,10 @@ export class PostController {
   static async unlike(req: Request, res: Response) {
     try {
       const { id: postId } = req.params;
-      const { userId } = req.body;
+      const authUser = req.user;
+      if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
 
-      if (!userId) {
-        return res.status(400).json({ error: 'userId required' });
-      }
-
-      await PostService.unlikePost(postId, userId);
+      await PostService.unlikePost(postId, authUser.userId);
 
       res.json({ message: 'Like removed' });
     } catch (error) {
@@ -496,8 +497,9 @@ export class PostController {
       const { userId } = req.params;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const viewerId = req.user?.userId;
 
-      const result = await PostService.getPostsByUserId(userId, page, limit);
+      const result = await PostService.getPostsByUserId(userId, page, limit, viewerId);
 
       res.json(result);
     } catch (error) {
@@ -515,16 +517,45 @@ export class PostController {
       const { userId } = req.params;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const viewerId = req.user?.userId;
 
       const result = await PostService.getPostsCommentedByUser(
         userId,
         page,
-        limit
+        limit,
+        viewerId
       );
 
       res.json(result);
     } catch (error) {
       console.error('Error fetching commented posts:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/posts/user/:userId/liked
+   * Posts the user has liked (private)
+   */
+  static async getLikedByUser(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const authUser = req.user;
+
+      if (!authUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (authUser.userId !== userId) {
+        return res.status(403).json({ error: 'You cannot view another user liked posts' });
+      }
+
+      const result = await PostService.getPostsLikedByUser(userId, page, limit);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching liked posts:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }

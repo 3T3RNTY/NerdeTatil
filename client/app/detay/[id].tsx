@@ -34,6 +34,7 @@ export default function DetailScreen() {
   const [error, setError] = useState<string | null>(null)
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [likingPost, setLikingPost] = useState(false)
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState('')
@@ -104,6 +105,39 @@ export default function DetailScreen() {
       console.error('Error adding comment:', err)
     } finally {
       setSubmittingComment(false)
+    }
+  }
+
+  const handleToggleLike = async () => {
+    if (!post || !user || likingPost) return
+
+    const currentlyLiked = !!post.isLikedByCurrentUser
+    const nextLiked = !currentlyLiked
+    const nextLikesCount = Math.max(0, post.likesCount + (nextLiked ? 1 : -1))
+
+    setPost({
+      ...post,
+      isLikedByCurrentUser: nextLiked,
+      likesCount: nextLikesCount,
+    })
+
+    setLikingPost(true)
+    try {
+      if (currentlyLiked) {
+        await PostService.unlikePost(post.id)
+      } else {
+        await PostService.likePost(post.id)
+      }
+    } catch (err: any) {
+      // Roll back optimistic update when request fails.
+      setPost({
+        ...post,
+        isLikedByCurrentUser: currentlyLiked,
+        likesCount: post.likesCount,
+      })
+      Alert.alert('Hata', err?.error || 'Beğeni işlemi başarısız oldu')
+    } finally {
+      setLikingPost(false)
     }
   }
 
@@ -748,6 +782,26 @@ export default function DetailScreen() {
                   <Text style={styles.scoreSub}>{post.likesCount} beğeni</Text>
                 </View>
               )}
+              {user && (
+                <Pressable
+                  style={StyleSheet.flatten([
+                    styles.likeButton,
+                    post.isLikedByCurrentUser && styles.likeButtonActive,
+                    likingPost && styles.likeButtonDisabled,
+                  ])}
+                  onPress={handleToggleLike}
+                  disabled={likingPost}
+                >
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.likeButtonText,
+                      post.isLikedByCurrentUser && styles.likeButtonTextActive,
+                    ])}
+                  >
+                    {post.isLikedByCurrentUser ? '❤️ Beğeniyi Kaldır' : '🤍 Beğen'}
+                  </Text>
+                </Pressable>
+              )}
 
               {/* Comments Section - Web Only */}
               {isWideWeb && commentsSection}
@@ -1136,6 +1190,30 @@ const styles = StyleSheet.create({
     color: tokens.colors.accentDark,
     marginTop: 4,
     fontSize: 12,
+  },
+  likeButton: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    backgroundColor: tokens.colors.surface,
+    minHeight: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  likeButtonActive: {
+    borderColor: tokens.colors.error,
+    backgroundColor: tokens.colors.errorLight,
+  },
+  likeButtonDisabled: {
+    opacity: 0.7,
+  },
+  likeButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: tokens.colors.text,
+  },
+  likeButtonTextActive: {
+    color: tokens.colors.error,
   },
   commentRow: {
     borderRadius: 12,

@@ -75,6 +75,7 @@ export interface Post {
   };
   likesCount: number;
   commentsCount: number;
+  isLikedByCurrentUser?: boolean;
   // Optional extended fields used in some UI components
   category?: string;
   startDate?: string;
@@ -369,10 +370,9 @@ export class PostService {
   /**
    * Like a post
    */
-  static async likePost(postId: string, userId: string): Promise<{ message: string }> {
+  static async likePost(postId: string): Promise<{ message: string }> {
     try {
       const response = await apiClient.post(`/posts/${postId}/like`, {
-        userId,
         reactionType: 'like',
       });
       return response.data;
@@ -384,14 +384,31 @@ export class PostService {
   /**
    * Unlike a post
    */
-  static async unlikePost(postId: string, userId: string): Promise<{ message: string }> {
+  static async unlikePost(postId: string): Promise<{ message: string }> {
     try {
-      const response = await apiClient.delete(`/posts/${postId}/like`, {
-        data: { userId },
-      });
+      const response = await apiClient.delete(`/posts/${postId}/like`);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { error: 'Failed to unlike post' };
+    }
+  }
+
+  /**
+   * Posts liked by the authenticated user only
+   */
+  static async getPostsLikedByUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PostsResponse> {
+    try {
+      const response = await apiClient.get<PostsResponse>(
+        `/posts/user/${userId}/liked`,
+        { params: { page, limit } }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch liked posts' };
     }
   }
 }

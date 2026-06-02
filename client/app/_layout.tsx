@@ -54,6 +54,7 @@ function RootLayoutNav() {
         <Stack.Screen name="profil" options={{ headerShown: false }} />
         <Stack.Screen name="user-posts" options={{ headerShown: false }} />
         <Stack.Screen name="user-commented-posts" options={{ headerShown: false }} />
+        <Stack.Screen name="user-liked-posts" options={{ headerShown: false }} />
         <Stack.Screen name="user-followers" options={{ headerShown: false }} />
         <Stack.Screen name="user-following" options={{ headerShown: false }} />
         <Stack.Screen name="kullanici/[id]" options={{ headerShown: false }} />

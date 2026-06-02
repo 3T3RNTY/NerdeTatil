@@ -5,11 +5,9 @@ import { LocationController } from '../controllers/locationController';
 import { AuthController } from '../controllers/authController';
 import imageController from '../controllers/imageController';
 import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth';
-import {
-  validateUserRegistration,
-  validatePostCreation,
-  validateLocationCreation,
-} from '../middleware/validation';
+import {validateLocationCreation} from '../middleware/LocationValidation';
+import { validateUserRegistration } from '../middleware/UserValidation';
+import { validatePostCreation } from '../middleware/PostCreationValidation';
 
 const router = Router();
 
@@ -74,8 +72,9 @@ router.patch(
 
 router.get('/themes', PostController.getThemes);
 router.get('/posts', optionalAuthMiddleware, PostController.list);
-router.get('/posts/user/:userId/commented', PostController.getCommentedByUser);
-router.get('/posts/user/:userId', PostController.getByUserId);
+router.get('/posts/user/:userId/commented', optionalAuthMiddleware, PostController.getCommentedByUser);
+router.get('/posts/user/:userId/liked', authMiddleware, PostController.getLikedByUser);
+router.get('/posts/user/:userId', optionalAuthMiddleware, PostController.getByUserId);
 router.get('/posts/search/summary', PostController.searchSummary);
 router.get('/posts/search', PostController.search);
 router.get('/posts/:id', optionalAuthMiddleware, PostController.getById);

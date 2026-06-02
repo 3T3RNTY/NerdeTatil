@@ -136,6 +136,10 @@ export default function ProfileScreen() {
     router.push('/user-commented-posts')
   }
 
+  const handleViewLikedPosts = () => {
+    router.push('/user-liked-posts')
+  }
+
   const handleViewFollowers = () => {
     router.push('/user-followers')
   }
@@ -143,6 +147,8 @@ export default function ProfileScreen() {
   const handleViewFollowing = () => {
     router.push('/user-following')
   }
+
+
 
   const heroStyle = StyleSheet.flatten([styles.hero, isWideWeb && styles.heroWide])
   const sectionsStyle = StyleSheet.flatten([styles.sections, isWideWeb && styles.sectionsWide])
@@ -208,6 +214,10 @@ export default function ProfileScreen() {
             <Pressable style={styles.statCard} onPress={handleViewFollowing}>
               <Text style={styles.statNumber}>{profile.followingCount}</Text>
               <Text style={styles.statName}>Takip</Text>
+            </Pressable>
+            <Pressable style={styles.statCard} onPress={handleViewLikedPosts}>
+              <Text style={styles.statNumber}>❤️</Text>
+              <Text style={styles.statName}>Beğendiklerim</Text>
             </Pressable>
           </View>
 
