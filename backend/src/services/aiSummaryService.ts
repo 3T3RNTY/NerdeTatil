@@ -177,6 +177,45 @@ Konuşma tarzında, ilgi çekici ve gerçekçi tut. Örnek: "5 kullanıcı İsta
   }
 
   /**
+   * Build prompt for profile summaries (liked posts, own posts)
+   */
+  private buildProfilePrompt(
+    metrics: SearchSummaryResult['metrics'],
+    contextLabel: string,
+    topPostDescriptions: string[] = []
+  ): string {
+    const typesList = Object.entries(metrics!.postTypes)
+      .map(([type, count]) => `${type} (${count})`)
+      .join(', ');
+
+    const themesList = metrics!.topThemes
+      .map((t) => t.name)
+      .join(', ');
+
+    let contextText = 'kullanıcı beğendiği paylaşımlarında';
+    if (contextLabel.includes('own-posts')) {
+      contextText = 'kullanıcı paylaşımlarında';
+    }
+
+    const statisticsSentence = `${contextText} ${metrics!.visitCount} ${metrics!.visitCount === 1 ? 'paylaşım' : 'paylaşım'}: %${metrics!.happinessPercentage} olumlu değerlendirildi (3+/5), ${typesList} içeriyor, popüler temalar ${themesList}.`;
+
+    const descriptionsSentence =
+      topPostDescriptions.length > 0
+        ? `Öne Çıkanlar: ${topPostDescriptions.slice(0, 2).join(' | ')}.`
+        : '';
+
+    const fullPrompt = descriptionsSentence 
+      ? `${statisticsSentence} ${descriptionsSentence}`
+      : statisticsSentence;
+
+    return `Aşağıdaki paylaşımlarına dayanarak kullanıcının ilgi alanları ve zevki hakkında 1-2 cümlelik rahat bir özet oluştur:
+
+${fullPrompt}
+
+Konuşma tarzında, ilgi çekici ve gerçekçi tut. Örnek: "Doğa ve macera severmiş! 3 paylaşımda dağlar, kanyonlar ve ormanlar var. %70'i harika denmiş. Popüler: TRIP, LOCATION. Öne Çıkanlar: Cappadocia Trekking | Swiss Alps."`;
+  }
+
+  /**
    * Call Ollama API to generate summary
    */
   private async callOllama(prompt: string): Promise<string> {
@@ -256,13 +295,14 @@ Konuşma tarzında, ilgi çekici ve gerçekçi tut. Örnek: "5 kullanıcı İsta
       // Aggregate metrics
       const metrics = this.aggregateMetrics(posts, city, country);
 
-      // Extract top post descriptions
+      // Extract top post descriptions with more complete information
       const topPostDescriptions = posts
-        .slice(0, 3)
+        .slice(0, 5)
         .map(
           (p) =>
-            `${p.title}${p.description ? ': ' + p.description.substring(0, 50) : ''}`
-        );
+            `${p.title}${p.description ? ': ' + p.description.substring(0, 150) : ''}`
+        )
+        .filter((desc) => desc.trim().length > 0);
 
       // Build prompt and call Ollama
       const prompt = this.buildPrompt(
@@ -305,7 +345,80 @@ Konuşma tarzında, ilgi çekici ve gerçekçi tut. Örnek: "5 kullanıcı İsta
     posts: Post[],
     contextLabel: string
   ): Promise<SearchSummaryResult> {
-    return this.generateSummary(posts, undefined, undefined, `profile:${contextLabel}`);
+    try {
+      // Check cache first
+      const cacheKey = `profile:${contextLabel}`;
+      const cachedSummary = summaryCache.get(undefined, undefined, cacheKey);
+      if (cachedSummary) {
+        console.log(
+          `[AISummaryService] Using cached profile summary for ${contextLabel}`
+        );
+        return {
+          summary: cachedSummary,
+          cached: true,
+          generatedAt: new Date(),
+        };
+      }
+
+      // If no posts, return empty summary
+      if (posts.length === 0) {
+        const emptySummary = contextLabel.includes('liked')
+          ? 'Henüz beğendiğiniz paylaşım yok'
+          : 'Henüz paylaşım yapmadınız';
+        summaryCache.set(emptySummary, undefined, undefined, cacheKey);
+        return {
+          summary: emptySummary,
+          cached: false,
+          generatedAt: new Date(),
+        };
+      }
+
+      // Aggregate metrics
+      const metrics = this.aggregateMetrics(posts);
+
+      // Extract top post descriptions with more complete information
+      const topPostDescriptions = posts
+        .slice(0, 5)
+        .map(
+          (p) =>
+            `${p.title}${p.description ? ': ' + p.description.substring(0, 150) : ''}`
+        )
+        .filter((desc) => desc.trim().length > 0);
+
+      // Build profile-specific prompt
+      const prompt = this.buildProfilePrompt(
+        metrics,
+        contextLabel,
+        topPostDescriptions
+      );
+
+      let summary: string;
+      try {
+        summary = await this.callOllama(prompt);
+      } catch (ollamaError) {
+        // Fallback: generate summary without AI if Ollama is unavailable
+        console.warn(
+          '[AISummaryService] Ollama unavailable, using fallback summary'
+        );
+        summary = this.generateProfileFallbackSummary(metrics, contextLabel);
+      }
+
+      // Cache the summary
+      summaryCache.set(summary, undefined, undefined, cacheKey);
+
+      return {
+        summary,
+        cached: false,
+        generatedAt: new Date(),
+        metrics,
+      };
+    } catch (error) {
+      console.error(
+        '[AISummaryService] Error generating profile summary:',
+        error instanceof Error ? error.message : String(error)
+      );
+      throw error;
+    }
   }
 
   async generatePersonalizedSuggestions(
@@ -404,6 +517,18 @@ Tema eğilimleri: ${topThemes.join(', ') || 'karışık'}.
       metrics!.topThemes.length > 0 ? metrics!.topThemes[0].name : 'anıtlar';
 
     return `${location} hakkında ${metrics!.visitCount} ${metrics!.visitCount === 1 ? 'paylaşım' : 'paylaşım'}. %${metrics!.happinessPercentage} yüksek puan verdi. Popüler: ${topTheme}.`;
+  }
+
+  private generateProfileFallbackSummary(
+    metrics: SearchSummaryResult['metrics'],
+    contextLabel: string
+  ): string {
+    const isLiked = contextLabel.includes('liked');
+    const contextText = isLiked ? 'beğendiği' : 'paylaştığı';
+    const topTheme =
+      metrics!.topThemes.length > 0 ? metrics!.topThemes[0].name : 'anıtlar';
+
+    return `${metrics!.visitCount} ${metrics!.visitCount === 1 ? 'paylaşım' : 'paylaşım'} ${contextText} konular arasında yer alıyor. %${metrics!.happinessPercentage} yüksek puan verdi. Popüler tema: ${topTheme}.`;
   }
 
   /**
