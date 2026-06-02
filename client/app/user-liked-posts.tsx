@@ -11,10 +11,11 @@ import {
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
-import { PostService, Post } from '@/src/api/postService'
+import { PostService, Post, SearchSummaryResponse } from '@/src/api/postService'
 import { useAuth } from '@/src/hooks/useAuth'
 import { tokens } from '@/src/theme/tokens'
 import { renderPostCard } from './_components/renderPostCard'
+import { SearchSummary } from './_components/SearchSummary'
 
 export default function UserLikedPostsScreen() {
   const router = useRouter()
@@ -25,6 +26,8 @@ export default function UserLikedPostsScreen() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [summary, setSummary] = useState<SearchSummaryResponse | null>(null)
+  const [loadingSummary, setLoadingSummary] = useState(false)
 
   useEffect(() => {
     if (user?.id) {
@@ -41,10 +44,24 @@ export default function UserLikedPostsScreen() {
       setError(null)
       const result = await PostService.getPostsLikedByUser(user.id, 1, 50)
       setPosts(result.posts)
+      await fetchSummary(user.id)
     } catch (err: any) {
       setError(err?.error || 'Beğenilen paylaşımlar yüklenemedi')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchSummary = async (userId: string) => {
+    try {
+      setLoadingSummary(true)
+      const data = await PostService.getLikedPostsSummary(userId)
+      setSummary(data)
+    } catch (err) {
+      console.error('Error fetching liked posts summary:', err)
+      setSummary(null)
+    } finally {
+      setLoadingSummary(false)
     }
   }
 
@@ -81,6 +98,14 @@ export default function UserLikedPostsScreen() {
         )}
 
         <View style={listStyle}>
+          {summary && user?.id && (
+            <SearchSummary
+              summary={summary.summary}
+              loading={loadingSummary}
+              cached={summary.cached}
+              onRefresh={() => fetchSummary(user.id)}
+            />
+          )}
           {posts.length === 0 ? (
             <Text style={styles.emptyText}>Henüz beğenilen paylaşım yok</Text>
           ) : (

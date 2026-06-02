@@ -120,6 +120,18 @@ export interface SearchSummaryResponse {
   };
 }
 
+export interface PersonalizedSuggestion {
+  location: string;
+  reason: string;
+  source: 'liked' | 'own' | 'mixed';
+}
+
+export interface PersonalizedSuggestionsResponse {
+  summary: string;
+  suggestions: PersonalizedSuggestion[];
+  generatedAt: string;
+}
+
 export class PostService {
   /**
    * Get all themes with sub-themes
@@ -250,6 +262,41 @@ export class PostService {
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { error: 'Failed to fetch summary' };
+    }
+  }
+
+  static async getOwnPostsSummary(userId: string): Promise<SearchSummaryResponse> {
+    try {
+      const response = await apiClient.get<SearchSummaryResponse>(
+        `/posts/user/${userId}/posts-summary`
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch own posts summary' };
+    }
+  }
+
+  static async getLikedPostsSummary(userId: string): Promise<SearchSummaryResponse> {
+    try {
+      const response = await apiClient.get<SearchSummaryResponse>(
+        `/posts/user/${userId}/liked-summary`
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch liked posts summary' };
+    }
+  }
+
+  static async getPersonalizedSuggestions(
+    userId: string
+  ): Promise<PersonalizedSuggestionsResponse> {
+    try {
+      const response = await apiClient.get<PersonalizedSuggestionsResponse>(
+        `/posts/user/${userId}/suggestions`
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch personalized suggestions' };
     }
   }
 

@@ -16,6 +16,8 @@ interface Post {
   rating?: number | null;
   locations?: LocationData[];
   multiCriteriaRatings?: any;
+  likesCount?: number;
+  commentsCount?: number;
   theme?: {
     name: string;
     emoji?: string;
@@ -33,6 +35,18 @@ interface SearchSummaryResult {
     topThemes: Array<{ name: string; count: number }>;
     avgEngagement: number;
   };
+}
+
+interface PersonalizedSuggestion {
+  location: string;
+  reason: string;
+  source: 'liked' | 'own' | 'mixed';
+}
+
+interface PersonalizedSuggestionsResult {
+  summary: string;
+  suggestions: PersonalizedSuggestion[];
+  generatedAt: Date;
 }
 
 class AISummaryService {
@@ -107,8 +121,7 @@ class AISummaryService {
         themeCounts[themeName] = (themeCounts[themeName] || 0) + 1;
       }
 
-      // For engagement calculation (placeholder, would need likes/comments from full post object)
-      totalLikesComments += 0;
+      totalLikesComments += (post.likesCount || 0) + (post.commentsCount || 0);
     });
 
     // Get top 3 themes
@@ -122,7 +135,7 @@ class AISummaryService {
       happinessPercentage: this.calculateHappinessPercentage(posts),
       postTypes,
       topThemes,
-      avgEngagement: Math.ceil(totalLikesComments / posts.length),
+      avgEngagement: Math.ceil(totalLikesComments / Math.max(posts.length, 1)),
     };
   }
 
@@ -286,6 +299,96 @@ Konuşma tarzında, ilgi çekici ve gerçekçi tut. Örnek: "5 kullanıcı İsta
       );
       throw error;
     }
+  }
+
+  async generateProfileSummary(
+    posts: Post[],
+    contextLabel: string
+  ): Promise<SearchSummaryResult> {
+    return this.generateSummary(posts, undefined, undefined, `profile:${contextLabel}`);
+  }
+
+  async generatePersonalizedSuggestions(
+    ownPosts: Post[],
+    likedPosts: Post[]
+  ): Promise<PersonalizedSuggestionsResult> {
+    const combined = [...ownPosts, ...likedPosts];
+    if (combined.length === 0) {
+      return {
+        summary: 'Henüz yeterli veri yok. Paylaşım yapıp beğeni verdikçe öneriler burada görünecek.',
+        suggestions: [],
+        generatedAt: new Date(),
+      };
+    }
+
+    const themes = new Map<string, number>();
+    const locations = new Map<string, { count: number; source: 'liked' | 'own' | 'mixed' }>();
+
+    const ingestPosts = (posts: Post[], source: 'liked' | 'own') => {
+      posts.forEach((post) => {
+        if (post.theme?.name) {
+          themes.set(post.theme.name, (themes.get(post.theme.name) || 0) + 1);
+        }
+
+        (post.locations || []).forEach((loc) => {
+          const key = [loc.city, loc.country].filter(Boolean).join(', ') || loc.country || loc.city;
+          if (!key) return;
+          const current = locations.get(key);
+          if (!current) {
+            locations.set(key, { count: 1, source });
+            return;
+          }
+          const mergedSource =
+            current.source === source ? source : 'mixed';
+          locations.set(key, { count: current.count + 1, source: mergedSource });
+        });
+      });
+    };
+
+    ingestPosts(ownPosts, 'own');
+    ingestPosts(likedPosts, 'liked');
+
+    const topThemes = Array.from(themes.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name]) => name);
+
+    const topLocations = Array.from(locations.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 5);
+
+    const suggestions: PersonalizedSuggestion[] = topLocations.map(([location, meta]) => ({
+      location,
+      source: meta.source,
+      reason:
+        meta.source === 'mixed'
+          ? `Hem beğenilerinizde hem paylaşımlarınızda benzer yerler öne çıkıyor (${meta.count} sinyal).`
+          : meta.source === 'liked'
+            ? `Beğendiğiniz içeriklerde bu bölge sık geçiyor (${meta.count} sinyal).`
+            : `Kendi paylaşımlarınız bu bölgeye ilgi gösteriyor (${meta.count} sinyal).`,
+    }));
+
+    const summaryPrompt = `Kullanıcının geçmiş verilerine göre kısa öneri özeti yaz.
+Tema eğilimleri: ${topThemes.join(', ') || 'karışık'}.
+Öne çıkan lokasyonlar: ${topLocations.map(([name]) => name).join(', ') || 'belirsiz'}.
+1-2 cümle, Türkçe, doğal konuşma tonu.`;
+
+    let summary = '';
+    try {
+      summary = await this.callOllama(summaryPrompt);
+    } catch {
+      const topThemeText = topThemes.length ? topThemes.join(', ') : 'farklı temalar';
+      const topLocationText = topLocations.length
+        ? topLocations.slice(0, 3).map(([name]) => name).join(', ')
+        : 'farklı lokasyonlar';
+      summary = `İlgi alanlarınıza göre ${topThemeText} temalarında ve ${topLocationText} tarafında yeni yerler keşfetmeniz yüksek ihtimalle keyifli olur.`;
+    }
+
+    return {
+      summary,
+      suggestions,
+      generatedAt: new Date(),
+    };
   }
 
   /**

@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
-import { PostService, Post } from '@/src/api/postService'
+import { PostService, Post, SearchSummaryResponse } from '@/src/api/postService'
 import { useAuth } from '@/src/hooks/useAuth'
 import { tokens } from '@/src/theme/tokens'
 import TripCard from './_components/TripCard'
@@ -19,6 +19,7 @@ import FoodPlaceCard from './_components/FoodPlaceCard'
 import HotelCard from './_components/HotelCard'
 import AttractionCard from './_components/AttractionCard'
 import { renderPostCard } from './_components/renderPostCard'
+import { SearchSummary } from './_components/SearchSummary'
 
 // Helper function to render the correct card component based on category
 const renderPostCardWithActions = (
@@ -83,6 +84,8 @@ export default function UserPostsScreen() {
   const [error, setError] = useState<string | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [summary, setSummary] = useState<SearchSummaryResponse | null>(null)
+  const [loadingSummary, setLoadingSummary] = useState(false)
 
   useEffect(() => {
     if (targetUserId) {
@@ -97,12 +100,26 @@ export default function UserPostsScreen() {
       if (targetUserId) {
         const result = await PostService.getPostsByUserId(targetUserId, 1, 50)
         setPosts(result.posts)
+        await fetchSummary(targetUserId)
       }
     } catch (err: any) {
       setError(err?.error || 'Paylaşımlar yüklenemedi')
       console.error('Error fetching posts:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchSummary = async (userId: string) => {
+    try {
+      setLoadingSummary(true)
+      const data = await PostService.getOwnPostsSummary(userId)
+      setSummary(data)
+    } catch (err) {
+      console.error('Error fetching own posts summary:', err)
+      setSummary(null)
+    } finally {
+      setLoadingSummary(false)
     }
   }
 
@@ -165,6 +182,16 @@ export default function UserPostsScreen() {
         )}
 
         <View style={listStyle}>
+          {summary && (
+            <SearchSummary
+              summary={summary.summary}
+              loading={loadingSummary}
+              cached={summary.cached}
+              onRefresh={
+                targetUserId ? () => fetchSummary(targetUserId) : undefined
+              }
+            />
+          )}
           {posts.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyEmoji}>📭</Text>

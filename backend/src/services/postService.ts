@@ -26,6 +26,22 @@ interface MultiCriteriaRatings {
   priceValue?: number; // 1-5
 }
 
+interface AIPostSummaryData {
+  id: string;
+  title: string;
+  description: string;
+  postType: PostType;
+  rating: number | null;
+  locations: LocationData[];
+  multiCriteriaRatings: Prisma.JsonValue | null;
+  likesCount: number;
+  commentsCount: number;
+  theme: {
+    name: string;
+    emoji: string;
+  };
+}
+
 interface CreatePostInput {
   userId: string;
   postType: PostType; // TRIP or LOCATION
@@ -1270,6 +1286,118 @@ export class PostService {
       },
     });
     return !!like;
+  }
+
+  private static mapPostForAISummary(post: {
+    id: string;
+    title: string;
+    description: string;
+    postType: PostType;
+    rating: number | null;
+    locationsData: Prisma.JsonValue;
+    multiCriteriaRatings: Prisma.JsonValue | null;
+    theme: {
+      name: string;
+      emoji: string;
+    };
+    _count: {
+      likes: number;
+      comments: number;
+    };
+  }): AIPostSummaryData {
+    return {
+      id: post.id,
+      title: post.title,
+      description: post.description,
+      postType: post.postType,
+      rating: post.rating,
+      locations: post.locationsData as unknown as LocationData[],
+      multiCriteriaRatings: post.multiCriteriaRatings,
+      likesCount: post._count.likes,
+      commentsCount: post._count.comments,
+      theme: post.theme,
+    };
+  }
+
+  static async getOwnPostsForAISummary(userId: string, limit: number = 30) {
+    const posts = await prisma.post.findMany({
+      where: {
+        userId,
+        isPublic: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        postType: true,
+        rating: true,
+        locationsData: true,
+        multiCriteriaRatings: true,
+        theme: {
+          select: {
+            name: true,
+            emoji: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return posts.map(PostService.mapPostForAISummary);
+  }
+
+  static async getLikedPostsForAISummary(userId: string, limit: number = 30) {
+    const likes = await prisma.like.findMany({
+      where: { userId },
+      select: { postId: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    const postIds = likes.map((like) => like.postId);
+    if (postIds.length === 0) return [];
+
+    const posts = await prisma.post.findMany({
+      where: {
+        id: { in: postIds },
+        isPublic: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        postType: true,
+        rating: true,
+        locationsData: true,
+        multiCriteriaRatings: true,
+        theme: {
+          select: {
+            name: true,
+            emoji: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+    });
+
+    const postMap = new Map(posts.map((post) => [post.id, post]));
+    const ordered = postIds
+      .map((postId) => postMap.get(postId))
+      .filter((post): post is NonNullable<typeof post> => !!post);
+
+    return ordered.map(PostService.mapPostForAISummary);
   }
 
   /**

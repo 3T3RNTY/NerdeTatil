@@ -559,4 +559,82 @@ export class PostController {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  /**
+   * GET /api/posts/user/:userId/posts-summary
+   * AI summary for user's own posts
+   */
+  static async getOwnPostsSummary(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const posts = await PostService.getOwnPostsForAISummary(userId, 30);
+      const summary = await aiSummaryService.generateProfileSummary(posts as any, `own-posts:${userId}`);
+      res.json(summary);
+    } catch (error) {
+      console.error('Error generating own posts summary:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/posts/user/:userId/liked-summary
+   * AI summary for user's liked posts (private)
+   */
+  static async getLikedPostsSummary(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const authUser = req.user;
+
+      if (!authUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (authUser.userId !== userId) {
+        return res.status(403).json({ error: 'You cannot view another user liked summary' });
+      }
+
+      const likedPosts = await PostService.getLikedPostsForAISummary(userId, 30);
+      const summary = await aiSummaryService.generateProfileSummary(
+        likedPosts as any,
+        `liked-posts:${userId}`
+      );
+      res.json(summary);
+    } catch (error) {
+      console.error('Error generating liked posts summary:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/posts/user/:userId/suggestions
+   * Personalized suggestions from own + liked posts (private)
+   */
+  static async getSuggestions(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+      const authUser = req.user;
+
+      if (!authUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (authUser.userId !== userId) {
+        return res.status(403).json({ error: 'You cannot view another user suggestions' });
+      }
+
+      const [ownPosts, likedPosts] = await Promise.all([
+        PostService.getOwnPostsForAISummary(userId, 30),
+        PostService.getLikedPostsForAISummary(userId, 30),
+      ]);
+
+      const suggestions = await aiSummaryService.generatePersonalizedSuggestions(
+        ownPosts as any,
+        likedPosts as any
+      );
+      res.json(suggestions);
+    } catch (error) {
+      console.error('Error generating personalized suggestions:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
 }

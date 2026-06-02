@@ -73,6 +73,9 @@ router.patch(
 router.get('/themes', PostController.getThemes);
 router.get('/posts', optionalAuthMiddleware, PostController.list);
 router.get('/posts/user/:userId/commented', optionalAuthMiddleware, PostController.getCommentedByUser);
+router.get('/posts/user/:userId/posts-summary', optionalAuthMiddleware, PostController.getOwnPostsSummary);
+router.get('/posts/user/:userId/liked-summary', authMiddleware, PostController.getLikedPostsSummary);
+router.get('/posts/user/:userId/suggestions', authMiddleware, PostController.getSuggestions);
 router.get('/posts/user/:userId/liked', authMiddleware, PostController.getLikedByUser);
 router.get('/posts/user/:userId', optionalAuthMiddleware, PostController.getByUserId);
 router.get('/posts/search/summary', PostController.searchSummary);

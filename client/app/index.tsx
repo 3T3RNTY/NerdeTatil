@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import {
   Platform,
   Pressable,
@@ -20,6 +20,7 @@ import TripCard from './_components/TripCard'
 import FoodPlaceCard from './_components/FoodPlaceCard'
 import HotelCard from './_components/HotelCard'
 import AttractionCard from './_components/AttractionCard'
+import { useAuth } from '@/src/hooks/useAuth'
 
 // Helper function to render the correct card component based on category or postType
 const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean) => {
@@ -51,9 +52,11 @@ const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean) => {
 }
 
 export default function HomeScreen() {
+  const router = useRouter()
   const { width } = useWindowDimensions()
   const isWideWeb = Platform.OS === 'web' && width >= 920
   const isMobile = Platform.OS !== 'web'
+  const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -114,6 +117,14 @@ export default function HomeScreen() {
           )}
         </View>
       </PageShell>
+      {user && (
+        <Pressable
+          style={styles.aiFab}
+          onPress={() => router.push('/suggestions')}
+        >
+          <Text style={styles.aiFabText}>AI</Text>
+        </Pressable>
+      )}
     </View>
   )
 }
@@ -176,5 +187,28 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 16,
     justifyContent: 'space-between',
+  },
+  aiFab: {
+    position: 'absolute',
+    right: 20,
+    bottom: Platform.OS === 'web' ? 24 : 90,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: tokens.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: tokens.colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 20,
+  },
+  aiFabText: {
+    color: tokens.colors.background,
+    fontWeight: '800',
+    fontSize: 16,
+    letterSpacing: 0.4,
   },
 })
