@@ -2,13 +2,14 @@ import { View, Text, StyleSheet } from 'react-native'
 import { tokens } from '@/src/theme/tokens'
 
 interface ProgressStepperProps {
-  currentStep: 1 | 2 | 3
+  currentStep: 1 | 2 | 3 | 4
 }
 
 const steps = [
-  { number: 1, label: 'Category' },
-  { number: 2, label: 'Details' },
-  { number: 3, label: 'Media' },
+  { number: 1, label: 'Tür' },
+  { number: 2, label: 'Tema' },
+  { number: 3, label: 'Detaylar' },
+  { number: 4, label: 'Yorum & Puan' },
 ]
 
 export default function ProgressStepper({ currentStep }: ProgressStepperProps) {
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: tokens.spacing[4],
     paddingVertical: tokens.spacing[4],
-    backgroundColor: tokens.colors.background,
+    backgroundColor: tokens.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
     borderColor: tokens.colors.primary,
   },
   stepCircleInactive: {
-    backgroundColor: tokens.colors.background,
+    backgroundColor: tokens.colors.surface,
     borderColor: tokens.colors.border,
   },
   stepNumber: {

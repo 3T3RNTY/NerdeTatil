@@ -1,6 +1,26 @@
 import apiClient from './client';
 
-export type PostCategory = 'TRIP' | 'FOOD_PLACE' | 'HOTEL' | 'ATTRACTION';
+export type PostType = 'TRIP' | 'LOCATION';
+
+export interface SubTheme {
+  id: string;
+  name: string;
+}
+
+export interface Theme {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  subThemes: SubTheme[];
+}
+
+export interface MultiCriteriaRatings {
+  optionVariety?: number; // 1-5
+  location?: number; // 1-5
+  accessibility?: number; // 1-5
+  priceValue?: number; // 1-5
+}
 
 export interface LocationData {
   id?: string;
@@ -10,23 +30,11 @@ export interface LocationData {
   country?: string;
   latitude?: number;
   longitude?: number;
-  visitDate?: string; // ISO date string
-}
-
-export interface PostMetadata {
-  // Feature selection and ratings (multi-criteria)
-  features?: string[]; // Selected feature chips (category-dependent)
-  ratings?: {
-    cleanliness?: number; // 1-5
-    service?: number; // 1-5
-    pricePerformance?: number; // 1-5
-  };
-  // Category-specific fields
-  mealType?: string;
-  priceRange?: string;
-  amenities?: string[];
-  hours?: string;
-  [key: string]: any;
+  visitDate?: string | null;
+  // Location-specific ratings (for TRIP posts only)
+  rating?: number; // 1-5 overall rating for this location
+  description?: string; // User's review/description for this location
+  multiCriteriaRatings?: MultiCriteriaRatings; // Per-location multi-criteria ratings
 }
 
 export interface Location {
@@ -44,23 +52,35 @@ export interface PostUser {
 
 export interface Post {
   id: string;
-  title?: string;
+  title: string;
   description: string;
-  category: PostCategory;
+  postType: PostType;
+  themeId: string;
+  subThemeIds: string[];
   rating?: number;
   imageUrls: string[];
   locations: LocationData[];
-  startDate?: string;
-  endDate?: string;
-  metadata?: PostMetadata;
+  multiCriteriaRatings?: MultiCriteriaRatings;
   isPublic: boolean;
   allowComments: boolean;
   createdAt: string;
   updatedAt: string;
   userId: string;
   user: PostUser;
+  theme: {
+    id: string;
+    name: string;
+    emoji: string;
+    subThemes?: SubTheme[];
+  };
   likesCount: number;
   commentsCount: number;
+  isLikedByCurrentUser?: boolean;
+  // Optional extended fields used in some UI components
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+  metadata?: any;
 }
 
 export interface PostDetail extends Post {
@@ -71,7 +91,10 @@ export interface Comment {
   id: string;
   content: string;
   createdAt: string;
+  updatedAt: string;
+  isEdited: boolean;
   user: PostUser;
+  replies?: Comment[];
 }
 
 export interface PostsResponse {
@@ -84,7 +107,44 @@ export interface PostsResponse {
   };
 }
 
+export interface SearchSummaryResponse {
+  summary: string;
+  cached: boolean;
+  generatedAt: string;
+  metrics?: {
+    visitCount: number;
+    happinessPercentage: number;
+    postTypes: Record<string, number>;
+    topThemes: Array<{ name: string; count: number }>;
+    avgEngagement: number;
+  };
+}
+
+export interface PersonalizedSuggestion {
+  location: string;
+  reason: string;
+  source: 'liked' | 'own' | 'mixed';
+}
+
+export interface PersonalizedSuggestionsResponse {
+  summary: string;
+  suggestions: PersonalizedSuggestion[];
+  generatedAt: string;
+}
+
 export class PostService {
+  /**
+   * Get all themes with sub-themes
+   */
+  static async getThemes(): Promise<Theme[]> {
+    try {
+      const response = await apiClient.get<Theme[]>('/themes');
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch themes' };
+    }
+  }
+
   /**
    * Get all posts with pagination
    */
@@ -131,19 +191,129 @@ export class PostService {
   }
 
   /**
-   * Create a new post with multiple locations and category
+   * Posts the user has commented on
+   */
+  static async getPostsCommentedByUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PostsResponse> {
+    try {
+      const response = await apiClient.get<PostsResponse>(
+        `/posts/user/${userId}/commented`,
+        { params: { page, limit } }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch commented posts' };
+    }
+  }
+
+  /**
+   * Search posts by query, city, country, and theme
+   */
+  static async searchPosts(
+    query: string = '',
+    filters?: {
+      city?: string;
+      country?: string;
+      themeId?: string;
+    },
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PostsResponse> {
+    try {
+      const params: any = { page, limit };
+      if (query) params.q = query;
+      if (filters?.city) params.city = filters.city;
+      if (filters?.country) params.country = filters.country;
+      if (filters?.themeId) params.themeId = filters.themeId;
+
+      const response = await apiClient.get<PostsResponse>('/posts/search', {
+        params,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to search posts' };
+    }
+  }
+
+  /**
+   * Get AI summary for search results
+   */
+  static async searchSummary(
+    query: string = '',
+    filters?: {
+      city?: string;
+      country?: string;
+      themeId?: string;
+    }
+  ): Promise<SearchSummaryResponse> {
+    try {
+      const params: any = {};
+      if (query) params.q = query;
+      if (filters?.city) params.city = filters.city;
+      if (filters?.country) params.country = filters.country;
+      if (filters?.themeId) params.themeId = filters.themeId;
+
+      const response = await apiClient.get<SearchSummaryResponse>('/posts/search/summary', {
+        params,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch summary' };
+    }
+  }
+
+  static async getOwnPostsSummary(userId: string): Promise<SearchSummaryResponse> {
+    try {
+      const response = await apiClient.get<SearchSummaryResponse>(
+        `/posts/user/${userId}/posts-summary`
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch own posts summary' };
+    }
+  }
+
+  static async getLikedPostsSummary(userId: string): Promise<SearchSummaryResponse> {
+    try {
+      const response = await apiClient.get<SearchSummaryResponse>(
+        `/posts/user/${userId}/liked-summary`
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch liked posts summary' };
+    }
+  }
+
+  static async getPersonalizedSuggestions(
+    userId: string
+  ): Promise<PersonalizedSuggestionsResponse> {
+    try {
+      const response = await apiClient.get<PersonalizedSuggestionsResponse>(
+        `/posts/user/${userId}/suggestions`
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch personalized suggestions' };
+    }
+  }
+
+  /**
+   * Create a new post with theme system
    */
   static async createPost(data: {
     userId: string;
-    category: PostCategory;
-    title?: string;
+    postType: PostType;
+    themeId: string;
+    subThemeIds: string[];
+    title: string;
     description: string;
     rating?: number;
     imageUrls?: string[];
     locations: LocationData[];
-    startDate?: string;
-    endDate?: string;
-    metadata?: PostMetadata;
+    multiCriteriaRatings?: MultiCriteriaRatings;
   }): Promise<Post> {
     try {
       const response = await apiClient.post<Post>('/posts', data);
@@ -183,11 +353,11 @@ export class PostService {
   }
 
   /**
-   * Add comment to post
+   * Add comment to post (or reply to a comment)
    */
   static async addComment(
     postId: string,
-    data: { userId: string; content: string }
+    data: { userId: string; content: string; parentCommentId?: string }
   ): Promise<Comment> {
     try {
       const response = await apiClient.post<Comment>(
@@ -197,6 +367,36 @@ export class PostService {
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { error: 'Failed to add comment' };
+    }
+  }
+
+  /**
+   * Delete comment
+   */
+  static async deleteComment(postId: string, commentId: string): Promise<void> {
+    try {
+      await apiClient.delete(`/posts/${postId}/comments/${commentId}`);
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to delete comment' };
+    }
+  }
+
+  /**
+   * Edit comment
+   */
+  static async editComment(
+    postId: string,
+    commentId: string,
+    content: string
+  ): Promise<Comment> {
+    try {
+      const response = await apiClient.patch<Comment>(
+        `/posts/${postId}/comments/${commentId}`,
+        { content }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to edit comment' };
     }
   }
 
@@ -217,10 +417,9 @@ export class PostService {
   /**
    * Like a post
    */
-  static async likePost(postId: string, userId: string): Promise<{ message: string }> {
+  static async likePost(postId: string): Promise<{ message: string }> {
     try {
       const response = await apiClient.post(`/posts/${postId}/like`, {
-        userId,
         reactionType: 'like',
       });
       return response.data;
@@ -232,14 +431,31 @@ export class PostService {
   /**
    * Unlike a post
    */
-  static async unlikePost(postId: string, userId: string): Promise<{ message: string }> {
+  static async unlikePost(postId: string): Promise<{ message: string }> {
     try {
-      const response = await apiClient.delete(`/posts/${postId}/like`, {
-        data: { userId },
-      });
+      const response = await apiClient.delete(`/posts/${postId}/like`);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { error: 'Failed to unlike post' };
+    }
+  }
+
+  /**
+   * Posts liked by the authenticated user only
+   */
+  static async getPostsLikedByUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PostsResponse> {
+    try {
+      const response = await apiClient.get<PostsResponse>(
+        `/posts/user/${userId}/liked`,
+        { params: { page, limit } }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { error: 'Failed to fetch liked posts' };
     }
   }
 }

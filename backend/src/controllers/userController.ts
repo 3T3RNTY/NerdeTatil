@@ -69,8 +69,9 @@ export class UserController {
   static async getProfile(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const viewerId = req.user?.userId;
 
-      const profile = await UserService.getUserProfile(id);
+      const profile = await UserService.getUserProfile(id, viewerId);
 
       if (!profile) {
         return res.status(404).json({ error: 'User not found' });
@@ -79,6 +80,80 @@ export class UserController {
       res.json(profile);
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * POST /api/users/:id/follow
+   */
+  static async follow(req: Request, res: Response) {
+    try {
+      const { id: followingId } = req.params;
+      const followerId = req.user!.userId;
+
+      await UserService.followUser(followerId, followingId);
+      res.status(201).json({ following: true });
+    } catch (error: any) {
+      if (error.message === 'Cannot follow yourself') {
+        return res.status(400).json({ error: error.message });
+      }
+      if (error.message === 'User not found') {
+        return res.status(404).json({ error: error.message });
+      }
+      console.error('Error following user:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * DELETE /api/users/:id/follow
+   */
+  static async unfollow(req: Request, res: Response) {
+    try {
+      const { id: followingId } = req.params;
+      const followerId = req.user!.userId;
+
+      await UserService.unfollowUser(followerId, followingId);
+      res.json({ following: false });
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/users/:id/followers
+   */
+  static async getFollowers(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const viewerId = req.user?.userId;
+
+      const result = await UserService.getFollowers(id, page, limit, viewerId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching followers:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/users/:id/following
+   */
+  static async getFollowing(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const viewerId = req.user?.userId;
+
+      const result = await UserService.getFollowing(id, page, limit, viewerId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching following:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }

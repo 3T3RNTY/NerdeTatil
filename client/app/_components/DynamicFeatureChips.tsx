@@ -1,7 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
 import { useState } from 'react'
-import { PostCategory } from '@/src/api/postService'
 import { tokens } from '@/src/theme/tokens'
+import { getTagColorSchemeByHash } from '@/src/utils/tagColors'
+
+// Legacy PostCategory for backward compatibility
+type PostCategory = 'TRIP' | 'FOOD_PLACE' | 'HOTEL' | 'ATTRACTION'
 
 interface DynamicFeatureChipsProps {
   category: PostCategory | null
@@ -60,19 +63,26 @@ export default function DynamicFeatureChips({
       >
         {features.map((feature) => {
           const isSelected = selected.has(feature)
+          const colorScheme = getTagColorSchemeByHash(feature)
+          
           return (
             <Pressable
               key={feature}
               style={[
                 styles.chip,
-                isSelected && styles.chipSelected,
+                {
+                  backgroundColor: isSelected ? colorScheme.backgroundColor : tokens.colors.background,
+                  borderColor: colorScheme.borderColor,
+                }
               ]}
               onPress={() => toggleFeature(feature)}
             >
               <Text
                 style={[
                   styles.chipText,
-                  isSelected && styles.chipTextSelected,
+                  {
+                    color: isSelected ? colorScheme.textColor : tokens.colors.textSecondary,
+                  }
                 ]}
               >
                 {feature}
@@ -128,8 +138,6 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[2],
     borderRadius: tokens.borderRadius.lg,
     borderWidth: 1.5,
-    borderColor: tokens.colors.border,
-    backgroundColor: tokens.colors.background,
     minWidth: 100,
     justifyContent: 'center',
     alignItems: 'center',
@@ -139,16 +147,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  chipSelected: {
-    backgroundColor: tokens.colors.primary,
-    borderColor: tokens.colors.primary,
-  },
   chipText: {
     fontSize: tokens.typography.fontSize.sm,
     fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.textSecondary,
-  },
-  chipTextSelected: {
-    color: tokens.colors.background,
   },
 })

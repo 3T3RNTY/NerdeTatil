@@ -2,24 +2,27 @@ import { Link } from 'expo-router'
 import { Pressable, StyleSheet, Text, useWindowDimensions, View, Image } from 'react-native'
 import { Post } from '@/src/api/postService'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
+import { tokens } from '@/src/theme/tokens'
+import { postCardStyles } from '@/src/theme/postCard'
 
-interface AttractionCardProps {
+interface HotelCardProps {
   post: Post
   isWideWeb?: boolean
   isMobile?: boolean
 }
 
-export default function AttractionCard({ post, isWideWeb = false, isMobile = false }: AttractionCardProps) {
+export default function HotelCard({ post, isWideWeb = false, isMobile = false }: HotelCardProps) {
   const { width } = useWindowDimensions()
   
-  const cardStyle = StyleSheet.flatten([styles.card, isWideWeb && styles.cardWide])
+  const cardStyle = StyleSheet.flatten([postCardStyles.card, isWideWeb && postCardStyles.cardWide])
   const cardImageStyle = StyleSheet.flatten([
-    styles.cardImage,
-    isWideWeb && styles.cardImageWide,
-    isMobile && styles.cardImageMobile,
+    postCardStyles.cardImage,
+    isWideWeb && postCardStyles.cardImageWide,
+    isMobile && postCardStyles.cardImageMobile,
   ])
 
-  const hours = post.metadata?.hours
+  const priceRange = post.theme?.name || 'Bilgisiz'
+  const amenities: string[] = []
 
   return (
     <View style={cardStyle}>
@@ -33,12 +36,12 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
               resizeMode="cover"
             />
             {post.imageUrls.length > 1 && (
-              <View style={styles.imageCountBadge}>
-                <Text style={styles.imageCountText}>+{post.imageUrls.length - 1}</Text>
+              <View style={postCardStyles.imageCountBadge}>
+                <Text style={postCardStyles.imageCountText}>+{post.imageUrls.length - 1}</Text>
               </View>
             )}
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryBadgeText}>🏛️ Sehenlik</Text>
+            <View style={postCardStyles.categoryBadge}>
+              <Text style={postCardStyles.categoryBadgeText}>🏨 Otel</Text>
             </View>
           </>
         ) : (
@@ -47,11 +50,11 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
       </View>
 
       {/* Content */}
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={2}>
+      <View style={postCardStyles.cardBody}>
+        <Text style={postCardStyles.cardTitle} numberOfLines={2}>
           {post.title || post.description.substring(0, 40)}
         </Text>
-        <Text style={styles.cardDescription} numberOfLines={3}>
+        <Text style={styles.cardDescription} numberOfLines={2}>
           {post.description}
         </Text>
 
@@ -67,11 +70,28 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
           </View>
         )}
 
-        {/* Hours */}
-        {hours && (
-          <View style={styles.hoursContainer}>
-            <Text style={styles.hoursLabel}>🕐 Açılış Saatleri</Text>
-            <Text style={styles.hoursValue}>{hours}</Text>
+        {/* Price Range */}
+        <View style={styles.priceContainer}>
+          <Text style={styles.priceLabel}>Fiyat Aralığı</Text>
+          <Text style={styles.priceValue}>{priceRange}</Text>
+        </View>
+
+        {/* Amenities */}
+        {amenities.length > 0 && (
+          <View style={styles.amenitiesContainer}>
+            <Text style={styles.amenitiesTitle}>Olanaklar:</Text>
+            <View style={styles.amenitiesList}>
+              {amenities.slice(0, 3).map((amenity, idx) => (
+                <View key={idx} style={styles.amenityBadge}>
+                  <Text style={styles.amenityText}>{amenity}</Text>
+                </View>
+              ))}
+              {amenities.length > 3 && (
+                <View style={styles.amenityBadge}>
+                  <Text style={styles.amenityText}>+{amenities.length - 3}</Text>
+                </View>
+              )}
+            </View>
           </View>
         )}
 
@@ -100,8 +120,8 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
 
         {/* View Button */}
         <Link href={`/detay/${post.id}`} asChild>
-          <Pressable style={styles.viewButton}>
-            <Text style={styles.viewButtonText}>İncele →</Text>
+          <Pressable style={postCardStyles.viewButton}>
+            <Text style={postCardStyles.viewButtonText}>İncele →</Text>
           </Pressable>
         </Link>
       </View>
@@ -110,84 +130,18 @@ export default function AttractionCard({ post, isWideWeb = false, isMobile = fal
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#ec4899',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardWide: {
-    flex: 1,
-    minWidth: '45%',
-  },
-  cardImage: {
-    width: '100%',
-    height: 200,
-    backgroundColor: '#f3f4f6',
-    position: 'relative',
-  },
-  cardImageWide: {
-    height: 180,
-  },
-  cardImageMobile: {
-    height: 160,
-  },
   image: {
     width: '100%',
     height: '100%',
   },
-  imageCountBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  imageCountText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  categoryBadge: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    backgroundColor: '#ec4899',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  categoryBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  cardBody: {
-    padding: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0f766e',
-    marginBottom: 6,
-  },
   cardDescription: {
     fontSize: 13,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginBottom: 8,
     lineHeight: 18,
   },
   locationContainer: {
-    backgroundColor: '#fce7f3',
+    backgroundColor: tokens.colors.primaryLighter,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
@@ -196,36 +150,63 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#831843',
+    color: tokens.colors.infoDark,
     marginBottom: 2,
   },
   locationCity: {
     fontSize: 11,
-    color: '#be185d',
+    color: tokens.colors.infoDark,
   },
-  hoursContainer: {
-    backgroundColor: '#fef3c7',
+  priceContainer: {
+    backgroundColor: tokens.colors.locationLight,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 8,
     borderRadius: 6,
   },
-  hoursLabel: {
+  priceLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: tokens.colors.locationDark,
+  },
+  priceValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: tokens.colors.locationPrimary,
+    marginTop: 2,
+  },
+  amenitiesContainer: {
+    marginBottom: 8,
+  },
+  amenitiesTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#92400e',
-    marginBottom: 2,
+    color: tokens.colors.infoDark,
+    marginBottom: 6,
   },
-  hoursValue: {
-    fontSize: 13,
+  amenitiesList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  amenityBadge: {
+    backgroundColor: tokens.colors.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  amenityText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: '#b45309',
+    color: tokens.colors.infoDark,
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fce7f3',
+    backgroundColor: tokens.colors.locationLight,
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -238,7 +219,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#831843',
+    color: tokens.colors.locationDark,
   },
   stats: {
     flexDirection: 'row',
@@ -257,7 +238,7 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   userInfo: {
     flex: 1,
@@ -266,17 +247,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
-  },
-  viewButton: {
-    backgroundColor: '#ec4899',
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '700',
+    color: tokens.colors.textSecondary,
   },
 })

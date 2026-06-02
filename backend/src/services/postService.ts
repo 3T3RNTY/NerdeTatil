@@ -1,4 +1,7 @@
-import { PrismaClient, Prisma, PostCategory } from '@prisma/client';
+import { PrismaClient, Prisma, PostType } from '@prisma/client';
+import { ThemeService } from './themeService';
+import geocodingService from './geocodingService';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 
 const prisma = new PrismaClient();
 
@@ -10,67 +13,175 @@ interface LocationData {
   country?: string;
   latitude?: number;
   longitude?: number;
-  visitDate?: string; // ISO date string
+  // Location-specific ratings (for TRIP posts only)
+  rating?: number; // 1-5 overall rating for this location
+  description?: string; // User's review/description for this location
+  multiCriteriaRatings?: MultiCriteriaRatings; // Per-location multi-criteria ratings
+}
+
+interface MultiCriteriaRatings {
+  optionVariety?: number; // 1-5
+  location?: number; // 1-5
+  accessibility?: number; // 1-5
+  priceValue?: number; // 1-5
+}
+
+interface AIPostSummaryData {
+  id: string;
+  title: string;
+  description: string;
+  postType: PostType;
+  rating: number | null;
+  locations: LocationData[];
+  multiCriteriaRatings: Prisma.JsonValue | null;
+  likesCount: number;
+  commentsCount: number;
+  theme: {
+    name: string;
+    emoji: string;
+  };
 }
 
 interface CreatePostInput {
   userId: string;
-  category: PostCategory;
-  title?: string;
+  postType: PostType; // TRIP or LOCATION
+  themeId: string;
+  subThemeIds: string[];
+  title: string;
   description: string;
-  rating?: number;
-  imageUrls?: string[];
   locations: LocationData[];
-  startDate?: string; // ISO date string for TRIP category
-  endDate?: string; // ISO date string for TRIP category
-  metadata?: {
-    // Feature selection and ratings (multi-criteria)
-    features?: string[]; // Selected feature chips (category-dependent)
-    ratings?: {
-      cleanliness?: number; // 1-5
-      service?: number; // 1-5
-      pricePerformance?: number; // 1-5
-    };
-    // Category-specific fields
-    mealType?: string; // For FOOD_PLACE
-    priceRange?: string; // For FOOD_PLACE, HOTEL
-    amenities?: string[]; // For HOTEL
-    hours?: string; // For ATTRACTION
-    // Allow any other custom fields
-    [key: string]: any;
-  };
+  imageUrls?: string[];
+  rating?: number;
+  multiCriteriaRatings?: MultiCriteriaRatings;
 }
 
 interface UpdatePostInput {
-  title?: string;
   description?: string;
   rating?: number;
   imageUrls?: string[];
-  locations?: LocationData[];
-  startDate?: string;
-  endDate?: string;
-  metadata?: {
-    // Feature selection and ratings (multi-criteria)
-    features?: string[]; // Selected feature chips (category-dependent)
-    ratings?: {
-      cleanliness?: number; // 1-5
-      service?: number; // 1-5
-      pricePerformance?: number; // 1-5
-    };
-    // Category-specific fields
-    mealType?: string;
-    priceRange?: string;
-    amenities?: string[];
-    hours?: string;
-    [key: string]: any;
-  };
+  multiCriteriaRatings?: MultiCriteriaRatings;
 }
 
 export class PostService {
+  private static async getLikedPostIdsForViewer(postIds: string[], viewerId?: string) {
+    if (!viewerId || postIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const likes = await prisma.like.findMany({
+      where: {
+        userId: viewerId,
+        postId: { in: postIds },
+      },
+      select: { postId: true },
+    });
+
+    return new Set(likes.map((like) => like.postId));
+  }
+
+  /**
+   * Enrich location data with missing city and country information
+   * Uses reverse geocoding if coordinates are available but city/country is missing
+   * Preserves location-specific ratings and descriptions during enrichment
+   * Ensures BOTH city and country are populated for search to work properly
+   */
+  static async enrichLocations(locations: LocationData[]): Promise<LocationData[]> {
+    try {
+      return await Promise.all(
+        locations.map(async (location) => {
+          // Check if we need enrichment - missing city OR country needs reverse geocoding
+          const hasBothCityAndCountry = location.city?.trim() && location.country?.trim();
+          
+          if (hasBothCityAndCountry) {
+            return location;
+          }
+
+          // If we have coordinates, use reverse geocoding to fill in missing city/country
+          if (location.latitude && location.longitude) {
+            try {
+              console.log(
+                `Enriching location "${location.name}" at [${location.latitude}, ${location.longitude}]`
+              );
+
+              const result = await geocodingService.reverseGeocode(
+                location.latitude,
+                location.longitude
+              );
+
+              const enrichedLocation = {
+                ...location,
+                // Only update city/country if they're missing; use reverse geocoding result
+                city: location.city?.trim() ? location.city : result.city,
+                country: location.country?.trim() ? location.country : result.country,
+                address: location.address || result.address,
+                // Preserve location-specific ratings and description
+                rating: location.rating,
+                description: location.description,
+                multiCriteriaRatings: location.multiCriteriaRatings,
+              };
+
+              console.log(
+                `Enriched location: city=${enrichedLocation.city}, country=${enrichedLocation.country}`
+              );
+
+              return enrichedLocation;
+            } catch (error) {
+              console.warn(
+                `Failed to reverse geocode ${location.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+              );
+              // Return original location if reverse geocoding fails
+              return location;
+            }
+          }
+
+          // If no coordinates available, try forward geocoding the name to get coordinates
+          if (!location.latitude || !location.longitude) {
+            try {
+              console.log(`Attempting forward geocoding for "${location.name}"`);
+              
+              const result = await geocodingService.geocodeAddress(location.name);
+              
+              const enrichedLocation = {
+                ...location,
+                latitude: location.latitude || result.latitude,
+                longitude: location.longitude || result.longitude,
+                address: location.address || result.address,
+                city: location.city?.trim() ? location.city : result.city,
+                country: location.country?.trim() ? location.country : result.country,
+                rating: location.rating,
+                description: location.description,
+                multiCriteriaRatings: location.multiCriteriaRatings,
+              };
+
+              console.log(
+                `Forward geocoded: city=${enrichedLocation.city}, country=${enrichedLocation.country}`
+              );
+
+              return enrichedLocation;
+            } catch (error) {
+              console.warn(
+                `Failed to forward geocode ${location.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+              );
+              return location;
+            }
+          }
+
+          // Return location as-is if no enrichment possible
+          return location;
+        })
+      );
+    } catch (error) {
+      console.error('Error enriching locations:', error);
+      // Return original locations if enrichment fails completely
+      return locations;
+    }
+  }
+
+  /**
   /**
    * Get all public posts with pagination
    */
-  static async getPosts(page: number = 1, limit: number = 10) {
+  static async getPosts(page: number = 1, limit: number = 10, viewerId?: string) {
     const offset = (page - 1) * limit;
 
     const [posts, total] = await Promise.all([
@@ -80,13 +191,13 @@ export class PostService {
           id: true,
           title: true,
           description: true,
-          category: true,
+          postType: true,
+          themeId: true,
+          subThemeIds: true,
           rating: true,
           imageUrls: true,
           locationsData: true,
-          startDate: true,
-          endDate: true,
-          metadata: true,
+          multiCriteriaRatings: true,
           isPublic: true,
           allowComments: true,
           createdAt: true,
@@ -97,6 +208,13 @@ export class PostService {
               id: true,
               username: true,
               profileImageUrl: true,
+            },
+          },
+          theme: {
+            select: {
+              id: true,
+              name: true,
+              emoji: true,
             },
           },
           _count: {
@@ -113,12 +231,18 @@ export class PostService {
       prisma.post.count({ where: { isPublic: true } }),
     ]);
 
+    const likedPostIds = await PostService.getLikedPostIdsForViewer(
+      posts.map((post) => post.id),
+      viewerId
+    );
+
     return {
       posts: posts.map((post) => ({
         ...post,
         locations: post.locationsData as unknown as LocationData[],
         likesCount: post._count.likes,
         commentsCount: post._count.comments,
+        isLikedByCurrentUser: likedPostIds.has(post.id),
         _count: undefined,
       })),
       pagination: {
@@ -133,20 +257,20 @@ export class PostService {
   /**
    * Get post by ID with comments
    */
-  static async getPostById(postId: string) {
+  static async getPostById(postId: string, viewerId?: string) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: {
         id: true,
         title: true,
         description: true,
-        category: true,
+        postType: true,
+        themeId: true,
+        subThemeIds: true,
         rating: true,
         imageUrls: true,
         locationsData: true,
-        startDate: true,
-        endDate: true,
-        metadata: true,
+        multiCriteriaRatings: true,
         isPublic: true,
         allowComments: true,
         createdAt: true,
@@ -159,14 +283,48 @@ export class PostService {
             profileImageUrl: true,
           },
         },
+        theme: {
+          select: {
+            id: true,
+            name: true,
+            emoji: true,
+            subThemes: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         comments: {
-          include: {
+          where: { parentCommentId: null },
+          select: {
+            id: true,
+            postId: true,
+            userId: true,
+            parentCommentId: true,
+            content: true,
+            isEdited: true,
+            createdAt: true,
+            updatedAt: true,
             user: {
               select: {
                 id: true,
                 username: true,
                 profileImageUrl: true,
               },
+            },
+            replies: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    profileImageUrl: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: 'asc' },
             },
           },
           orderBy: { createdAt: 'desc' },
@@ -181,10 +339,15 @@ export class PostService {
 
     if (!post) return null;
 
+    const isLikedByCurrentUser = viewerId
+      ? await PostService.hasUserLikedPost(postId, viewerId)
+      : false;
+
     return {
       ...post,
       locations: post.locationsData as unknown as LocationData[],
       likesCount: post._count.likes,
+      isLikedByCurrentUser,
       _count: undefined,
     };
   }
@@ -192,7 +355,12 @@ export class PostService {
   /**
    * Get posts by user ID
    */
-  static async getPostsByUserId(userId: string, page: number = 1, limit: number = 10) {
+  static async getPostsByUserId(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+    viewerId?: string
+  ) {
     const offset = (page - 1) * limit;
 
     const [posts, total] = await Promise.all([
@@ -202,13 +370,13 @@ export class PostService {
           id: true,
           title: true,
           description: true,
-          category: true,
+          postType: true,
+          themeId: true,
+          subThemeIds: true,
           rating: true,
           imageUrls: true,
           locationsData: true,
-          startDate: true,
-          endDate: true,
-          metadata: true,
+          multiCriteriaRatings: true,
           isPublic: true,
           allowComments: true,
           createdAt: true,
@@ -219,6 +387,13 @@ export class PostService {
               id: true,
               username: true,
               profileImageUrl: true,
+            },
+          },
+          theme: {
+            select: {
+              id: true,
+              name: true,
+              emoji: true,
             },
           },
           _count: {
@@ -235,12 +410,18 @@ export class PostService {
       prisma.post.count({ where: { userId } }),
     ]);
 
+    const likedPostIds = await PostService.getLikedPostIdsForViewer(
+      posts.map((post) => post.id),
+      viewerId
+    );
+
     return {
       posts: posts.map((post) => ({
         ...post,
         locations: post.locationsData as unknown as LocationData[],
         likesCount: post._count.likes,
         commentsCount: post._count.comments,
+        isLikedByCurrentUser: likedPostIds.has(post.id),
         _count: undefined,
       })),
       pagination: {
@@ -253,96 +434,53 @@ export class PostService {
   }
 
   /**
-   * Create a new post with multiple locations and category
+   * Posts the user has commented on (distinct, newest comment first)
    */
-  static async createPost(data: CreatePostInput) {
-    // Validate required fields
-    if (!data.userId || !data.description || !data.locations || data.locations.length === 0) {
-      throw new Error('Missing required fields: userId, description, locations');
-    }
+  static async getPostsCommentedByUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+    viewerId?: string
+  ) {
+    const comments = await prisma.comment.findMany({
+      where: { userId },
+      select: { postId: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    // Validate description
-    if (typeof data.description !== 'string' || data.description.trim().length === 0) {
-      throw new Error('Description must be a non-empty string');
-    }
-
-    // Validate category
-    const validCategories = ['TRIP', 'FOOD_PLACE', 'HOTEL', 'ATTRACTION'];
-    if (!validCategories.includes(data.category)) {
-      throw new Error(`Invalid category. Must be one of: ${validCategories.join(', ')}`);
-    }
-
-    // Validate rating if provided
-    if (data.rating !== undefined && (typeof data.rating !== 'number' || data.rating < 1 || data.rating > 5)) {
-      throw new Error('Rating must be a number between 1 and 5');
-    }
-
-    // Validate imageUrls
-    if (!Array.isArray(data.imageUrls)) {
-      data.imageUrls = [];
-    }
-    if (!data.imageUrls.every((url) => typeof url === 'string')) {
-      throw new Error('All image URLs must be strings');
-    }
-
-    // Validate locations
-    if (!Array.isArray(data.locations)) {
-      throw new Error('Locations must be an array');
-    }
-    for (const loc of data.locations) {
-      if (!loc.name || typeof loc.name !== 'string') {
-        throw new Error('Each location must have a name');
-      }
-      if (loc.latitude !== undefined && typeof loc.latitude !== 'number') {
-        throw new Error('Location latitude must be a number');
-      }
-      if (loc.longitude !== undefined && typeof loc.longitude !== 'number') {
-        throw new Error('Location longitude must be a number');
+    const seen = new Set<string>();
+    const orderedPostIds: string[] = [];
+    for (const comment of comments) {
+      if (!seen.has(comment.postId)) {
+        seen.add(comment.postId);
+        orderedPostIds.push(comment.postId);
       }
     }
 
-    // Validate and parse dates
-    let startDate: Date | null = null;
-    let endDate: Date | null = null;
+    const total = orderedPostIds.length;
+    const offset = (page - 1) * limit;
+    const pageIds = orderedPostIds.slice(offset, offset + limit);
 
-    if (data.startDate) {
-      startDate = new Date(data.startDate);
-      if (isNaN(startDate.getTime())) {
-        throw new Error('Invalid startDate format. Use ISO 8601 format (e.g., 2024-01-15T10:30:00Z)');
-      }
+    if (pageIds.length === 0) {
+      return {
+        posts: [],
+        pagination: { page, limit, total, pages: 0 },
+      };
     }
 
-    if (data.endDate) {
-      endDate = new Date(data.endDate);
-      if (isNaN(endDate.getTime())) {
-        throw new Error('Invalid endDate format. Use ISO 8601 format (e.g., 2024-01-15T10:30:00Z)');
-      }
-    }
-
-    return prisma.post.create({
-      data: {
-        userId: data.userId,
-        category: data.category,
-        title: data.title,
-        description: data.description.trim(),
-        rating: data.rating,
-        imageUrls: data.imageUrls || [],
-        locationsData: data.locations as unknown as Prisma.InputJsonValue,
-        startDate,
-        endDate,
-        metadata: data.metadata || {},
-      },
+    const posts = await prisma.post.findMany({
+      where: { id: { in: pageIds }, isPublic: true },
       select: {
         id: true,
         title: true,
         description: true,
-        category: true,
+        postType: true,
+        themeId: true,
+        subThemeIds: true,
         rating: true,
         imageUrls: true,
         locationsData: true,
-        startDate: true,
-        endDate: true,
-        metadata: true,
+        multiCriteriaRatings: true,
         isPublic: true,
         allowComments: true,
         createdAt: true,
@@ -355,11 +493,450 @@ export class PostService {
             profileImageUrl: true,
           },
         },
+        theme: {
+          select: {
+            id: true,
+            name: true,
+            emoji: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
       },
-    }).then((post) => ({
-      ...post,
-      locations: post.locationsData as unknown as LocationData[],
-    }));
+    });
+
+    const postMap = new Map(posts.map((p) => [p.id, p]));
+    const orderedPosts = pageIds
+      .map((id) => postMap.get(id))
+      .filter((p): p is NonNullable<typeof p> => !!p);
+
+    const likedPostIds = await PostService.getLikedPostIdsForViewer(
+      orderedPosts.map((post) => post.id),
+      viewerId
+    );
+
+    return {
+      posts: orderedPosts.map((post) => ({
+        ...post,
+        locations: post.locationsData as unknown as LocationData[],
+        likesCount: post._count.likes,
+        commentsCount: post._count.comments,
+        isLikedByCurrentUser: likedPostIds.has(post.id),
+        _count: undefined,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Search posts by query, city, country, theme
+   * Supports filtering by title, description, location, and theme
+   */
+  static async searchPosts(
+    query: string = '',
+    filters?: {
+      city?: string;
+      country?: string;
+      themeId?: string;
+    },
+    page: number = 1,
+    limit: number = 10,
+    viewerId?: string
+  ) {
+    const offset = (page - 1) * limit;
+    const searchTerm = query.trim().toLowerCase();
+
+    // Build the where clause
+    const where: Prisma.PostWhereInput = {
+      isPublic: true,
+    };
+
+    // Add search conditions if query is provided
+    if (searchTerm) {
+      where.OR = [
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { description: { contains: searchTerm, mode: 'insensitive' } },
+      ];
+    }
+
+    // Add filter for theme if provided
+    if (filters?.themeId) {
+      where.themeId = filters.themeId;
+    }
+
+    // Get posts first, then filter by location in memory (since locationsData is JSON)
+    const [allPostsForThisPage, total] = await Promise.all([
+      prisma.post.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          postType: true,
+          themeId: true,
+          subThemeIds: true,
+          rating: true,
+          imageUrls: true,
+          locationsData: true,
+          multiCriteriaRatings: true,
+          isPublic: true,
+          allowComments: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              profileImageUrl: true,
+            },
+          },
+          theme: {
+            select: {
+              id: true,
+              name: true,
+              emoji: true,
+            },
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.post.count({ where }),
+    ]);
+
+    // Filter by city and country in memory if specified (with fuzzy matching)
+    let posts = allPostsForThisPage;
+    if (filters?.city || filters?.country) {
+      const filteredPosts = await Promise.all(
+        posts.map(async (post) => {
+          const locations = (post.locationsData as unknown as LocationData[]) || [];
+          const hasValidLocation = await Promise.all(
+            locations.map(async (loc) => {
+              let cityMatch = true;
+              let countryMatch = true;
+
+              // Fuzzy match city
+              if (filters.city && loc.city) {
+                const matched = await fuzzyMatch([loc.city], filters.city, 0.35);
+                cityMatch = matched.length > 0;
+              }
+
+              // Fuzzy match country
+              if (filters.country && loc.country) {
+                const matched = await fuzzyMatch([loc.country], filters.country, 0.35);
+                countryMatch = matched.length > 0;
+              }
+
+              return cityMatch && countryMatch;
+            })
+          );
+
+          return hasValidLocation.some(v => v) ? post : null;
+        })
+      );
+      
+      posts = filteredPosts.filter((p) => p !== null) as typeof posts;
+    }
+
+    const likedPostIds = await PostService.getLikedPostIdsForViewer(
+      posts.map((post) => post.id),
+      viewerId
+    );
+
+    return {
+      posts: posts.map((post) => ({
+        ...post,
+        locations: post.locationsData as unknown as LocationData[],
+        likesCount: post._count.likes,
+        commentsCount: post._count.comments,
+        isLikedByCurrentUser: likedPostIds.has(post.id),
+        _count: undefined,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Create a new post with theme system
+   */
+  static async createPost(data: CreatePostInput) {
+    // Initial validation
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data provided to createPost');
+    }
+
+    // Validate required fields with strict type checking
+    if (!data.userId || typeof data.userId !== 'string') {
+      throw new Error('userId is required and must be a string');
+    }
+
+    if (!data.postType || typeof data.postType !== 'string') {
+      throw new Error('postType is required and must be a string');
+    }
+
+    if (!data.themeId || typeof data.themeId !== 'string') {
+      throw new Error('themeId is required and must be a string');
+    }
+
+    if (!Array.isArray(data.subThemeIds) || data.subThemeIds.length === 0) {
+      throw new Error('subThemeIds is required and must be a non-empty array');
+    }
+
+    // CRITICAL: Ensure title is a non-empty string - triple check
+    if (data.title === null || data.title === undefined) {
+      throw new Error('title cannot be null or undefined');
+    }
+
+    if (typeof data.title !== 'string') {
+      throw new Error(`title must be a string, received ${typeof data.title}`);
+    }
+
+    // Validate title
+    if (typeof data.title !== 'string' || data.title.trim().length < 1) {
+      throw new Error('Title must be at least 1 character long');
+    }
+
+    // CRITICAL: Ensure description is a non-empty string - triple check
+    if (data.description === null || data.description === undefined) {
+      throw new Error('description cannot be null or undefined');
+    }
+
+    if (typeof data.description !== 'string') {
+      throw new Error(`description must be a string, received ${typeof data.description}`);
+    }
+
+    // Validate description
+    if (typeof data.description !== 'string' || data.description.trim().length < 10) {
+      throw new Error('Description must be at least 10 characters long');
+    }
+
+    // Validate postType
+    if (!['TRIP', 'LOCATION'].includes(data.postType)) {
+      throw new Error('postType must be TRIP or LOCATION');
+    }
+
+    // Validate locations based on postType
+    if (!Array.isArray(data.locations) || data.locations.length === 0) {
+      throw new Error('At least one location is required');
+    }
+
+    if (data.postType === 'LOCATION' && data.locations.length !== 1) {
+      throw new Error('LOCATION type requires exactly 1 location');
+    }
+
+    if (data.postType === 'TRIP' && data.locations.length < 2) {
+      throw new Error('TRIP type requires at least 2 locations');
+    }
+
+    // Enrich locations with city and country data if missing
+    const enrichedLocations = await PostService.enrichLocations(data.locations);
+
+    // Validate locations structure
+    for (const loc of enrichedLocations) {
+      if (!loc.name || typeof loc.name !== 'string') {
+        throw new Error('Each location must have a name');
+      }
+      if (loc.latitude !== undefined && typeof loc.latitude !== 'number') {
+        throw new Error('Location latitude must be a number');
+      }
+      if (loc.longitude !== undefined && typeof loc.longitude !== 'number') {
+        throw new Error('Location longitude must be a number');
+      }
+
+      // Validate location-level ratings for TRIP posts
+      if (data.postType === 'TRIP') {
+        if (loc.rating !== undefined) {
+          if (typeof loc.rating !== 'number' || loc.rating < 1 || loc.rating > 5) {
+            throw new Error(`Location "${loc.name}": rating must be a number between 1 and 5`);
+          }
+        }
+
+        if (loc.description !== undefined && loc.description !== null) {
+          if (typeof loc.description !== 'string') {
+            throw new Error(`Location "${loc.name}": description must be a string`);
+          }
+          // Description is optional but can be any length if provided
+        }
+
+        if (loc.multiCriteriaRatings) {
+          const ratings = loc.multiCriteriaRatings;
+          if (ratings.optionVariety && (ratings.optionVariety < 1 || ratings.optionVariety > 5)) {
+            throw new Error(`Location "${loc.name}": optionVariety rating must be between 1 and 5`);
+          }
+          if (ratings.location && (ratings.location < 1 || ratings.location > 5)) {
+            throw new Error(`Location "${loc.name}": location rating must be between 1 and 5`);
+          }
+          if (ratings.accessibility && (ratings.accessibility < 1 || ratings.accessibility > 5)) {
+            throw new Error(`Location "${loc.name}": accessibility rating must be between 1 and 5`);
+          }
+          if (ratings.priceValue && (ratings.priceValue < 1 || ratings.priceValue > 5)) {
+            throw new Error(`Location "${loc.name}": priceValue rating must be between 1 and 5`);
+          }
+        }
+      }
+    }
+
+    // Validate theme
+    const theme = await ThemeService.getThemeById(data.themeId);
+    if (!theme) {
+      throw new Error('Theme not found');
+    }
+
+    // Validate sub-themes
+    if (!Array.isArray(data.subThemeIds) || data.subThemeIds.length === 0) {
+      throw new Error('At least one sub-theme must be selected');
+    }
+
+    await ThemeService.validateSubThemes(data.themeId, data.subThemeIds);
+
+    // Validate imageUrls
+    if (data.imageUrls && !Array.isArray(data.imageUrls)) {
+      throw new Error('imageUrls must be an array');
+    }
+
+    const imageUrls = data.imageUrls || [];
+    if (imageUrls.length < 1 || imageUrls.length > 20) {
+      throw new Error('Must upload between 1 and 20 images');
+    }
+
+    if (!imageUrls.every((url) => typeof url === 'string')) {
+      throw new Error('All image URLs must be strings');
+    }
+
+    // Validate rating if provided
+    if (data.rating !== undefined) {
+      if (typeof data.rating !== 'number' || data.rating < 1 || data.rating > 5) {
+        throw new Error('Rating must be a number between 1 and 5');
+      }
+    }
+
+    // Validate multi-criteria ratings if provided
+    if (data.multiCriteriaRatings) {
+      const ratings = data.multiCriteriaRatings;
+      if (ratings.optionVariety && (ratings.optionVariety < 1 || ratings.optionVariety > 5)) {
+        throw new Error('optionVariety rating must be between 1 and 5');
+      }
+      if (ratings.location && (ratings.location < 1 || ratings.location > 5)) {
+        throw new Error('location rating must be between 1 and 5');
+      }
+      if (ratings.accessibility && (ratings.accessibility < 1 || ratings.accessibility > 5)) {
+        throw new Error('accessibility rating must be between 1 and 5');
+      }
+      if (ratings.priceValue && (ratings.priceValue < 1 || ratings.priceValue > 5)) {
+        throw new Error('priceValue rating must be between 1 and 5');
+      }
+    }
+
+    // Final defensive preparations - ensure no null values will be passed
+    const finalTitle = String(data.title).trim();
+    const finalDescription = String(data.description).trim();
+
+    if (!finalTitle || finalTitle.length === 0) {
+      throw new Error('Final title validation failed: title is empty');
+    }
+
+    if (!finalDescription || finalDescription.length === 0) {
+      throw new Error('Final description validation failed: description is empty');
+    }
+
+    console.log('Creating post with:');
+    console.log('- title:', finalTitle);
+    console.log('- title type:', typeof finalTitle);
+    console.log('- title length:', finalTitle.length);
+    console.log('- title is truthy:', !!finalTitle);
+    console.log('- description length:', finalDescription.length);
+    console.log('- postType:', data.postType);
+    console.log('- imageUrls count:', imageUrls.length);
+    console.log('- userId:', data.userId);
+    console.log('- themeId:', data.themeId);
+
+    // One final check before Prisma - this should never fail if we got here
+    if (!finalTitle || typeof finalTitle !== 'string' || finalTitle.length === 0) {
+      throw new Error(`CRITICAL ERROR: Title validation failed before Prisma insert. Title: "${finalTitle}", Type: ${typeof finalTitle}`);
+    }
+
+    try {
+      return prisma.post.create({
+        data: {
+          userId: data.userId,
+          postType: data.postType,
+          themeId: data.themeId,
+          subThemeIds: data.subThemeIds,
+          title: finalTitle,
+          description: finalDescription,
+          rating: data.rating,
+          imageUrls: imageUrls,
+          locationsData: enrichedLocations as unknown as Prisma.InputJsonValue,
+          multiCriteriaRatings: data.multiCriteriaRatings
+            ? (data.multiCriteriaRatings as unknown as Prisma.InputJsonValue)
+            : undefined,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          postType: true,
+          themeId: true,
+          subThemeIds: true,
+          rating: true,
+          imageUrls: true,
+          locationsData: true,
+          multiCriteriaRatings: true,
+          isPublic: true,
+          allowComments: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              profileImageUrl: true,
+            },
+          },
+          theme: {
+            select: {
+              id: true,
+              name: true,
+              emoji: true,
+            },
+          },
+        },
+      }).then((post) => ({
+        ...post,
+        locations: post.locationsData as unknown as LocationData[],
+      }));
+    } catch (prismaError: any) {
+      console.error('Prisma error details:', {
+        code: prismaError.code,
+        message: prismaError.message,
+        meta: prismaError.meta,
+        clientVersion: prismaError.clientVersion,
+      });
+      throw prismaError;
+    }
   }
 
   /**
@@ -368,29 +945,60 @@ export class PostService {
   static async updatePost(postId: string, data: UpdatePostInput) {
     const updateData: any = {};
 
-    if (data.title !== undefined) updateData.title = data.title;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (data.rating !== undefined) updateData.rating = data.rating;
-    if (data.imageUrls !== undefined) updateData.imageUrls = data.imageUrls;
-    if (data.locations !== undefined) updateData.locationsData = data.locations;
-    if (data.startDate !== undefined) updateData.startDate = data.startDate ? new Date(data.startDate) : null;
-    if (data.endDate !== undefined) updateData.endDate = data.endDate ? new Date(data.endDate) : null;
-    if (data.metadata !== undefined) updateData.metadata = data.metadata;
+    if (data.description !== undefined) {
+      if (data.description.trim().length < 10) {
+        throw new Error('Description must be at least 10 characters long');
+      }
+      updateData.description = data.description.trim();
+    }
+
+    if (data.rating !== undefined) {
+      if (typeof data.rating !== 'number' || data.rating < 1 || data.rating > 5) {
+        throw new Error('Rating must be a number between 1 and 5');
+      }
+      updateData.rating = data.rating;
+    }
+
+    if (data.imageUrls !== undefined) {
+      if (!Array.isArray(data.imageUrls)) {
+        throw new Error('imageUrls must be an array');
+      }
+      if (data.imageUrls.length < 1 || data.imageUrls.length > 20) {
+        throw new Error('Must have between 1 and 20 images');
+      }
+      updateData.imageUrls = data.imageUrls;
+    }
+
+    if (data.multiCriteriaRatings !== undefined) {
+      const ratings = data.multiCriteriaRatings;
+      if (ratings.optionVariety && (ratings.optionVariety < 1 || ratings.optionVariety > 5)) {
+        throw new Error('optionVariety rating must be between 1 and 5');
+      }
+      if (ratings.location && (ratings.location < 1 || ratings.location > 5)) {
+        throw new Error('location rating must be between 1 and 5');
+      }
+      if (ratings.accessibility && (ratings.accessibility < 1 || ratings.accessibility > 5)) {
+        throw new Error('accessibility rating must be between 1 and 5');
+      }
+      if (ratings.priceValue && (ratings.priceValue < 1 || ratings.priceValue > 5)) {
+        throw new Error('priceValue rating must be between 1 and 5');
+      }
+      updateData.multiCriteriaRatings = ratings;
+    }
 
     return prisma.post.update({
       where: { id: postId },
       data: updateData,
       select: {
         id: true,
-        title: true,
         description: true,
-        category: true,
+        postType: true,
+        themeId: true,
+        subThemeIds: true,
         rating: true,
         imageUrls: true,
         locationsData: true,
-        startDate: true,
-        endDate: true,
-        metadata: true,
+        multiCriteriaRatings: true,
         isPublic: true,
         allowComments: true,
         createdAt: true,
@@ -401,6 +1009,13 @@ export class PostService {
             id: true,
             username: true,
             profileImageUrl: true,
+          },
+        },
+        theme: {
+          select: {
+            id: true,
+            name: true,
+            emoji: true,
           },
         },
       },
@@ -422,12 +1037,18 @@ export class PostService {
   /**
    * Add comment to post
    */
-  static async addComment(data: { postId: string; userId: string; content: string }) {
+  static async addComment(data: {
+    postId: string;
+    userId: string;
+    content: string;
+    parentCommentId?: string | null;
+  }) {
     return prisma.comment.create({
       data: {
         postId: data.postId,
         userId: data.userId,
         content: data.content,
+        parentCommentId: data.parentCommentId || null,
       },
       include: {
         user: {
@@ -437,16 +1058,39 @@ export class PostService {
             profileImageUrl: true,
           },
         },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profileImageUrl: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
   }
 
   /**
-   * Get comments for post
+   * Get comments for post with post owner ID
    */
   static async getPostComments(postId: string) {
-    return prisma.comment.findMany({
-      where: { postId },
+    // First get the post to retrieve post owner ID
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { userId: true },
+    });
+
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // Get top-level comments with replies
+    const comments = await prisma.comment.findMany({
+      where: { postId, parentCommentId: null },
       include: {
         user: {
           select: {
@@ -454,15 +1098,141 @@ export class PostService {
             username: true,
             profileImageUrl: true,
           },
+        },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profileImageUrl: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return {
+      comments,
+      postOwnerId: post.userId,
+    };
   }
 
   /**
-   * Like a post
+   * Delete comment (post owner can delete any, users can delete own)
    */
+  static async deleteComment(data: {
+    postId: string;
+    commentId: string;
+    userId: string;
+  }) {
+    // Get the comment
+    const comment = await prisma.comment.findUnique({
+      where: { id: data.commentId },
+      include: {
+        post: {
+          select: { userId: true },
+        },
+      },
+    });
+
+    if (!comment) {
+      console.log('[deleteComment] Comment not found:', data.commentId);
+      throw new Error('Comment not found');
+    }
+
+    // Check authorization: comment author or post owner
+    const isCommentAuthor = comment.userId === data.userId;
+    const isPostOwner = comment.post.userId === data.userId;
+
+    console.log('[deleteComment] Permission check', {
+      commentUserId: comment.userId,
+      userId: data.userId,
+      isCommentAuthor,
+      isPostOwner,
+      allowed: isCommentAuthor || isPostOwner,
+    });
+
+    if (!isCommentAuthor && !isPostOwner) {
+      return null; // Indicate unauthorized
+    }
+
+    // Delete comment (cascade will delete replies)
+    await prisma.comment.delete({
+      where: { id: data.commentId },
+    });
+
+    console.log('[deleteComment] Successfully deleted comment:', data.commentId);
+    return true;
+  }
+
+  /**
+   * Edit comment (users can edit own comments only)
+   */
+  static async editComment(data: {
+    postId: string;
+    commentId: string;
+    content: string;
+    userId: string;
+  }) {
+    // Get the comment to verify ownership
+    const comment = await prisma.comment.findUnique({
+      where: { id: data.commentId },
+    });
+
+    if (!comment) {
+      console.log('[editComment] Comment not found:', data.commentId);
+      throw new Error('Comment not found');
+    }
+
+    // Check authorization: only comment author can edit
+    const isCommentAuthor = comment.userId === data.userId;
+    console.log('[editComment] Permission check', {
+      commentUserId: comment.userId,
+      userId: data.userId,
+      isCommentAuthor,
+    });
+
+    if (!isCommentAuthor) {
+      return null; // Indicate unauthorized
+    }
+
+    // Update comment with isEdited flag
+    const updated = await prisma.comment.update({
+      where: { id: data.commentId },
+      data: {
+        content: data.content,
+        isEdited: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profileImageUrl: true,
+          },
+        },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                profileImageUrl: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    console.log('[editComment] Successfully edited comment:', data.commentId);
+    return updated;
+  }
   static async likePost(postId: string, userId: string, reactionType: string = 'like') {
     return prisma.like.upsert({
       where: {
@@ -516,5 +1286,211 @@ export class PostService {
       },
     });
     return !!like;
+  }
+
+  private static mapPostForAISummary(post: {
+    id: string;
+    title: string;
+    description: string;
+    postType: PostType;
+    rating: number | null;
+    locationsData: Prisma.JsonValue;
+    multiCriteriaRatings: Prisma.JsonValue | null;
+    theme: {
+      name: string;
+      emoji: string;
+    };
+    _count: {
+      likes: number;
+      comments: number;
+    };
+  }): AIPostSummaryData {
+    return {
+      id: post.id,
+      title: post.title,
+      description: post.description,
+      postType: post.postType,
+      rating: post.rating,
+      locations: post.locationsData as unknown as LocationData[],
+      multiCriteriaRatings: post.multiCriteriaRatings,
+      likesCount: post._count.likes,
+      commentsCount: post._count.comments,
+      theme: post.theme,
+    };
+  }
+
+  static async getOwnPostsForAISummary(userId: string, limit: number = 30) {
+    const posts = await prisma.post.findMany({
+      where: {
+        userId,
+        isPublic: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        postType: true,
+        rating: true,
+        locationsData: true,
+        multiCriteriaRatings: true,
+        theme: {
+          select: {
+            name: true,
+            emoji: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return posts.map(PostService.mapPostForAISummary);
+  }
+
+  static async getLikedPostsForAISummary(userId: string, limit: number = 30) {
+    const likes = await prisma.like.findMany({
+      where: { userId },
+      select: { postId: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    const postIds = likes.map((like) => like.postId);
+    if (postIds.length === 0) return [];
+
+    const posts = await prisma.post.findMany({
+      where: {
+        id: { in: postIds },
+        isPublic: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        postType: true,
+        rating: true,
+        locationsData: true,
+        multiCriteriaRatings: true,
+        theme: {
+          select: {
+            name: true,
+            emoji: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+    });
+
+    const postMap = new Map(posts.map((post) => [post.id, post]));
+    const ordered = postIds
+      .map((postId) => postMap.get(postId))
+      .filter((post): post is NonNullable<typeof post> => !!post);
+
+    return ordered.map(PostService.mapPostForAISummary);
+  }
+
+  /**
+   * Posts the user has liked (newest like first)
+   */
+  static async getPostsLikedByUser(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ) {
+    const offset = (page - 1) * limit;
+
+    const [likes, total] = await Promise.all([
+      prisma.like.findMany({
+        where: { userId },
+        select: { postId: true },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.like.count({ where: { userId } }),
+    ]);
+
+    const pageIds = likes.map((like) => like.postId);
+
+    if (pageIds.length === 0) {
+      return {
+        posts: [],
+        pagination: { page, limit, total, pages: Math.ceil(total / limit) || 0 },
+      };
+    }
+
+    const posts = await prisma.post.findMany({
+      where: { id: { in: pageIds }, isPublic: true },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        postType: true,
+        themeId: true,
+        subThemeIds: true,
+        rating: true,
+        imageUrls: true,
+        locationsData: true,
+        multiCriteriaRatings: true,
+        isPublic: true,
+        allowComments: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profileImageUrl: true,
+          },
+        },
+        theme: {
+          select: {
+            id: true,
+            name: true,
+            emoji: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+    });
+
+    const postMap = new Map(posts.map((post) => [post.id, post]));
+    const orderedPosts = pageIds
+      .map((id) => postMap.get(id))
+      .filter((post): post is NonNullable<typeof post> => !!post);
+
+    return {
+      posts: orderedPosts.map((post) => ({
+        ...post,
+        locations: post.locationsData as unknown as LocationData[],
+        likesCount: post._count.likes,
+        commentsCount: post._count.comments,
+        isLikedByCurrentUser: true,
+        _count: undefined,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
   }
 }

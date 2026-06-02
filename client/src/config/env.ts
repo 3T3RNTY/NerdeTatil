@@ -16,11 +16,11 @@ const getApiBaseUrl = (): string => {
 
   // For different platforms, use appropriate API URL
   if (Platform.OS === 'android') {
-    // For physical device: use environment variable EXPO_PUBLIC_API_BASE_URL
+    // For physical device: set EXPO_PUBLIC_API_BASE_URL environment variable
     // For emulator: use 10.0.2.2 to reach the host machine
     return 'http://10.0.2.2:5000/api';
   } else if (Platform.OS === 'ios') {
-    // For physical device: use environment variable EXPO_PUBLIC_API_BASE_URL
+    // For physical device: set EXPO_PUBLIC_API_BASE_URL environment variable
     // For simulator: localhost works
     return 'http://localhost:5000/api';
   } else {

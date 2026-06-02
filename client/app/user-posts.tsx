@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useRouter } from 'expo-router'
+import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import {
   Platform,
   Pressable,
@@ -11,15 +11,24 @@ import {
 } from 'react-native'
 import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
-import { PostService, Post } from '@/src/api/postService'
+import { PostService, Post, SearchSummaryResponse } from '@/src/api/postService'
 import { useAuth } from '@/src/hooks/useAuth'
-import TripCard from './components/TripCard'
-import FoodPlaceCard from './components/FoodPlaceCard'
-import HotelCard from './components/HotelCard'
-import AttractionCard from './components/AttractionCard'
+import { tokens } from '@/src/theme/tokens'
+import TripCard from './_components/TripCard'
+import FoodPlaceCard from './_components/FoodPlaceCard'
+import HotelCard from './_components/HotelCard'
+import AttractionCard from './_components/AttractionCard'
+import { renderPostCard } from './_components/renderPostCard'
+import { SearchSummary } from './_components/SearchSummary'
 
 // Helper function to render the correct card component based on category
-const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean, onEdit: (id: string) => void, onDelete: (id: string) => void) => {
+const renderPostCardWithActions = (
+  post: Post,
+  isWideWeb: boolean,
+  isMobile: boolean,
+  onEdit: (id: string) => void,
+  onDelete: (id: string) => void
+) => {
   const cardComponent = (() => {
     switch (post.category) {
       case 'TRIP':
@@ -63,35 +72,54 @@ const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean, onEdi
 
 export default function UserPostsScreen() {
   const router = useRouter()
+  const params = useLocalSearchParams<{ userId?: string }>()
   const { width } = useWindowDimensions()
   const isWideWeb = Platform.OS === 'web' && width >= 920
   const isMobile = Platform.OS !== 'web'
   const { user } = useAuth()
+  const targetUserId = params.userId || user?.id
+  const isOwnPosts = !params.userId || params.userId === user?.id
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [summary, setSummary] = useState<SearchSummaryResponse | null>(null)
+  const [loadingSummary, setLoadingSummary] = useState(false)
 
   useEffect(() => {
-    if (user) {
+    if (targetUserId) {
       fetchUserPosts()
     }
-  }, [user])
+  }, [targetUserId])
 
   const fetchUserPosts = async () => {
     try {
       setLoading(true)
       setError(null)
-      if (user) {
-        const result = await PostService.getPostsByUserId(user.id, 1, 50)
+      if (targetUserId) {
+        const result = await PostService.getPostsByUserId(targetUserId, 1, 50)
         setPosts(result.posts)
+        await fetchSummary(targetUserId)
       }
     } catch (err: any) {
       setError(err?.error || 'Paylaşımlar yüklenemedi')
       console.error('Error fetching posts:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchSummary = async (userId: string) => {
+    try {
+      setLoadingSummary(true)
+      const data = await PostService.getOwnPostsSummary(userId)
+      setSummary(data)
+    } catch (err) {
+      console.error('Error fetching own posts summary:', err)
+      setSummary(null)
+    } finally {
+      setLoadingSummary(false)
     }
   }
 
@@ -121,7 +149,7 @@ export default function UserPostsScreen() {
     const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
       <View style={loadingStyle}>
-        <ActivityIndicator size="large" color="#0d9488" />
+        <ActivityIndicator size="large" color={tokens.colors.primary} />
       </View>
     )
   }
@@ -134,9 +162,15 @@ export default function UserPostsScreen() {
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backButtonText}>← Geri</Text>
           </Pressable>
-          <Text style={styles.title}>📝 Paylaşımlarım</Text>
+          <Text style={styles.title}>
+            {isOwnPosts ? '📝 Paylaşımlarım' : '📝 Paylaşımlar'}
+          </Text>
           <Text style={styles.subtitle}>
-            {posts.length === 0 ? 'Henüz paylaşım yapmadınız' : `${posts.length} paylaşımınız var`}
+            {posts.length === 0
+              ? isOwnPosts
+                ? 'Henüz paylaşım yapmadınız'
+                : 'Henüz paylaşım yok'
+              : `${posts.length} paylaşım`}
           </Text>
         </View>
 
@@ -148,6 +182,16 @@ export default function UserPostsScreen() {
         )}
 
         <View style={listStyle}>
+          {summary && (
+            <SearchSummary
+              summary={summary.summary}
+              loading={loadingSummary}
+              cached={summary.cached}
+              onRefresh={
+                targetUserId ? () => fetchSummary(targetUserId) : undefined
+              }
+            />
+          )}
           {posts.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyEmoji}>📭</Text>
@@ -159,7 +203,17 @@ export default function UserPostsScreen() {
               </Link>
             </View>
           ) : (
-            posts.map((post) => renderPostCard(post, isWideWeb, isMobile, handleEditPost, confirmDelete))
+            posts.map((post) =>
+              isOwnPosts
+                ? renderPostCardWithActions(
+                    post,
+                    isWideWeb,
+                    isMobile,
+                    handleEditPost,
+                    confirmDelete
+                  )
+                : renderPostCard(post, isWideWeb, isMobile)
+            )
           )}
         </View>
       </PageShell>
@@ -198,7 +252,7 @@ export default function UserPostsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.pageBackground,
   },
   centerContent: {
     justifyContent: 'center',
@@ -213,27 +267,27 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
   },
   backButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   subtitle: {
     fontSize: 15,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '500',
   },
   errorBox: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: tokens.colors.errorLight,
     borderRadius: 12,
     padding: 14,
     marginTop: 16,
@@ -242,13 +296,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   errorEmoji: {
     fontSize: 18,
   },
   errorText: {
-    color: '#7c2d12',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
@@ -279,23 +333,23 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '600',
   },
   createButton: {
     marginTop: 12,
     borderRadius: 12,
-    backgroundColor: '#0d9488',
+    backgroundColor: tokens.colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    shadowColor: '#0d9488',
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
   },
   createButtonText: {
-    color: '#ffffff',
+    color: tokens.colors.background,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -305,7 +359,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderBottomLeftRadius: 18,
     borderBottomRightRadius: 18,
     marginBottom: 16,
@@ -313,7 +367,7 @@ const styles = StyleSheet.create({
   editButton: {
     flex: 1,
     borderRadius: 8,
-    backgroundColor: '#dbeafe',
+    backgroundColor: tokens.colors.backgroundSecondary,
     paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -321,12 +375,12 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0369a1',
+    color: tokens.colors.infoDark,
   },
   deleteButton: {
     flex: 1,
     borderRadius: 8,
-    backgroundColor: '#fee2e2',
+    backgroundColor: tokens.colors.errorLight,
     paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -334,7 +388,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#dc2626',
+    color: tokens.colors.error,
   },
   confirmationOverlay: {
     position: 'absolute',
@@ -342,18 +396,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: tokens.colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 9999,
   },
   confirmationModal: {
-    backgroundColor: '#ffffff',
+    backgroundColor: tokens.colors.background,
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 16,
     minWidth: 280,
-    shadowColor: '#000',
+    shadowColor: tokens.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -362,12 +416,12 @@ const styles = StyleSheet.create({
   confirmationTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#dc2626',
+    color: tokens.colors.error,
     marginBottom: 12,
   },
   confirmationText: {
     fontSize: 14,
-    color: '#0f172a',
+    color: tokens.colors.text,
     fontWeight: '500',
     marginBottom: 20,
     lineHeight: 20,
@@ -379,7 +433,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -387,12 +441,12 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   confirmDeleteButton: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: '#dc2626',
+    backgroundColor: tokens.colors.error,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -400,6 +454,6 @@ const styles = StyleSheet.create({
   confirmDeleteButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: tokens.colors.background,
   },
 })

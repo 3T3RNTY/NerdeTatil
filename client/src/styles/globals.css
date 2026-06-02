@@ -1,22 +1,32 @@
 /**
  * Global Styles
- * CSS custom properties, base styles, and resets
- * Generated from design tokens in src/theme/tokens.ts
+ * CSS custom properties — keep in sync with src/theme/tokens.ts
  */
 
 :root {
-  /* Colors - Primary */
+  /* Brand */
   --color-primary: #0d9488;
-  --color-primaryLight: #e0f7f5;
-  --color-primaryLighter: #f0fdf9;
-  --color-primaryDark: #0a7368;
+  --color-primaryLight: #9fd4c8;
+  --color-primaryLighter: #e4f0ec;
+  --color-primaryDark: #085e55;
 
-  /* Colors - Secondary */
-  --color-secondary: #059669;
-  --color-secondaryLight: #d1f3ed;
-  --color-secondaryLighter: #e8f5f1;
+  --color-navBar: #0d9488;
+  --color-navBarDark: #085e55;
+  --color-navBarForeground: #ffffff;
+  --color-navBarMuted: rgba(255, 255, 255, 0.88);
 
-  /* Colors - Status */
+  --color-secondary: #0f766e;
+  --color-secondaryLight: #7ec9bc;
+  --color-secondaryLighter: #d4e8e3;
+
+  /* Surfaces */
+  --color-pageBackground: #c5dbd4;
+  --color-panel: #aec9c1;
+  --color-surface: #ffffff;
+  --color-surfaceMuted: #dce9e5;
+  --color-surfaceInset: #f0f7f5;
+
+  /* Status */
   --color-error: #dc2626;
   --color-errorLight: #fee2e2;
   --color-success: #16a34a;
@@ -24,16 +34,37 @@
   --color-warning: #ea580c;
   --color-warningLight: #fed7aa;
 
-  /* Colors - Neutral */
-  --color-text: #0f172a;
-  --color-textSecondary: #4b5563;
-  --color-textTertiary: #9ca3af;
-  --color-border: #ccf0e8;
-  --color-borderLight: #dbeafe;
+  /* Accent */
+  --color-accent: #d97706;
+  --color-accentLight: #fef3e2;
+  --color-accentDark: #b45309;
+  --color-accentSecondary: #e8952a;
+  --color-star: #e8952a;
+
+  /* Semantic aliases */
+  --color-locationPrimary: #0f766e;
+  --color-locationLight: #dce9e5;
+  --color-locationDark: #085e55;
+  --color-infoPrimary: #0d9488;
+  --color-infoLight: #dce9e5;
+  --color-infoDark: #085e55;
+
+  --color-overlay: #0f172a;
+  --color-overlayScrim: rgba(15, 23, 42, 0.62);
+
+  /* Neutrals */
+  --color-text: #0c1222;
+  --color-contrast: #0c1222;
+  --color-contrastInverse: #ffffff;
+  --color-textSecondary: #334155;
+  --color-textTertiary: #64748b;
+  --color-border: #8fbdb3;
+  --color-borderLight: #a8cfc6;
+  --color-borderStrong: #6a9e92;
   --color-background: #ffffff;
-  --color-backgroundSecondary: #f9fafb;
-  --color-backgroundTertiary: #f3f4f6;
-  --color-shadow: #000000;
+  --color-backgroundSecondary: #dce9e5;
+  --color-backgroundTertiary: #c5dbd4;
+  --color-shadow: #0f172a;
 
   /* Typography - Font Sizes */
   --font-size-xs: 12px;
@@ -91,12 +122,13 @@
 
   /* Shadows */
   --shadow-none: none;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.08);
+  --shadow-base: 0 1px 3px 0 rgba(15, 23, 42, 0.12), 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.14), 0 2px 6px -2px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 10px 28px -4px rgba(15, 23, 42, 0.16), 0 4px 12px -4px rgba(15, 23, 42, 0.1);
+  --shadow-xl: 0 20px 36px -8px rgba(15, 23, 42, 0.2), 0 8px 16px -6px rgba(15, 23, 42, 0.12);
+  --shadow-2xl: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+  --shadow-card: 0 4px 16px -2px rgba(15, 23, 42, 0.14), 0 2px 8px -2px rgba(15, 23, 42, 0.1);
 
   /* Breakpoints */
   --breakpoint-mobile: 320px;
@@ -124,11 +156,8 @@
   --transition-duration-slow: 300ms;
   --transition-duration-slower: 500ms;
 
-  /* Default font family */
   font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 }
-
-/* CSS Reset and Base Styles */
 
 *,
 *::before,
@@ -147,16 +176,14 @@ html {
 
 body {
   color: var(--color-text);
-  background-color: var(--color-background);
-  font-family: var(--font-family);
+  background-color: var(--color-pageBackground);
+  font-family: inherit;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-/* Typography */
 
 h1,
 h2,
@@ -212,8 +239,6 @@ a:active {
   color: var(--color-primaryDark);
 }
 
-/* Form Elements */
-
 input,
 textarea,
 select,
@@ -235,7 +260,7 @@ select {
   padding: var(--spacing-3) var(--spacing-4);
   font-size: var(--font-size-base);
   color: var(--color-text);
-  background-color: var(--color-background);
+  background-color: var(--color-surface);
   transition: all var(--transition-duration-base) ease-out;
 }
 
@@ -244,7 +269,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
 
 input:disabled,
@@ -260,8 +285,6 @@ textarea::placeholder {
   color: var(--color-textTertiary);
 }
 
-/* Images */
-
 img,
 picture,
 video,
@@ -272,14 +295,10 @@ svg {
   height: auto;
 }
 
-/* Lists */
-
 ul,
 ol {
   list-style: none;
 }
-
-/* Code */
 
 code,
 pre,
@@ -290,14 +309,14 @@ samp {
 }
 
 code {
-  background-color: var(--color-backgroundTertiary);
+  background-color: var(--color-surfaceMuted);
   border-radius: var(--border-radius-sm);
   padding: 2px 6px;
-  color: var(--color-error);
+  color: var(--color-primaryDark);
 }
 
 pre {
-  background-color: var(--color-backgroundTertiary);
+  background-color: var(--color-surfaceMuted);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-4);
   overflow-x: auto;
@@ -308,8 +327,6 @@ pre code {
   color: var(--color-text);
   padding: 0;
 }
-
-/* Tables */
 
 table {
   border-collapse: collapse;
@@ -325,7 +342,7 @@ td {
 }
 
 th {
-  background-color: var(--color-backgroundSecondary);
+  background-color: var(--color-surfaceMuted);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text);
 }
@@ -333,8 +350,6 @@ th {
 tbody tr:hover {
   background-color: var(--color-backgroundTertiary);
 }
-
-/* Scrollbar Styling (for webkit browsers) */
 
 ::-webkit-scrollbar {
   width: 10px;
@@ -351,17 +366,13 @@ tbody tr:hover {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-textTertiary);
+  background: var(--color-primaryLight);
 }
-
-/* Selection Styles */
 
 ::selection {
   background-color: var(--color-primary);
-  color: var(--color-background);
+  color: var(--color-contrastInverse);
 }
-
-/* Print Styles */
 
 @media print {
   * {

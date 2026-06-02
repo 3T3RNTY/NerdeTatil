@@ -41,7 +41,7 @@ export function PageShell({ children, withScroll = true }: PageShellProps) {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    maxWidth: 1100,
+    maxWidth: 1200,
     alignSelf: 'center',
     marginHorizontal: 'auto' as any,
     paddingVertical: tokens.spacing[4],

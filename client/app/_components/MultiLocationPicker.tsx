@@ -88,6 +88,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
       return;
     }
 
+    // Allow selection - backend will enrich missing city/country via reverse geocoding
     const newLocation: LocationData = {
       name: location.address.split(',')[0] || location.address,
       address: location.address,
@@ -151,7 +152,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
         <TextInput
           style={styles.searchInput}
           placeholder="Konum ara..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={tokens.colors.textTertiary}
           value={searchQuery}
           onChangeText={setSearchQuery}
           onSubmitEditing={handleSearch}
@@ -163,7 +164,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
           disabled={isSearching}
         >
           {isSearching ? (
-            <ActivityIndicator color="#fff" size="small" />
+            <ActivityIndicator color={tokens.colors.background} size="small" />
           ) : (
             <Text style={styles.searchButtonText}>Ara</Text>
           )}
@@ -204,9 +205,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
                       {location.city && `${location.city}, `}
                       {location.country}
                     </Text>
-                    {location.visitDate && (
-                      <Text style={styles.visitDateDisplay}>Tarih: {location.visitDate}</Text>
-                    )}
+                    {/* visitDate display removed in new schema */}
                   </View>
                   <Pressable
                     style={styles.removeButton}
@@ -234,7 +233,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
                           <DayPicker
                             mode="single"
                             selected={visitDates[index]}
-                            onSelect={(date) => handleSetDate(index, date)}
+                            onSelect={(date: Date) => handleSetDate(index, date)}
                           />
                         </View>
                       )}
@@ -257,7 +256,7 @@ const MultiLocationPicker: React.FC<MultiLocationPickerProps> = ({
                             mode="date"
                             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                             onChange={(event, date) => handleDatePickerChange(event, date, index)}
-                            textColor="#0d9488"
+                            textColor={tokens.colors.primary}
                           />
                           {Platform.OS === 'ios' && (
                             <Pressable
@@ -302,74 +301,74 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
+    backgroundColor: tokens.colors.primaryLighter,
+    color: tokens.colors.contrast,
   },
   searchButton: {
-    backgroundColor: '#10b981',
+    backgroundColor: tokens.colors.secondary,
     paddingHorizontal: 16,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   searchButtonText: {
-    color: '#fff',
+    color: tokens.colors.background,
     fontWeight: '600',
     fontSize: 14,
   },
   resultsList: {
     maxHeight: 200,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     borderRadius: 8,
     marginBottom: 12,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
   },
   resultItem: {
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0f2fe',
+    borderBottomColor: tokens.colors.infoLight,
   },
   resultAddress: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     marginBottom: 4,
   },
   resultCoordinates: {
     fontSize: 12,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
   },
   selectedListContainer: {
     marginTop: 16,
-    backgroundColor: '#d1fae5',
+    backgroundColor: tokens.colors.secondaryLight,
     borderWidth: 2,
-    borderColor: '#10b981',
+    borderColor: tokens.colors.secondary,
     borderRadius: 8,
     padding: 12,
   },
   selectedListTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#047857',
+    color: tokens.colors.secondary,
     marginBottom: 12,
   },
   selectedList: {
     maxHeight: 300,
   },
   selectedItem: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.colors.background,
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#10b981',
+    borderLeftColor: tokens.colors.secondary,
   },
   selectedItemContent: {
     flexDirection: 'row',
@@ -380,7 +379,7 @@ const styles = StyleSheet.create({
   selectedItemNumber: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#10b981',
+    color: tokens.colors.secondary,
     minWidth: 24,
   },
   selectedItemInfo: {
@@ -389,114 +388,113 @@ const styles = StyleSheet.create({
   selectedItemAddress: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     marginBottom: 2,
   },
   selectedItemCity: {
     fontSize: 12,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     marginBottom: 4,
   },
   visitDateDisplay: {
     fontSize: 11,
-    color: '#10b981',
+    color: tokens.colors.secondary,
     fontStyle: 'italic',
   },
   removeButton: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#fee2e2',
+    backgroundColor: tokens.colors.errorLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   removeButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#dc2626',
+    color: tokens.colors.error,
   },
   dateInputContainer: {
     marginTop: 8,
   },
   dateInput: {
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 12,
-    backgroundColor: '#f0fdf9',
-    color: '#0f766e',
+    backgroundColor: tokens.colors.primaryLighter,
+    color: tokens.colors.contrast,
   },
   webDateButton: {
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     borderRadius: 6,
     padding: 10,
     marginBottom: 8,
   },
   webDateButtonText: {
     fontSize: 12,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '600',
     textAlign: 'center',
   },
   webDateButtonPlaceholder: {
-    color: '#9ca3af',
+    color: tokens.colors.textTertiary,
     fontStyle: 'italic',
   },
   calendarContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: tokens.colors.background,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: tokens.colors.border,
     borderRadius: 8,
     padding: 8,
     marginBottom: 8,
-    overflowY: 'auto' as any,
   },
   mobileeDateButton: {
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.primaryLighter,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     borderRadius: 6,
     padding: 10,
     marginBottom: 8,
   },
   mobileeDateButtonText: {
     fontSize: 12,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '600',
     textAlign: 'center',
   },
   mobileeDateButtonPlaceholder: {
-    color: '#9ca3af',
+    color: tokens.colors.textTertiary,
     fontStyle: 'italic',
   },
   datePickerDoneButton: {
     marginTop: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#10b981',
+    backgroundColor: tokens.colors.secondary,
     borderRadius: 6,
     alignItems: 'center',
   },
   datePickerDoneText: {
-    color: '#ffffff',
+    color: tokens.colors.background,
     fontWeight: '600',
     fontSize: 12,
   },
   infoContainer: {
-    backgroundColor: '#ecfdf5',
+    backgroundColor: tokens.colors.secondaryLighter,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     borderRadius: 8,
     padding: 12,
     marginTop: 12,
   },
   infoText: {
     fontSize: 13,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     textAlign: 'center',
   },
 });

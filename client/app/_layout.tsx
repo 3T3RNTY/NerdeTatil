@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import Toast from 'react-native-toast-message'
 import { AuthProvider, AuthContext } from '../src/context/AuthContext'
+import { tokens } from '@/src/theme/tokens'
 import { MobileNavigation } from '../src/components/MobileNavigation'
 import { useContext } from 'react'
 import { Platform, View, StyleSheet } from 'react-native'
@@ -41,7 +42,7 @@ function RootLayoutNav() {
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: '#f1f5f9' },
+          contentStyle: { backgroundColor: tokens.colors.pageBackground },
         }}
       >
         {/* Auth screens - always defined */}
@@ -52,7 +53,14 @@ function RootLayoutNav() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="profil" options={{ headerShown: false }} />
         <Stack.Screen name="user-posts" options={{ headerShown: false }} />
+        <Stack.Screen name="user-commented-posts" options={{ headerShown: false }} />
+        <Stack.Screen name="user-liked-posts" options={{ headerShown: false }} />
+        <Stack.Screen name="user-followers" options={{ headerShown: false }} />
+        <Stack.Screen name="user-following" options={{ headerShown: false }} />
+        <Stack.Screen name="kullanici/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="yeni-paylasim" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false }} />
+        <Stack.Screen name="suggestions" options={{ headerShown: false }} />
         <Stack.Screen name="detay/[id]" options={{ headerShown: false }} />
       </Stack>
       {Platform.OS !== 'web' && <MobileNavigation />}

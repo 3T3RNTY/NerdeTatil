@@ -5,11 +5,9 @@ import { LocationController } from '../controllers/locationController';
 import { AuthController } from '../controllers/authController';
 import imageController from '../controllers/imageController';
 import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth';
-import {
-  validateUserRegistration,
-  validatePostCreation,
-  validateLocationCreation,
-} from '../middleware/validation';
+import {validateLocationCreation} from '../middleware/LocationValidation';
+import { validateUserRegistration } from '../middleware/UserValidation';
+import { validatePostCreation } from '../middleware/PostCreationValidation';
 
 const router = Router();
 
@@ -38,16 +36,50 @@ router.post('/auth/verify', authMiddleware, AuthController.verify);
 // ============================================
 
 router.post('/users', validateUserRegistration, UserController.create);
+router.get('/users/:id/followers', optionalAuthMiddleware, UserController.getFollowers);
+router.get('/users/:id/following', optionalAuthMiddleware, UserController.getFollowing);
 router.get('/users/:id', UserController.getById);
-router.get('/users/:id/profile', UserController.getProfile);
+router.get('/users/:id/profile', optionalAuthMiddleware, UserController.getProfile);
+router.post('/users/:id/follow', authMiddleware, UserController.follow);
+router.delete('/users/:id/follow', authMiddleware, UserController.unfollow);
 router.put('/users/:id', authMiddleware, UserController.update);
 
 // ============================================
-// POSTS ROUTES
+// POSTS ROUTES - COMMENTS FIRST (more specific)
 // ============================================
 
+// Comments routes must come before generic /:id routes
+router.post(
+  '/posts/:id/comments',
+  authMiddleware,
+  PostController.addComment
+);
+router.get('/posts/:id/comments', PostController.getComments);
+router.delete(
+  '/posts/:id/comments/:commentId',
+  authMiddleware,
+  PostController.deleteComment
+);
+router.patch(
+  '/posts/:id/comments/:commentId',
+  authMiddleware,
+  PostController.editComment
+);
+
+// ============================================
+// POSTS ROUTES - GENERIC (less specific)
+// ============================================
+
+router.get('/themes', PostController.getThemes);
 router.get('/posts', optionalAuthMiddleware, PostController.list);
-router.get('/posts/user/:userId', PostController.getByUserId);
+router.get('/posts/user/:userId/commented', optionalAuthMiddleware, PostController.getCommentedByUser);
+router.get('/posts/user/:userId/posts-summary', optionalAuthMiddleware, PostController.getOwnPostsSummary);
+router.get('/posts/user/:userId/liked-summary', authMiddleware, PostController.getLikedPostsSummary);
+router.get('/posts/user/:userId/suggestions', authMiddleware, PostController.getSuggestions);
+router.get('/posts/user/:userId/liked', authMiddleware, PostController.getLikedByUser);
+router.get('/posts/user/:userId', optionalAuthMiddleware, PostController.getByUserId);
+router.get('/posts/search/summary', PostController.searchSummary);
+router.get('/posts/search', PostController.search);
 router.get('/posts/:id', optionalAuthMiddleware, PostController.getById);
 router.post(
   '/posts',
@@ -57,17 +89,6 @@ router.post(
 );
 router.put('/posts/:id', authMiddleware, PostController.update);
 router.delete('/posts/:id', authMiddleware, PostController.delete);
-
-// ============================================
-// COMMENTS ROUTES
-// ============================================
-
-router.post(
-  '/posts/:id/comments',
-  authMiddleware,
-  PostController.addComment
-);
-router.get('/posts/:id/comments', PostController.getComments);
 
 // ============================================
 // LIKES ROUTES

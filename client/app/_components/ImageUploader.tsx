@@ -26,7 +26,7 @@ interface UploadError {
 interface ImageUploaderProps {
   onImagesUploaded: (images: UploadedImage[]) => void;
   maxImages?: number;
-  token?: string;
+  token?: string | null;
 }
 
 // Helper function to get MIME type from filename

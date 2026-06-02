@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import {
   Platform,
   Pressable,
@@ -15,13 +15,28 @@ import { AppHeader } from '@/src/components/AppHeader'
 import { ImagePlaceholder } from '@/src/components/ImagePlaceholder'
 import { PageShell } from '@/src/components/PageShell'
 import { PostService, Post } from '@/src/api/postService'
-import TripCard from './components/TripCard'
-import FoodPlaceCard from './components/FoodPlaceCard'
-import HotelCard from './components/HotelCard'
-import AttractionCard from './components/AttractionCard'
+import { tokens } from '@/src/theme/tokens'
+import TripCard from './_components/TripCard'
+import FoodPlaceCard from './_components/FoodPlaceCard'
+import HotelCard from './_components/HotelCard'
+import AttractionCard from './_components/AttractionCard'
+import { useAuth } from '@/src/hooks/useAuth'
 
-// Helper function to render the correct card component based on category
+// Helper function to render the correct card component based on category or postType
 const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean) => {
+  // Handle new post format (postType)
+  if (post.postType) {
+    switch (post.postType) {
+      case 'TRIP':
+        return <TripCard key={post.id} post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+      case 'LOCATION':
+        return <AttractionCard key={post.id} post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+      default:
+        return <AttractionCard key={post.id} post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
+    }
+  }
+
+  // Handle legacy post format (category)
   switch (post.category) {
     case 'TRIP':
       return <TripCard key={post.id} post={post} isWideWeb={isWideWeb} isMobile={isMobile} />
@@ -37,9 +52,11 @@ const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean) => {
 }
 
 export default function HomeScreen() {
+  const router = useRouter()
   const { width } = useWindowDimensions()
   const isWideWeb = Platform.OS === 'web' && width >= 920
   const isMobile = Platform.OS !== 'web'
+  const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -69,7 +86,7 @@ export default function HomeScreen() {
     const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
       <View style={loadingStyle}>
-        <ActivityIndicator size="large" color="#0d9488" />
+        <ActivityIndicator size="large" color={tokens.colors.primary} />
       </View>
     )
   }
@@ -100,6 +117,14 @@ export default function HomeScreen() {
           )}
         </View>
       </PageShell>
+      {user && (
+        <Pressable
+          style={styles.aiFab}
+          onPress={() => router.push('/suggestions')}
+        >
+          <Text style={styles.aiFabText}>AI</Text>
+        </Pressable>
+      )}
     </View>
   )
 }
@@ -107,7 +132,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.pageBackground,
   },
   centerContent: {
     justifyContent: 'center',
@@ -120,15 +145,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   subtitle: {
     fontSize: 15,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '500',
   },
   errorBox: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: tokens.colors.successLight,
     borderRadius: 12,
     padding: 14,
     marginBottom: 20,
@@ -136,20 +161,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   errorEmoji: {
     fontSize: 18,
   },
   errorText: {
-    color: '#7c2d12',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     fontSize: 14,
     paddingVertical: 40,
     fontWeight: '500',
@@ -162,5 +187,28 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 16,
     justifyContent: 'space-between',
+  },
+  aiFab: {
+    position: 'absolute',
+    right: 20,
+    bottom: Platform.OS === 'web' ? 24 : 90,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: tokens.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: tokens.colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 20,
+  },
+  aiFabText: {
+    color: tokens.colors.background,
+    fontWeight: '800',
+    fontSize: 16,
+    letterSpacing: 0.4,
   },
 })

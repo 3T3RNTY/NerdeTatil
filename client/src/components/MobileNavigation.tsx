@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: tokens.colors.secondaryLight,
-    backgroundColor: tokens.colors.primaryLighter,
+    borderTopColor: tokens.colors.navBarDark,
+    backgroundColor: tokens.colors.navBar,
     paddingBottom: Platform.OS === 'ios' ? 24 : 8,
     paddingTop: tokens.spacing[2],
     height: Platform.OS === 'ios' ? 80 : 60,
@@ -90,9 +90,10 @@ const styles = StyleSheet.create({
   label: {
     fontSize: tokens.typography.fontSize.xs,
     fontWeight: tokens.typography.fontWeight.semibold as any,
-    color: tokens.colors.primaryDark,
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   labelActive: {
-    color: tokens.colors.primary,
+    color: tokens.colors.navBarForeground,
+    fontWeight: tokens.typography.fontWeight.bold as any,
   },
 })

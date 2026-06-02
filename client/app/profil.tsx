@@ -16,6 +16,7 @@ import { AppHeader } from '@/src/components/AppHeader'
 import { PageShell } from '@/src/components/PageShell'
 import { useAuth } from '@/src/hooks/useAuth'
 import { UserService, UserProfile } from '@/src/api/userService'
+import { tokens } from '@/src/theme/tokens'
 
 function InfoRow({ label, value }: { label: string; value?: string }) {
   return (
@@ -131,6 +132,24 @@ export default function ProfileScreen() {
     router.push('/user-posts')
   }
 
+  const handleViewCommentedPosts = () => {
+    router.push('/user-commented-posts')
+  }
+
+  const handleViewLikedPosts = () => {
+    router.push('/user-liked-posts')
+  }
+
+  const handleViewFollowers = () => {
+    router.push('/user-followers')
+  }
+
+  const handleViewFollowing = () => {
+    router.push('/user-following')
+  }
+
+
+
   const heroStyle = StyleSheet.flatten([styles.hero, isWideWeb && styles.heroWide])
   const sectionsStyle = StyleSheet.flatten([styles.sections, isWideWeb && styles.sectionsWide])
 
@@ -138,7 +157,7 @@ export default function ProfileScreen() {
     const loadingStyle = StyleSheet.flatten([styles.screen, styles.centerContent])
     return (
       <View style={loadingStyle}>
-        <ActivityIndicator size="large" color="#0d9488" />
+        <ActivityIndicator size="large" color={tokens.colors.primary} />
       </View>
     )
   }
@@ -184,18 +203,22 @@ export default function ProfileScreen() {
               <Text style={styles.statNumber}>{profile.postsCount}</Text>
               <Text style={styles.statName}>Paylaşım</Text>
             </Pressable>
-            <View style={styles.statCard}>
+            <Pressable style={styles.statCard} onPress={handleViewCommentedPosts}>
               <Text style={styles.statNumber}>{profile.commentsCount}</Text>
               <Text style={styles.statName}>Yorum</Text>
-            </View>
-            <View style={styles.statCard}>
+            </Pressable>
+            <Pressable style={styles.statCard} onPress={handleViewFollowers}>
               <Text style={styles.statNumber}>{profile.followersCount}</Text>
               <Text style={styles.statName}>Takipçi</Text>
-            </View>
-            <View style={styles.statCard}>
+            </Pressable>
+            <Pressable style={styles.statCard} onPress={handleViewFollowing}>
               <Text style={styles.statNumber}>{profile.followingCount}</Text>
               <Text style={styles.statName}>Takip</Text>
-            </View>
+            </Pressable>
+            <Pressable style={styles.statCard} onPress={handleViewLikedPosts}>
+              <Text style={styles.statNumber}>❤️</Text>
+              <Text style={styles.statName}>Beğendiklerim</Text>
+            </Pressable>
           </View>
 
           <View style={sectionsStyle}>
@@ -262,7 +285,7 @@ export default function ProfileScreen() {
                   setEditForm({ ...editForm, fullName: text })
                 }
                 editable={!isSubmitting}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={tokens.colors.textTertiary}
               />
             </View>
 
@@ -276,7 +299,7 @@ export default function ProfileScreen() {
                   setEditForm({ ...editForm, bio: text })
                 }
                 editable={!isSubmitting}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={tokens.colors.textTertiary}
                 multiline={true}
                 numberOfLines={4}
               />
@@ -300,7 +323,7 @@ export default function ProfileScreen() {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#ffffff" size="small" />
+                  <ActivityIndicator color={tokens.colors.background} size="small" />
                 ) : (
                   <Text style={styles.saveButtonText}>Kaydet</Text>
                 )}
@@ -316,7 +339,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.pageBackground,
   },
   centerContent: {
     justifyContent: 'center',
@@ -325,17 +348,17 @@ const styles = StyleSheet.create({
   hero: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    backgroundColor: '#f0fdf9',
+    borderColor: tokens.colors.borderStrong,
+    backgroundColor: tokens.colors.surface,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    shadowColor: '#0d9488',
-    shadowOffset: { width: 4, height: 4 },
+    shadowColor: tokens.colors.shadow,
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 4,
   },
   heroWide: {
     paddingHorizontal: 20,
@@ -344,10 +367,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 14,
-    backgroundColor: '#d1f3ed',
+    backgroundColor: tokens.colors.secondaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#0d9488',
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: -2, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -362,11 +385,11 @@ const styles = StyleSheet.create({
   displayName: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   heroSub: {
     marginTop: 2,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontWeight: '500',
     fontSize: 13,
   },
@@ -376,8 +399,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fee2e2',
-    shadowColor: '#dc2626',
+    backgroundColor: tokens.colors.errorLight,
+    shadowColor: tokens.colors.error,
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -386,11 +409,11 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#dc2626',
+    color: tokens.colors.error,
     letterSpacing: 0.3,
   },
   errorBox: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: tokens.colors.successLight,
     borderRadius: 12,
     padding: 14,
     marginTop: 16,
@@ -398,13 +421,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   errorEmoji: {
     fontSize: 18,
   },
   errorText: {
-    color: '#7c2d12',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
@@ -420,12 +443,12 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: '#f0fdf9',
+    backgroundColor: tokens.colors.surface,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    shadowColor: '#0d9488',
+    borderColor: tokens.colors.borderStrong,
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -434,11 +457,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   statName: {
     fontSize: 11,
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     marginTop: 4,
     fontWeight: '600',
   },
@@ -454,15 +477,15 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#ccf0e8',
-    backgroundColor: '#f0fdf9',
+    borderColor: tokens.colors.borderStrong,
+    backgroundColor: tokens.colors.surface,
     padding: 16,
     gap: 12,
-    shadowColor: '#0d9488',
-    shadowOffset: { width: 4, height: 4 },
+    shadowColor: tokens.colors.shadow,
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 4,
   },
   profileCardWide: {
     flex: 1,
@@ -473,57 +496,57 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   infoRow: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#d1f3ed',
+    borderBottomColor: tokens.colors.secondaryLight,
     gap: 4,
   },
   infoLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   infoValue: {
     fontSize: 14,
-    color: '#0f172a',
+    color: tokens.colors.text,
     fontWeight: '500',
   },
   placeholder: {
     borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     padding: 24,
     alignItems: 'center',
-    backgroundColor: '#e8f5f1',
+    backgroundColor: tokens.colors.surfaceMuted,
   },
   placeholderEmoji: {
     fontSize: 32,
     marginBottom: 8,
   },
   placeholderText: {
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     fontSize: 13,
     fontWeight: '500',
   },
   primaryButton: {
     borderRadius: 12,
-    backgroundColor: '#0d9488',
+    backgroundColor: tokens.colors.primary,
     paddingVertical: 12,
     alignItems: 'center',
-    shadowColor: '#0d9488',
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
   },
   primaryButtonText: {
-    color: '#ffffff',
+    color: tokens.colors.background,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -535,31 +558,31 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   editButton: {
-    backgroundColor: '#d1f3ed',
+    backgroundColor: tokens.colors.secondaryLight,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#99ebe2',
+    borderColor: tokens.colors.secondary,
   },
   editButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: tokens.colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#ffffff',
+    backgroundColor: tokens.colors.background,
     borderRadius: 20,
     padding: 24,
     width: '90%',
     maxWidth: 400,
-    shadowColor: '#0d9488',
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -574,23 +597,23 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0d9488',
+    color: tokens.colors.primary,
   },
   modalCloseButton: {
     fontSize: 24,
-    color: '#6b7280',
+    color: tokens.colors.textSecondary,
     fontWeight: '400',
   },
   editErrorBox: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: tokens.colors.errorLight,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: tokens.colors.error,
   },
   editErrorText: {
-    color: '#7c2d12',
+    color: tokens.colors.error,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -600,19 +623,19 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0f766e',
+    color: tokens.colors.contrast,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#ccf0e8',
+    borderColor: tokens.colors.border,
     borderRadius: 10,
     padding: 12,
     fontSize: 14,
-    color: '#0f172a',
-    backgroundColor: '#f0fdf9',
+    color: tokens.colors.text,
+    backgroundColor: tokens.colors.primaryLighter,
   },
   bioInput: {
     minHeight: 100,
@@ -631,18 +654,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: tokens.colors.backgroundTertiary,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: tokens.colors.border,
   },
   cancelButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: tokens.colors.textSecondary,
   },
   saveButton: {
-    backgroundColor: '#0d9488',
-    shadowColor: '#0d9488',
+    backgroundColor: tokens.colors.primary,
+    shadowColor: tokens.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -654,6 +677,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#ffffff',
+    color: tokens.colors.background,
   },
 })
