@@ -9,6 +9,10 @@ interface NavItem {
   activeRoutes: string[]
 }
 
+/*
+* MobileNavigation component - a bottom navigation bar for mobile devices, with links to main sections of the app. Uses icons and labels, and highlights the active route. Does not render on authentication screens.
+*/
+
 const navItems: NavItem[] = [
   {
     label: 'Keşfet',
@@ -28,7 +32,17 @@ const navItems: NavItem[] = [
     href: '/profil',
     activeRoutes: ['/profil', '/user-posts'],
   },
+  {
+    label: 'AI Asistan',
+    icon: '🤖',
+    href: '/suggestions',
+    activeRoutes: ['/suggestions'],
+  },
 ]
+
+/*
+* MobileNavigation component - a bottom navigation bar for mobile devices, with links to main sections of the app. Uses icons and labels, and highlights the active route. Does not render on authentication screens.
+*/
 
 export function MobileNavigation() {
   const pathname = usePathname()
@@ -59,6 +73,10 @@ export function MobileNavigation() {
     </View>
   )
 }
+
+/*
+* Styles for MobileNavigation component - defines layout and appearance of the navigation bar and its items, with conditional styles for active state and platform-specific adjustments for padding and height.
+*/
 
 const styles = StyleSheet.create({
   container: {

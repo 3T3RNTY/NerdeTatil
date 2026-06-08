@@ -35,31 +35,32 @@ export default function RegisterScreen() {
       setValidationError('')
       clearError()
 
+      /** Validation */
       if (!email || !username || !password || !confirmPassword) {
         setValidationError('Tüm alanları doldurunuz')
         return
       }
-
+      /** Email Validation */
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         setValidationError('Geçerli bir email giriniz')
         return
       }
-
+      /** Username Validation */
       if (username.length < 3) {
         setValidationError('Kullanıcı adı en az 3 karakter olmalı')
         return
       }
-
+      /** Password Validation */
       if (password.length < 8) {
         setValidationError('Şifre en az 8 karakter olmalı')
         return
       }
-
+      /** Password Complexity Validation */
       if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
         setValidationError('Şifre büyük harf, küçük harf ve rakam içermeli')
         return
       }
-
+      /** Confirm Password Validation */
       if (password !== confirmPassword) {
         setValidationError('Şifreler eşleşmiyor')
         return
@@ -73,6 +74,9 @@ export default function RegisterScreen() {
     }
   }
 
+  /*
+  * RegisterScreen component - a registration form that allows users to create an account. Includes input fields for email, username, full name, password, and confirm password, with validation and error handling. Uses the useAuth hook to manage registration logic and displays loading state during the registration process.
+   */
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.backgroundGradient} />

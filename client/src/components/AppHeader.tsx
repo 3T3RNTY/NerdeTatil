@@ -15,16 +15,22 @@ import {
 import { env } from '@/src/config/env'
 import { tokens } from '@/src/theme/tokens'
 
+/*
+* SearchType - defines the types of searches available in the header search bar (by title, city, or country). Used to determine how to construct search queries and what placeholder text to show in the input.
+*/
 type SearchType = 'title' | 'city' | 'country'
 
 const SEARCH_TYPES: { value: SearchType; label: string; emoji: string }[] = [
   { value: 'title', label: 'Başlık', emoji: '📝' },
   { value: 'city', label: 'Şehir', emoji: '🏙️' },
-  { value: 'country', label: 'Ülke', emoji: '🌍' },
+  { value: 'country', label: 'Üle', emoji: '🌍' },
 ]
 
 const CONTENT_MAX_WIDTH = 1200
 
+/*
+* AppHeader component - responsive header with brand, search bar, and navigation links. Adapts layout and features based on platform (web vs mobile) and screen size.
+*/
 export function AppHeader() {
   const router = useRouter()
   const { width } = useWindowDimensions()
@@ -34,12 +40,17 @@ export function AppHeader() {
   const isDesktopWeb = isWeb && width >= tokens.breakpoints.desktop
   const pathname = usePathname()
   const isProfilePage = pathname === '/profil'
-  const isHomePage = pathname === '/' || pathname === ''
+  
+  // DEĞİŞİKLİK: Keşfet yerine AI Asistan sayfasının aktiflik kontrolü
+  const isSuggestionPage = pathname === '/suggestion'
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searchType, setSearchType] = useState<SearchType>('title')
   const [showSearchTypeModal, setShowSearchTypeModal] = useState(false)
 
+  /*
+  * Styles with conditional logic based on platform and screen size
+  */
   const innerStyle = StyleSheet.flatten([
     styles.inner,
     isDesktopWeb && styles.innerDesktop,
@@ -48,9 +59,11 @@ export function AppHeader() {
     styles.searchBar,
     isWideWeb && styles.searchBarWide,
   ])
+  
+  // DEĞİŞİKLİK: Aktiflik stili artık isSuggestionPage durumuna göre belirleniyor
   const navLinkStyle = StyleSheet.flatten([
     styles.navLink,
-    isHomePage && styles.navLinkActive,
+    isSuggestionPage && styles.navLinkActive,
   ])
   const profileButtonStyle = StyleSheet.flatten([
     styles.profileButton,
@@ -65,6 +78,9 @@ export function AppHeader() {
     !searchQuery.trim() && styles.searchSubmitDisabled,
   ])
 
+  /*
+  * Search handling logic - constructs query params based on selected search type and navigates to search results page
+  */
   const handleSearch = () => {
     if (!searchQuery.trim()) return
 
@@ -132,7 +148,6 @@ export function AppHeader() {
               })}
             </View>
           ) : null}
-
           <View style={searchBarStyle}>
             <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
@@ -166,15 +181,16 @@ export function AppHeader() {
         {!isMobile ? (
           <View style={styles.actionsColumn}>
             {isWideWeb ? (
-              <Link href="/" asChild>
+
+              <Link href="/suggestions" asChild>
                 <Pressable style={navLinkStyle as StyleProp<ViewStyle>}>
                   <Text
                     style={StyleSheet.flatten([
                       styles.navLinkText,
-                      isHomePage && styles.navLinkTextActive,
+                      isSuggestionPage && styles.navLinkTextActive,
                     ])}
                   >
-                    Keşfet
+                    AI Asistan
                   </Text>
                 </Pressable>
               </Link>
@@ -227,6 +243,9 @@ export function AppHeader() {
   )
 }
 
+/*
+* Styles for AppHeader component - includes conditional styles for different platforms and screen sizes
+*/
 const styles = StyleSheet.create({
   header: {
     width: '100%',

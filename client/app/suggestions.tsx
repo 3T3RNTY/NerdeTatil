@@ -45,6 +45,10 @@ export default function SuggestionsScreen() {
     }
   }
 
+  /*
+  * fetchSuggestions function - retrieves personalized location suggestions from the API using the PostService. Manages loading and error states, and updates the data state with the retrieved suggestions. Called on component mount when user ID is available.
+  */
+
   return (
     <View style={styles.screen}>
       <AppHeader />

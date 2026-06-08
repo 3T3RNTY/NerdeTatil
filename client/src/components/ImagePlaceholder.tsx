@@ -7,6 +7,10 @@ type ImagePlaceholderProps = {
   style?: StyleProp<ViewStyle>
 }
 
+/*
+* ImagePlaceholder component - a simple placeholder box with an icon and label, used when an image is not available. Accepts a 'compact' prop to render a smaller version, and a 'style' prop for custom styling.
+*/
+
 export function ImagePlaceholder({ compact = false, style }: ImagePlaceholderProps) {
   return (
     <View style={[styles.box, compact && styles.compact, style]}>

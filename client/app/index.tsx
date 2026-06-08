@@ -51,6 +51,10 @@ const renderPostCard = (post: Post, isWideWeb: boolean, isMobile: boolean) => {
   }
 }
 
+/*
+* HomeScreen component - the main screen of the app that displays a list of posts for users to explore. Fetches posts from the API, handles loading and error states, and renders different card components based on post category or type. Also includes a floating action button for AI suggestions if the user is logged in.
+*/
+
 export default function HomeScreen() {
   const router = useRouter()
   const { width } = useWindowDimensions()
@@ -68,6 +72,9 @@ export default function HomeScreen() {
     fetchPosts()
   }, [])
 
+  /*
+  * fetchPosts function - retrieves posts from the API using the PostService. Manages loading and error states, and updates the posts state with the retrieved data. Called on component mount and can be extended for pagination.
+  */ 
   const fetchPosts = async () => {
     try {
       setLoading(true)
@@ -90,12 +97,12 @@ export default function HomeScreen() {
       </View>
     )
   }
-
+  
   return (
     <View style={styles.screen}>
       <AppHeader />
       <PageShell>
-        <View style={styles.titleArea}>
+                <View style={styles.titleArea}>
           <Text style={styles.title}>✨ Keşfet</Text>
           <Text style={styles.subtitle}>
             Sıradaki tatilini seçmek için kategorize edilmiş paylaşımları incele
@@ -108,8 +115,7 @@ export default function HomeScreen() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
-
-        <View style={listStyle}>
+                <View style={listStyle}>
           {posts.length === 0 ? (
             <Text style={styles.emptyText}>Henüz paylaşım yok</Text>
           ) : (
@@ -117,17 +123,15 @@ export default function HomeScreen() {
           )}
         </View>
       </PageShell>
-      {user && (
-        <Pressable
-          style={styles.aiFab}
-          onPress={() => router.push('/suggestions')}
-        >
-          <Text style={styles.aiFabText}>AI</Text>
-        </Pressable>
-      )}
+      
     </View>
   )
 }
+
+
+/*
+* Styles for HomeScreen component - defines the layout and appearance of the home screen, including loading state, error messages, title area, post list, and floating action button. Uses tokens for consistent theming and responsive design adjustments for web and mobile platforms.
+*/
 
 const styles = StyleSheet.create({
   screen: {
@@ -188,27 +192,6 @@ const styles = StyleSheet.create({
     gap: 16,
     justifyContent: 'space-between',
   },
-  aiFab: {
-    position: 'absolute',
-    right: 20,
-    bottom: Platform.OS === 'web' ? 24 : 90,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: tokens.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: tokens.colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 6,
-    zIndex: 20,
-  },
-  aiFabText: {
-    color: tokens.colors.background,
-    fontWeight: '800',
-    fontSize: 16,
-    letterSpacing: 0.4,
-  },
+  
+  
 })

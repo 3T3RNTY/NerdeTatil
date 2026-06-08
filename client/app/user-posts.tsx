@@ -92,7 +92,9 @@ export default function UserPostsScreen() {
       fetchUserPosts()
     }
   }, [targetUserId])
-
+  /*
+  * fetchUserPosts function - retrieves posts from the API using the PostService. Manages loading and error states, and updates the posts state with the retrieved data. Called on component mount and can be extended for pagination.
+   */
   const fetchUserPosts = async () => {
     try {
       setLoading(true)

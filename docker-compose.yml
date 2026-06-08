@@ -53,7 +53,7 @@ services:
     networks:
       - nerdetatil_network
     restart: unless-stopped
-    pull_policy: always
+    pull_policy: missing
 
 volumes:
   postgres_data:
